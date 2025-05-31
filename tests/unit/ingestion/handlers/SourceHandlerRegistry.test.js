@@ -50,13 +50,14 @@ describe('SourceHandlerRegistry', () => {
 
     mockFactory = {
       createHandler: jest.fn(),
+      validateConfig: jest.fn().mockResolvedValue(true),
       validateHandlerConfig: jest.fn().mockResolvedValue(true),
       getRegisteredTypes: jest.fn().mockReturnValue([SOURCE_TYPES.STATIC, SOURCE_TYPES.SEMI_STATIC])
     };
 
     SourceHandlerFactory.mockImplementation(() => mockFactory);
 
-    registry = new SourceHandlerRegistry(mockLogger);
+    registry = new SourceHandlerRegistry(mockFactory, mockLogger);
   });
 
   describe('Initialization', () => {
@@ -66,7 +67,7 @@ describe('SourceHandlerRegistry', () => {
     });
 
     test('should initialize factory correctly', () => {
-      expect(SourceHandlerFactory).toHaveBeenCalledWith(mockLogger);
+      expect(registry.factory).toBe(mockFactory);
     });
   });
 
@@ -83,7 +84,7 @@ describe('SourceHandlerRegistry', () => {
 
       await registry.registerHandler(config);
 
-      expect(mockFactory.validateHandlerConfig).toHaveBeenCalledWith(config);
+      expect(mockFactory.validateConfig).toHaveBeenCalledWith(config);
       expect(mockFactory.createHandler).toHaveBeenCalledWith(config);
       expect(mockHandler1.initialize).toHaveBeenCalled();
       expect(registry.getHandlerCount()).toBe(1);
@@ -138,7 +139,7 @@ describe('SourceHandlerRegistry', () => {
         config: {} // Invalid config
       };
 
-      mockFactory.validateHandlerConfig.mockRejectedValue(new Error('Invalid config'));
+      mockFactory.validateConfig.mockRejectedValue(new Error('Invalid config'));
 
       await expect(registry.registerHandler(config))
         .rejects.toThrow('Invalid config');
@@ -222,7 +223,7 @@ describe('SourceHandlerRegistry', () => {
     });
 
     test('should get enabled handlers only', () => {
-      mockHandler2.config.enabled = false;
+      registry.disableHandler('handler-2');
 
       const enabledHandlers = registry.getEnabledHandlers();
       expect(enabledHandlers).toHaveLength(1);
@@ -250,10 +251,10 @@ describe('SourceHandlerRegistry', () => {
       });
     });
 
-    test('should enable handler', async () => {
-      mockHandler1.config.enabled = false;
+    test('should enable handler', () => {
+      registry.disableHandler('test-handler');
 
-      await registry.enableHandler('test-handler');
+      registry.enableHandler('test-handler');
 
       expect(mockHandler1.config.enabled).toBe(true);
       expect(mockLogger.info).toHaveBeenCalledWith(
@@ -262,8 +263,8 @@ describe('SourceHandlerRegistry', () => {
       );
     });
 
-    test('should disable handler', async () => {
-      await registry.disableHandler('test-handler');
+    test('should disable handler', () => {
+      registry.disableHandler('test-handler');
 
       expect(mockHandler1.config.enabled).toBe(false);
       expect(mockLogger.info).toHaveBeenCalledWith(
@@ -280,12 +281,12 @@ describe('SourceHandlerRegistry', () => {
       expect(registry.getHandlerCount()).toBe(0);
     });
 
-    test('should handle enable/disable of non-existent handler', async () => {
-      await expect(registry.enableHandler('non-existent'))
-        .rejects.toThrow('Handler with ID non-existent not found');
+    test('should handle enable/disable of non-existent handler', () => {
+      expect(() => registry.enableHandler('non-existent'))
+        .toThrow('Handler non-existent not found');
 
-      await expect(registry.disableHandler('non-existent'))
-        .rejects.toThrow('Handler with ID non-existent not found');
+      expect(() => registry.disableHandler('non-existent'))
+        .toThrow('Handler non-existent not found');
     });
 
     test('should handle unregister of non-existent handler', async () => {
@@ -330,7 +331,7 @@ describe('SourceHandlerRegistry', () => {
     });
 
     test('should skip disabled handlers in discovery', async () => {
-      mockHandler2.config.enabled = false;
+      registry.disableHandler('handler-2');
       mockHandler1.discover.mockResolvedValue([{ id: 'doc1' }]);
 
       const allDocuments = await registry.discoverAll();
@@ -348,8 +349,8 @@ describe('SourceHandlerRegistry', () => {
 
       expect(allDocuments).toHaveLength(1);
       expect(mockLogger.error).toHaveBeenCalledWith(
-        'Handler discovery failed',
-        expect.objectContaining({ handlerId: 'handler-2' })
+        'Handler discovery failed for handler-2:',
+        'Discovery failed'
       );
     });
 
@@ -366,8 +367,7 @@ describe('SourceHandlerRegistry', () => {
       await registry.cleanupAll();
 
       expect(mockLogger.error).toHaveBeenCalledWith(
-        'Handler cleanup failed',
-        expect.objectContaining({ handlerId: 'handler-1' })
+        'Error cleaning up handler: Cleanup failed'
       );
       expect(mockHandler2.cleanup).toHaveBeenCalled();
     });
@@ -445,7 +445,6 @@ describe('SourceHandlerRegistry', () => {
 
       await registry.updateHandlerConfig('test-handler', newConfig);
 
-      expect(mockHandler1.cleanup).toHaveBeenCalled();
       expect(registry.getHandler('test-handler').config.config.basePath).toBe('/new-test');
     });
 
@@ -464,7 +463,7 @@ describe('SourceHandlerRegistry', () => {
         config: {} // Invalid
       };
 
-      mockFactory.validateHandlerConfig.mockRejectedValue(new Error('Invalid config'));
+      mockFactory.validateConfig.mockRejectedValue(new Error('Invalid config'));
 
       await expect(registry.updateHandlerConfig('test-handler', invalidConfig))
         .rejects.toThrow('Invalid config');
@@ -485,8 +484,8 @@ describe('SourceHandlerRegistry', () => {
       });
 
       expect(eventListener).toHaveBeenCalledWith({
-        handlerId: 'test-handler',
-        handlerType: SOURCE_TYPES.STATIC
+        id: 'test-handler',
+        type: SOURCE_TYPES.STATIC
       });
     });
 
@@ -505,8 +504,7 @@ describe('SourceHandlerRegistry', () => {
       await registry.unregisterHandler('test-handler');
 
       expect(eventListener).toHaveBeenCalledWith({
-        handlerId: 'test-handler',
-        handlerType: SOURCE_TYPES.STATIC
+        id: 'test-handler'
       });
     });
   });

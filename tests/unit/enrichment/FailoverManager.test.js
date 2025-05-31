@@ -188,7 +188,8 @@ describe('FailoverManager', () => {
     test('should emit events during execution', async () => {
       const mockResult = {
         content: 'test response',
-        cost: { total: 0.01 }
+        cost: { total: 0.01 },
+        provider: 'provider1'
       };
       
       mockProvider1.complete.mockResolvedValue(mockResult);
@@ -219,7 +220,8 @@ describe('FailoverManager', () => {
       
       const mockResult = {
         content: 'test response',
-        cost: { total: 0.01 }
+        cost: { total: 0.01 },
+        provider: 'provider1'
       };
       
       mockProvider1.complete
@@ -240,7 +242,8 @@ describe('FailoverManager', () => {
       
       const mockResult = {
         content: 'test response',
-        cost: { total: 0.01 }
+        cost: { total: 0.01 },
+        provider: 'provider2'
       };
       
       mockProvider1.complete.mockRejectedValue(nonRetryableError);

@@ -1,13 +1,14 @@
-const EventEmitter = require('events');
+const { EventEmitter } = require('events');
 const SourceHandlerFactory = require('./SourceHandlerFactory');
 
 /**
  * Registry for managing source handlers
  */
 class SourceHandlerRegistry extends EventEmitter {
-  constructor(factory = null) {
+  constructor(factory = null, logger = null) {
     super();
     this.factory = factory || new SourceHandlerFactory();
+    this.logger = logger || console;
     this.handlers = new Map();
     this.enabledHandlers = new Set();
     this.stats = {
@@ -27,7 +28,7 @@ class SourceHandlerRegistry extends EventEmitter {
     }
 
     if (this.handlers.has(config.id)) {
-      throw new Error(`Handler with id ${config.id} already registered`);
+      throw new Error(`Handler with ID ${config.id} is already registered`);
     }
 
     // Validate configuration
@@ -41,9 +42,14 @@ class SourceHandlerRegistry extends EventEmitter {
 
     // Store handler
     this.handlers.set(config.id, handler);
-    this.enabledHandlers.add(config.id);
+    
+    // Add to enabled handlers if enabled
+    if (config.enabled !== false) {
+      this.enabledHandlers.add(config.id);
+      this.stats.activeHandlers++;
+    }
+    
     this.stats.totalHandlers++;
-    this.stats.activeHandlers++;
 
     this.emit('handlerRegistered', { id: config.id, type: config.type });
     
@@ -56,7 +62,7 @@ class SourceHandlerRegistry extends EventEmitter {
   async unregisterHandler(handlerId) {
     const handler = this.handlers.get(handlerId);
     if (!handler) {
-      return false;
+      throw new Error(`Handler with ID ${handlerId} not found`);
     }
 
     // Cleanup handler
@@ -81,7 +87,7 @@ class SourceHandlerRegistry extends EventEmitter {
    * Get a handler by id
    */
   getHandler(handlerId) {
-    return this.handlers.get(handlerId);
+    return this.handlers.get(handlerId) || null;
   }
 
   /**
@@ -108,11 +114,15 @@ class SourceHandlerRegistry extends EventEmitter {
       throw new Error(`Handler ${handlerId} not found`);
     }
 
+    const handler = this.handlers.get(handlerId);
     const wasEnabled = this.enabledHandlers.has(handlerId);
+    
     this.enabledHandlers.add(handlerId);
+    handler.config.enabled = true;
     
     if (!wasEnabled) {
       this.stats.activeHandlers++;
+      this.logger.info('Handler enabled', { handlerId });
       this.emit('handlerEnabled', { id: handlerId });
     }
 
@@ -127,11 +137,15 @@ class SourceHandlerRegistry extends EventEmitter {
       throw new Error(`Handler ${handlerId} not found`);
     }
 
+    const handler = this.handlers.get(handlerId);
     const wasEnabled = this.enabledHandlers.has(handlerId);
+    
     this.enabledHandlers.delete(handlerId);
+    handler.config.enabled = false;
     
     if (wasEnabled) {
       this.stats.activeHandlers--;
+      this.logger.info('Handler disabled', { handlerId });
       this.emit('handlerDisabled', { id: handlerId });
     }
 
@@ -171,27 +185,22 @@ class SourceHandlerRegistry extends EventEmitter {
    */
   async discoverAll() {
     const enabledHandlers = this.getEnabledHandlers();
-    const results = [];
+    const allDocuments = [];
 
     for (const handler of enabledHandlers) {
       try {
         const documents = await handler.discover();
-        results.push({
-          handlerId: handler.config.id,
-          success: true,
-          documents: documents || []
-        });
-        this.stats.discoveredDocuments += (documents || []).length;
+        if (Array.isArray(documents)) {
+          allDocuments.push(...documents);
+          this.stats.discoveredDocuments += documents.length;
+        }
       } catch (error) {
-        results.push({
-          handlerId: handler.config.id,
-          success: false,
-          error: error.message
-        });
+        // Log error but continue with other handlers
+        this.logger.error(`Handler discovery failed for ${handler.config?.id}:`, error.message);
       }
     }
 
-    return results;
+    return allDocuments;
   }
 
   /**
@@ -207,7 +216,7 @@ class SourceHandlerRegistry extends EventEmitter {
         }
       } catch (error) {
         // Log error but continue cleanup
-        console.error(`Error cleaning up handler: ${error.message}`);
+        this.logger.error(`Error cleaning up handler: ${error.message}`);
       }
     }
 
@@ -224,6 +233,13 @@ class SourceHandlerRegistry extends EventEmitter {
   }
 
   /**
+   * Cleanup all handlers (alias for cleanup)
+   */
+  async cleanupAll() {
+    return this.cleanup();
+  }
+
+  /**
    * Get registry statistics
    */
   getStats() {
@@ -234,7 +250,40 @@ class SourceHandlerRegistry extends EventEmitter {
    * Get detailed statistics (alias for compatibility)
    */
   getStatistics() {
-    return this.getStats();
+    const handlersByType = {};
+    for (const handler of this.handlers.values()) {
+      const type = handler.config?.type || 'unknown';
+      handlersByType[type] = (handlersByType[type] || 0) + 1;
+    }
+
+    return {
+      totalHandlers: this.handlers.size,
+      enabledHandlers: this.enabledHandlers.size,
+      disabledHandlers: this.handlers.size - this.enabledHandlers.size,
+      handlersByType,
+      ...this.stats
+    };
+  }
+
+  /**
+   * Get handler count
+   */
+  getHandlerCount() {
+    return this.handlers.size;
+  }
+
+  /**
+   * Get enabled handler count
+   */
+  getEnabledHandlerCount() {
+    return this.enabledHandlers.size;
+  }
+
+  /**
+   * Get all handler IDs
+   */
+  getAllHandlerIds() {
+    return Array.from(this.handlers.keys());
   }
 
   /**
@@ -266,17 +315,18 @@ class SourceHandlerRegistry extends EventEmitter {
   }
 
   /**
+   * Get handlers by visibility
+   */
+  getHandlersByVisibility(visibility) {
+    return Array.from(this.handlers.values())
+      .filter(handler => handler.config.visibility === visibility);
+  }
+
+  /**
    * Check if any handlers are registered
    */
   hasHandlers() {
     return this.handlers.size > 0;
-  }
-
-  /**
-   * Get handler count
-   */
-  getHandlerCount() {
-    return this.handlers.size;
   }
 }
 
