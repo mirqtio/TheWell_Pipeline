@@ -5,34 +5,79 @@
  * provider selection logic, and health monitoring.
  */
 
-const OpenAIProvider = require('./providers/OpenAIProvider');
-const AnthropicProvider = require('./providers/AnthropicProvider');
+const { BaseProvider, OpenAIProvider, AnthropicProvider } = require('./providers');
+const FailoverManager = require('./FailoverManager');
 const logger = require('../utils/logger');
 
 class LLMProviderManager {
   constructor(config = {}) {
-    this.providers = {};
-    this.providerHealth = {};
     this.config = {
-      healthCheckInterval: 300000, // 5 minutes
-      failoverThreshold: 3, // Number of consecutive failures before failover
+      healthCheckInterval: 30000, // 30 seconds
+      maxConsecutiveFailures: 3,
+      providerTimeout: 30000, // 30 seconds
       ...config
     };
     
+    this.providers = new Map();
+    this.healthCheckInterval = null;
+    this.isShuttingDown = false;
+    
+    // Initialize enhanced failover manager
+    this.failoverManager = new FailoverManager(config.failover || {});
+    
+    // Set up event listeners for failover events
+    this.setupFailoverEventListeners();
+    
     this.initializeProviders(config);
+    
+    // Initialize failover manager with providers
+    this.failoverManager.initialize(this.providers);
+    
     this.startHealthMonitoring();
+  }
+
+  /**
+   * Set up event listeners for failover manager
+   */
+  setupFailoverEventListeners() {
+    this.failoverManager.on('execution_success', (data) => {
+      logger.debug('Provider execution succeeded', data);
+    });
+    
+    this.failoverManager.on('provider_failure', (data) => {
+      logger.warn('Provider execution failed', data);
+      // Update local health tracking when provider fails
+      this.handleProviderFailure(data.provider, new Error(data.error));
+    });
+    
+    this.failoverManager.on('all_providers_failed', (data) => {
+      logger.error('All providers failed', data);
+    });
+    
+    this.failoverManager.on('circuit_breaker_opened', (data) => {
+      logger.error('Circuit breaker opened for provider', data);
+    });
+    
+    this.failoverManager.on('provider_recovered', (data) => {
+      logger.info('Provider recovered from failure', data);
+      // Reset local health tracking when provider recovers
+      const health = this.providerHealth[data.provider];
+      if (health) {
+        health.consecutiveFailures = 0;
+        health.isAvailable = true;
+        health.lastFailure = null;
+      }
+    });
   }
 
   initializeProviders(config) {
     // Initialize OpenAI provider if configured
     if (config.openai?.apiKey) {
       try {
-        this.providers.openai = new OpenAIProvider(config.openai);
-        this.providerHealth.openai = {
-          consecutiveFailures: 0,
-          lastFailure: null,
-          isAvailable: true
-        };
+        const provider = new OpenAIProvider(config.openai);
+        this.providers.set('openai', provider);
+        // Also set as property for backward compatibility with tests
+        this.providers.openai = provider;
         logger.info('OpenAI provider initialized');
       } catch (error) {
         logger.error('Failed to initialize OpenAI provider', { error: error.message });
@@ -42,21 +87,179 @@ class LLMProviderManager {
     // Initialize Anthropic provider if configured
     if (config.anthropic?.apiKey) {
       try {
-        this.providers.anthropic = new AnthropicProvider(config.anthropic);
-        this.providerHealth.anthropic = {
-          consecutiveFailures: 0,
-          lastFailure: null,
-          isAvailable: true
-        };
+        const provider = new AnthropicProvider(config.anthropic);
+        this.providers.set('anthropic', provider);
+        // Also set as property for backward compatibility with tests
+        this.providers.anthropic = provider;
         logger.info('Anthropic provider initialized');
       } catch (error) {
         logger.error('Failed to initialize Anthropic provider', { error: error.message });
       }
     }
 
-    if (Object.keys(this.providers).length === 0) {
+    if (this.providers.size === 0) {
       throw new Error('No LLM providers configured. Please provide API keys for at least one provider.');
     }
+
+    // Initialize provider health tracking for backward compatibility
+    this.providerHealth = {};
+    for (const [name, provider] of this.providers) {
+      this.providerHealth[name] = {
+        consecutiveFailures: 0,
+        lastFailure: null,
+        isAvailable: true
+      };
+    }
+  }
+
+  /**
+   * Execute a completion request with automatic failover
+   * @param {Object} request - Completion request
+   * @returns {Promise<Object>} Completion result with metadata
+   */
+  async execute(request) {
+    return this.executeWithFailover(request);
+  }
+
+  /**
+   * Execute a completion request with automatic failover
+   * @param {Object} request - Completion request
+   * @returns {Promise<Object>} Completion result with metadata
+   */
+  async executeWithFailover(request) {
+    if (this.isShuttingDown) {
+      throw new Error('Provider manager is shutting down');
+    }
+
+    const { taskType = 'general', ...completionRequest } = request;
+    
+    logger.info('Executing completion request', {
+      taskType,
+      model: completionRequest.model,
+      hasPrompt: !!completionRequest.prompt
+    });
+
+    try {
+      const startTime = Date.now();
+      
+      // Use enhanced failover manager for execution
+      const result = await this.failoverManager.executeWithFailover(completionRequest);
+      
+      const endTime = Date.now();
+      
+      // Enhance result with expected metadata
+      const enhancedResult = {
+        ...result,
+        metadata: {
+          ...result.metadata,
+          totalDuration: endTime - startTime,
+          executionTimestamp: endTime
+        }
+      };
+      
+      logger.info('Completion request executed successfully', {
+        provider: result.provider,
+        model: result.model,
+        cost: result.cost?.total || 0,
+        duration: endTime - startTime
+      });
+      
+      return enhancedResult;
+      
+    } catch (error) {
+      logger.error('All providers failed for completion request', {
+        error: error.message,
+        taskType
+      });
+      
+      throw error;
+    }
+  }
+
+  /**
+   * Execute request with a specific provider
+   * @param {Object} provider - Provider instance
+   * @param {Object} request - Completion request
+   * @returns {Promise<Object>} Completion result with metadata
+   */
+  async executeWithProvider(provider, request) {
+    if (this.isShuttingDown) {
+      throw new Error('Provider manager is shutting down');
+    }
+
+    try {
+      const startTime = Date.now();
+      const result = await provider.complete(request);
+      const endTime = Date.now();
+      
+      // Add provider metadata
+      const enhancedResult = {
+        ...result,
+        provider: provider.getName(),
+        metadata: {
+          ...result.metadata,
+          totalDuration: endTime - startTime,
+          executionTime: endTime - startTime,
+          executionTimestamp: endTime,
+          provider: provider.getName()
+        }
+      };
+      
+      // Record success in failover manager
+      this.failoverManager.recordSuccess(
+        provider.getName(),
+        endTime - startTime,
+        result.cost?.total || 0
+      );
+      
+      return enhancedResult;
+      
+    } catch (error) {
+      // Enhance error with provider context
+      error.provider = provider.getName();
+      error.duration = Date.now();
+      error.message = `Provider error: ${error.message}`;
+      
+      // Record failure in failover manager
+      this.failoverManager.recordFailure(provider.getName(), error);
+      
+      throw error;
+    }
+  }
+
+  /**
+   * Handle provider failure and update health tracking
+   * @param {string} providerName - Name of the failed provider
+   * @param {Error} error - The error that occurred
+   */
+  handleProviderFailure(providerName, error) {
+    const health = this.providerHealth[providerName];
+    if (!health) {
+      logger.warn('Attempted to handle failure for unknown provider', { providerName });
+      return;
+    }
+    
+    health.consecutiveFailures++;
+    health.lastFailure = new Date();
+    
+    // Mark provider as unavailable if too many failures
+    if (health.consecutiveFailures >= this.config.maxConsecutiveFailures) {
+      health.isAvailable = false;
+      logger.warn('Provider marked as unavailable due to consecutive failures', {
+        provider: providerName,
+        consecutiveFailures: health.consecutiveFailures
+      });
+    }
+    
+    // Also record in failover manager
+    this.failoverManager.recordFailure(providerName, error);
+    
+    logger.debug('Provider failure recorded', {
+      provider: providerName,
+      consecutiveFailures: health.consecutiveFailures,
+      isAvailable: health.isAvailable,
+      error: error.message
+    });
   }
 
   /**
@@ -91,118 +294,18 @@ class LLMProviderManager {
   }
 
   /**
-   * Execute a completion with automatic failover
-   * @param {Object} request - Completion request
-   * @param {string} taskType - Type of task
-   * @returns {Promise<Object>} Completion result
-   */
-  async executeWithFailover(request, taskType = 'general') {
-    const excludeProviders = [];
-    let lastError;
-
-    while (excludeProviders.length < Object.keys(this.providers).length) {
-      try {
-        const provider = await this.getProvider(
-          taskType,
-          request.prompt?.length || 0,
-          excludeProviders
-        );
-
-        const result = await this.executeWithProvider(provider, request);
-        
-        // Reset failure count on success
-        this.providerHealth[provider.getName()].consecutiveFailures = 0;
-        
-        return result;
-
-      } catch (error) {
-        lastError = error;
-        
-        // Find which provider failed and update health
-        const failedProvider = this.findProviderFromError(error, excludeProviders);
-        if (failedProvider) {
-          this.handleProviderFailure(failedProvider, error);
-          excludeProviders.push(failedProvider);
-        }
-
-        logger.warn('Provider execution failed, attempting failover', {
-          error: error.message,
-          failedProvider,
-          excludeProviders,
-          taskType
-        });
-      }
-    }
-
-    // All providers failed
-    logger.error('All providers failed for task execution', {
-      error: lastError?.message,
-      taskType,
-      totalProviders: Object.keys(this.providers).length
-    });
-
-    throw new Error(`All providers failed. Last error: ${lastError?.message}`);
-  }
-
-  /**
-   * Execute completion with a specific provider
-   * @param {Object} provider - Provider instance
-   * @param {Object} request - Completion request
-   * @returns {Promise<Object>} Completion result with metadata
-   */
-  async executeWithProvider(provider, request) {
-    const startTime = Date.now();
-    
-    try {
-      const result = await provider.complete(request);
-      const totalDuration = Date.now() - startTime;
-      
-      // Add execution metadata
-      result.metadata = {
-        ...result.metadata,
-        totalDuration,
-        executionTimestamp: new Date().toISOString()
-      };
-
-      logger.info('Provider execution successful', {
-        provider: provider.getName(),
-        model: result.model,
-        totalDuration,
-        cost: result.cost.total
-      });
-
-      return result;
-
-    } catch (error) {
-      const totalDuration = Date.now() - startTime;
-      
-      logger.error('Provider execution failed', {
-        provider: provider.getName(),
-        error: error.message,
-        totalDuration
-      });
-
-      // Enhance error with provider context
-      error.provider = provider.getName();
-      error.duration = totalDuration;
-      throw error;
-    }
-  }
-
-  /**
    * Get list of available (healthy) providers
    * @param {Array<string>} excludeProviders - Providers to exclude
    * @returns {Array<Object>} Available provider instances
    */
   getAvailableProviders(excludeProviders = []) {
-    return Object.entries(this.providers)
-      .filter(([name, provider]) => {
-        if (excludeProviders.includes(name)) return false;
+    return Array.from(this.providers.values())
+      .filter(provider => {
+        if (excludeProviders.includes(provider.getName())) return false;
         
-        const health = this.providerHealth[name];
+        const health = this.providerHealth[provider.getName()];
         return health?.isAvailable && provider.isHealthy;
-      })
-      .map(([name, provider]) => provider);
+      });
   }
 
   /**
@@ -252,50 +355,15 @@ class LLMProviderManager {
   }
 
   /**
-   * Handle provider failure and update health status
-   * @param {string} providerName - Name of failed provider
-   * @param {Error} error - Error that occurred
-   */
-  handleProviderFailure(providerName, error) {
-    const health = this.providerHealth[providerName];
-    if (!health) return;
-
-    health.consecutiveFailures++;
-    health.lastFailure = new Date();
-
-    // Mark provider as unavailable if it exceeds failure threshold
-    if (health.consecutiveFailures >= this.config.failoverThreshold) {
-      health.isAvailable = false;
-      logger.warn('Provider marked as unavailable due to consecutive failures', {
-        provider: providerName,
-        consecutiveFailures: health.consecutiveFailures,
-        threshold: this.config.failoverThreshold
-      });
-    }
-  }
-
-  /**
-   * Find which provider failed based on error context
-   * @param {Error} error - Error object
-   * @param {Array<string>} excludeProviders - Already excluded providers
-   * @returns {string|null} Provider name
-   */
-  findProviderFromError(error, excludeProviders) {
-    if (error.provider) {
-      return error.provider;
-    }
-
-    // Try to infer from available providers
-    const availableProviders = Object.keys(this.providers)
-      .filter(name => !excludeProviders.includes(name));
-    
-    return availableProviders[0] || null;
-  }
-
-  /**
    * Start periodic health monitoring
    */
   startHealthMonitoring() {
+    // Skip health monitoring if interval is 0 (for testing)
+    if (this.config.healthCheckInterval === 0) {
+      logger.info('Health monitoring disabled (interval = 0)');
+      return;
+    }
+    
     this.healthCheckInterval = setInterval(async () => {
       await this.performHealthChecks();
     }, this.config.healthCheckInterval);
@@ -309,7 +377,7 @@ class LLMProviderManager {
    * Perform health checks on all providers
    */
   async performHealthChecks() {
-    const healthPromises = Object.entries(this.providers).map(async ([name, provider]) => {
+    const healthPromises = Array.from(this.providers.entries()).map(async ([name, provider]) => {
       try {
         const health = await provider.healthCheck();
         
@@ -334,40 +402,68 @@ class LLMProviderManager {
   }
 
   /**
-   * Get overall system health and statistics
+   * Get system health and statistics
    * @returns {Object} Health and stats summary
    */
   getSystemHealth() {
-    const providerStats = Object.entries(this.providers).map(([name, provider]) => ({
+    const providerStats = Array.from(this.providers.entries()).map(([name, provider]) => ({
       name,
       ...provider.getStats(),
       health: this.providerHealth[name]
     }));
-
+    
     const totalRequests = providerStats.reduce((sum, p) => sum + p.requestCount, 0);
     const totalErrors = providerStats.reduce((sum, p) => sum + p.errorCount, 0);
     const availableProviders = providerStats.filter(p => p.health.isAvailable).length;
 
+    // Get enhanced failover statistics
+    const failoverStats = this.failoverManager.getFailoverStats();
+
     return {
-      totalProviders: Object.keys(this.providers).length,
+      totalProviders: this.providers.size,
       availableProviders,
       totalRequests,
       totalErrors,
       errorRate: totalRequests > 0 ? (totalErrors / totalRequests) : 0,
-      providers: providerStats
+      providers: providerStats,
+      failover: failoverStats
     };
   }
 
   /**
-   * Shutdown the provider manager
+   * Gracefully shutdown the provider manager
    */
-  shutdown() {
+  async shutdown() {
+    this.isShuttingDown = true;
+    
+    logger.info('Shutting down LLM Provider Manager');
+    
+    // Stop health monitoring
     if (this.healthCheckInterval) {
       clearInterval(this.healthCheckInterval);
       this.healthCheckInterval = null;
     }
-
-    logger.info('LLM Provider Manager shutdown completed');
+    
+    // Shutdown failover manager
+    await this.failoverManager.shutdown();
+    
+    // Shutdown all providers
+    const shutdownPromises = Array.from(this.providers.values()).map(async (provider) => {
+      try {
+        if (typeof provider.shutdown === 'function') {
+          await provider.shutdown();
+        }
+      } catch (error) {
+        logger.error('Error shutting down provider', {
+          provider: provider.getName(),
+          error: error.message
+        });
+      }
+    });
+    
+    await Promise.all(shutdownPromises);
+    
+    logger.info('LLM Provider Manager shutdown complete');
   }
 }
 
