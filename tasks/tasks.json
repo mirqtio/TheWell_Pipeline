@@ -4,7 +4,7 @@
       "id": 1,
       "title": "Multi-Source Ingestion Engine Setup",
       "description": "Implement the core ingestion system supporting four source types with configurable processing strategies and manual curation gates.",
-      "status": "in-progress",
+      "status": "completed",
       "dependencies": [],
       "priority": "high",
       "details": "Create a Node.js-based ingestion service with the following components:\n\n1. Source type handlers for:\n   - Static sources (one-time bulk loads)\n   - Semi-static platform policies (weekly polling)\n   - Dynamic consistent sources (daily batch processing)\n   - Dynamic unstructured sources (weekly discovery runs)\n\n2. Bull/Redis job queue implementation:\n   ```javascript\n   // Example queue setup\n   const Queue = require('bull');\n   const staticSourceQueue = new Queue('static-source-processing');\n   const semiStaticQueue = new Queue('semi-static-processing');\n   const dynamicQueue = new Queue('dynamic-processing');\n   const discoveryQueue = new Queue('discovery-processing');\n   \n   // Process queue items\n   staticSourceQueue.process(async (job) => {\n     const { sourceConfig, files } = job.data;\n     return await processStaticSource(sourceConfig, files);\n   });\n   ```\n\n3. Hot-reloadable configuration system using file watchers:\n   ```javascript\n   const chokidar = require('chokidar');\n   const configWatcher = chokidar.watch('./config/sources/', {\n     persistent: true,\n     ignoreInitial: false\n   });\n   \n   configWatcher.on('change', async (path) => {\n     try {\n       const newConfig = await validateAndLoadConfig(path);\n       await applyConfigChanges(newConfig);\n     } catch (error) {\n       logger.error(`Config update failed: ${error.message}`);\n     }\n   });\n   ```\n\n4. Manual review interface for discovered sources with approval workflow\n\n5. Document visibility flag management (internal/external) with appropriate database schema support",
@@ -66,7 +66,7 @@
             5
           ],
           "details": "Schema changes should support new metadata, job tracking, and visibility controls. Integration tests must cover end-to-end flows, error cases, and recovery mechanisms. Testing requirements: 1) Write unit tests for schema migrations and data access, 2) Create integration tests for database operations, 3) Implement e2e tests for complete data flows, 4) Run all tests and resolve any issues, 5) Merge to master and verify CI passes via GitHub logs.",
-          "status": "in-progress"
+          "status": "completed"
         }
       ]
     },
