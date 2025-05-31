@@ -1,0 +1,17 @@
+{
+  "id": "entity-extraction",
+  "version": "1.0.0",
+  "content": "Extract and categorize entities from the following document. Identify people, organizations, locations, dates, and other relevant entities.\n\nDocument: {{title}}\nContent:\n{{content}}\n\nPlease extract entities in the following format:\n\n**People:**\n- [List names of people mentioned]\n\n**Organizations:**\n- [List organizations, companies, institutions]\n\n**Locations:**\n- [List places, cities, countries, addresses]\n\n**Dates/Times:**\n- [List specific dates, time periods, events]\n\n**Other Entities:**\n- [List other relevant entities like products, technologies, concepts]\n\nFor each entity, provide brief context about how it relates to the document's main content.",
+  "metadata": {
+    "author": "System",
+    "createdAt": "2024-01-01T00:00:00.000Z",
+    "updatedAt": "2024-01-01T00:00:00.000Z",
+    "tags": ["entity-extraction", "nlp", "information-extraction"],
+    "description": "Prompt for extracting and categorizing named entities from documents"
+  },
+  "schema": {
+    "version": "1.0.0",
+    "type": "prompt",
+    "variables": ["title", "content"]
+  }
+}

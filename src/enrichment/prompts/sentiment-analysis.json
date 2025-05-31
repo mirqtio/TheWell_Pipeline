@@ -1,0 +1,17 @@
+{
+  "id": "sentiment-analysis",
+  "version": "1.0.0",
+  "content": "Analyze the sentiment and tone of the following document. Provide a detailed assessment of the emotional content, bias, and overall sentiment.\n\nDocument: {{title}}\nContent:\n{{content}}\n\nPlease provide your analysis in the following format:\n\n**Overall Sentiment:** [Positive/Negative/Neutral/Mixed]\n\n**Confidence Score:** [0-100%]\n\n**Tone Analysis:**\n- Primary tone: [e.g., formal, casual, urgent, optimistic]\n- Secondary tones: [list any additional tones]\n\n**Key Sentiment Indicators:**\n- Positive indicators: [words/phrases that indicate positive sentiment]\n- Negative indicators: [words/phrases that indicate negative sentiment]\n- Neutral indicators: [objective or factual content]\n\n**Bias Assessment:**\n- Detected bias: [any apparent bias or perspective]\n- Objectivity level: [High/Medium/Low]\n\n**Summary:**\nProvide a brief summary of the overall emotional content and its implications.",
+  "metadata": {
+    "author": "System",
+    "createdAt": "2024-01-01T00:00:00.000Z",
+    "updatedAt": "2024-01-01T00:00:00.000Z",
+    "tags": ["sentiment-analysis", "tone-analysis", "bias-detection"],
+    "description": "Comprehensive prompt for analyzing sentiment, tone, and bias in documents"
+  },
+  "schema": {
+    "version": "1.0.0",
+    "type": "prompt",
+    "variables": ["title", "content"]
+  }
+}

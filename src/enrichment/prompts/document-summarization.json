@@ -1,0 +1,17 @@
+{
+  "id": "document-summarization",
+  "version": "1.0.0",
+  "content": "Please provide a comprehensive summary of the following document. Focus on the key points, main arguments, and important details. Keep the summary concise but informative.\n\nDocument Title: {{title}}\nDocument Type: {{documentType}}\nSource: {{source}}\n\nDocument Content:\n{{content}}\n\nPlease structure your summary with:\n1. Main Topic/Theme\n2. Key Points (3-5 bullet points)\n3. Important Details\n4. Conclusion/Implications",
+  "metadata": {
+    "author": "System",
+    "createdAt": "2024-01-01T00:00:00.000Z",
+    "updatedAt": "2024-01-01T00:00:00.000Z",
+    "tags": ["summarization", "document-analysis", "content-extraction"],
+    "description": "Standard prompt for generating comprehensive document summaries"
+  },
+  "schema": {
+    "version": "1.0.0",
+    "type": "prompt",
+    "variables": ["title", "documentType", "source", "content"]
+  }
+}

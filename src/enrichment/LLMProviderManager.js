@@ -7,6 +7,7 @@
 
 const { BaseProvider, OpenAIProvider, AnthropicProvider } = require('./providers');
 const FailoverManager = require('./FailoverManager');
+const PromptVersionManager = require('./PromptVersionManager');
 const logger = require('../utils/logger');
 
 class LLMProviderManager {
@@ -21,6 +22,9 @@ class LLMProviderManager {
     this.providers = new Map();
     this.healthCheckInterval = null;
     this.isShuttingDown = false;
+    
+    // Initialize prompt version manager
+    this.promptVersionManager = new PromptVersionManager(config.prompts || {});
     
     // Initialize enhanced failover manager
     this.failoverManager = new FailoverManager(config.failover || {});
@@ -431,6 +435,183 @@ class LLMProviderManager {
   }
 
   /**
+   * Initialize prompt version manager
+   */
+  async initializePromptVersioning() {
+    try {
+      await this.promptVersionManager.initialize();
+      logger.info('Prompt versioning system initialized');
+    } catch (error) {
+      logger.error('Failed to initialize prompt versioning', { error: error.message });
+      throw error;
+    }
+  }
+
+  /**
+   * Execute enrichment with versioned prompt
+   * @param {string} promptId - ID of the prompt to use
+   * @param {Object} variables - Variables to substitute in the prompt
+   * @param {Object} options - Execution options
+   * @returns {Promise<Object>} Enrichment result with prompt metadata
+   */
+  async executeWithPrompt(promptId, variables = {}, options = {}) {
+    try {
+      const {
+        promptVersion = 'latest',
+        provider = null,
+        taskType = 'enrichment',
+        ...executeOptions
+      } = options;
+
+      // Get the versioned prompt
+      const prompt = await this.promptVersionManager.getPrompt(promptId, promptVersion);
+      if (!prompt) {
+        throw new Error(`Prompt not found: ${promptId} (version: ${promptVersion})`);
+      }
+
+      // Substitute variables in prompt content
+      const processedContent = this.substitutePromptVariables(prompt.content, variables);
+
+      // Execute with failover
+      const result = await this.executeWithFailover(taskType, {
+        prompt: processedContent,
+        ...executeOptions
+      }, provider);
+
+      // Add prompt metadata to result
+      return {
+        ...result,
+        promptMetadata: {
+          promptId,
+          promptVersion: prompt.version,
+          variables,
+          promptHash: this.generatePromptHash(prompt),
+          executionTimestamp: new Date().toISOString()
+        }
+      };
+    } catch (error) {
+      logger.error('Failed to execute with prompt', {
+        promptId,
+        promptVersion: options.promptVersion,
+        error: error.message
+      });
+      throw error;
+    }
+  }
+
+  /**
+   * Substitute variables in prompt content
+   * @param {string} content - Prompt content with variables
+   * @param {Object} variables - Variables to substitute
+   * @returns {string} Processed content
+   */
+  substitutePromptVariables(content, variables) {
+    let processedContent = content;
+    
+    for (const [key, value] of Object.entries(variables)) {
+      const regex = new RegExp(`\\{\\{${key}\\}\\}`, 'g');
+      processedContent = processedContent.replace(regex, String(value));
+    }
+
+    // Check for unsubstituted variables
+    const unsubstituted = processedContent.match(/\{\{\w+\}\}/g);
+    if (unsubstituted) {
+      logger.warn('Unsubstituted variables found in prompt', { 
+        variables: unsubstituted,
+        promptContent: processedContent.substring(0, 100) + '...'
+      });
+    }
+
+    return processedContent;
+  }
+
+  /**
+   * Generate hash for prompt reproducibility
+   * @param {Object} prompt - Prompt object
+   * @returns {string} Hash string
+   */
+  generatePromptHash(prompt) {
+    const crypto = require('crypto');
+    const hashData = {
+      id: prompt.id,
+      version: prompt.version,
+      content: prompt.content
+    };
+    return crypto.createHash('sha256').update(JSON.stringify(hashData)).digest('hex');
+  }
+
+  /**
+   * Save or update a prompt
+   * @param {string} promptId - Prompt identifier
+   * @param {Object} promptData - Prompt content and metadata
+   * @param {Object} options - Save options
+   * @returns {Promise<Object>} Saved prompt
+   */
+  async savePrompt(promptId, promptData, options = {}) {
+    try {
+      return await this.promptVersionManager.savePrompt(promptId, promptData, options);
+    } catch (error) {
+      logger.error('Failed to save prompt', { promptId, error: error.message });
+      throw error;
+    }
+  }
+
+  /**
+   * Get a prompt by ID and version
+   * @param {string} promptId - Prompt identifier
+   * @param {string} version - Prompt version (default: 'latest')
+   * @returns {Promise<Object|null>} Prompt object or null
+   */
+  async getPrompt(promptId, version = 'latest') {
+    try {
+      return await this.promptVersionManager.getPrompt(promptId, version);
+    } catch (error) {
+      logger.error('Failed to get prompt', { promptId, version, error: error.message });
+      throw error;
+    }
+  }
+
+  /**
+   * List all available prompts
+   * @returns {Array<string>} Array of prompt IDs
+   */
+  listPrompts() {
+    return this.promptVersionManager.listPrompts();
+  }
+
+  /**
+   * Get version history for a prompt
+   * @param {string} promptId - Prompt identifier
+   * @returns {Array<Object>} Version history
+   */
+  getPromptVersionHistory(promptId) {
+    return this.promptVersionManager.getVersionHistory(promptId);
+  }
+
+  /**
+   * Rollback prompt to a previous version
+   * @param {string} promptId - Prompt identifier
+   * @param {string} targetVersion - Target version to rollback to
+   * @returns {Promise<Object>} Rollback result
+   */
+  async rollbackPrompt(promptId, targetVersion) {
+    try {
+      return await this.promptVersionManager.rollbackPrompt(promptId, targetVersion);
+    } catch (error) {
+      logger.error('Failed to rollback prompt', { promptId, targetVersion, error: error.message });
+      throw error;
+    }
+  }
+
+  /**
+   * Get prompt versioning statistics
+   * @returns {Object} Statistics
+   */
+  getPromptStatistics() {
+    return this.promptVersionManager.getStatistics();
+  }
+
+  /**
    * Gracefully shutdown the provider manager
    */
   async shutdown() {
@@ -446,6 +627,9 @@ class LLMProviderManager {
     
     // Shutdown failover manager
     await this.failoverManager.shutdown();
+    
+    // Shutdown prompt version manager
+    await this.promptVersionManager.shutdown();
     
     // Shutdown all providers
     const shutdownPromises = Array.from(this.providers.values()).map(async (provider) => {
