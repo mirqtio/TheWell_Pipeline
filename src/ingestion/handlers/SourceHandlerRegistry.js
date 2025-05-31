@@ -1,5 +1,5 @@
-const SourceHandlerFactory = require('./SourceHandlerFactory');
 const EventEmitter = require('events');
+const SourceHandlerFactory = require('./SourceHandlerFactory');
 
 /**
  * Registry for managing source handlers

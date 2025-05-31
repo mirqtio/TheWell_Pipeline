@@ -16,7 +16,7 @@
           "description": "Develop and integrate source handler modules for each supported data source type, ensuring each can extract, transform, and forward data according to its unique requirements.",
           "dependencies": [],
           "details": "Each source handler must encapsulate logic specific to its data source, handle authentication, data extraction, and error scenarios, and provide a consistent interface for the ingestion engine. Testing requirements: 1) Write unit tests for each handler with mock data sources, 2) Create integration tests for handler interactions, 3) Implement e2e tests for complete data flow, 4) Run all tests and resolve any issues, 5) Merge to master and verify CI passes via GitHub logs.",
-          "status": "in-progress"
+          "status": "completed"
         },
         {
           "id": 2,
@@ -26,7 +26,7 @@
             1
           ],
           "details": "The queue should support scaling, error handling, and integration with the source handlers. It must also provide visibility into job status and allow for manual intervention if needed. Testing requirements: 1) Write unit tests for queue operations and handlers, 2) Create integration tests with Redis for queue persistence, 3) Implement e2e tests for job lifecycle, 4) Run all tests and resolve any issues, 5) Merge to master and verify CI passes via GitHub logs.",
-          "status": "pending"
+          "status": "in-progress"
         },
         {
           "id": 3,
@@ -217,7 +217,7 @@
           "dependencies": [
             1
           ],
-          "details": "Select appropriate caching technologies (e.g., Redis, Memcached). Identify cacheable queries and data, and implement cache invalidation policies. Testing requirements: 1) Write unit tests for cache operations and invalidation, 2) Create integration tests for cache hit/miss scenarios, 3) Implement e2e tests for complete caching workflows, 4) Run all tests and resolve any issues, 5) Merge to master and verify CI passes via GitHub logs.",
+          "details": "Select appropriate caching technologies (e.g., Redis, Memcached). Identify cacheable queries and data, and implement cache invalidation policies. Add cache warming for common queries and implement TTL (Time-To-Live) configurations for different data types. Testing requirements: 1) Write unit tests for caching logic and invalidation, 2) Create integration tests for cache hit/miss scenarios, 3) Implement e2e tests for complete caching workflows, 4) Run all tests and resolve any issues, 5) Merge to master and verify CI passes via GitHub logs.",
           "status": "pending"
         },
         {
