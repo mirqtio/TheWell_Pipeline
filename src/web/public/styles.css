@@ -1,0 +1,718 @@
+/* TheWell Pipeline Manual Review Interface Styles */
+
+:root {
+  /* Primary Palette - Our emotional foundation */
+  --color-primary-100: #E3F2FD;  /* Lightest blue for subtle backgrounds */
+  --color-primary-300: #90CAF9;  /* Interactive hover states */
+  --color-primary-500: #4A90E2;  /* Primary actions and focus states */
+  --color-primary-700: #1976D2;  /* Active/pressed states */
+  --color-primary-900: #0D47A1;  /* High emphasis text */
+
+  /* Semantic Colors - Meaning through color */
+  --color-success-light: #E8F5E9;
+  --color-success-main: #7ED321;
+  --color-warning-light: #FFF3E0;
+  --color-warning-main: #FF9800;
+  --color-error-light: #FFEBEE;
+  --color-error-main: #F44336;
+
+  /* Neutral Spectrum - The calming foundation */
+  --color-neutral-50: #FAFAFA;   /* Page backgrounds */
+  --color-neutral-100: #F5F5F5;  /* Card backgrounds */
+  --color-neutral-300: #E0E0E0;  /* Borders and dividers */
+  --color-neutral-600: #757575;  /* Secondary text */
+  --color-neutral-900: #212121;  /* Primary text */
+
+  /* Dark Mode Foundation */
+  --color-background-dark: #0A0A0A;        /* Near black, not pure black */
+  --color-surface-dark: #1A1A1A;           /* Card backgrounds */
+  --color-surface-raised-dark: #2A2A2A;    /* Elevated elements */
+
+  /* Dark Mode Primary Palette */
+  --color-primary-100-dark: #0D47A1;       /* Darkest, for backgrounds */
+  --color-primary-300-dark: #1565C0;       /* Subtle interactive states */
+  --color-primary-500-dark: #42A5F5;       /* Primary actions - higher saturation */
+  --color-primary-700-dark: #64B5F6;       /* Hover states */
+  --color-primary-900-dark: #BBDEFB;       /* Lightest, for text on dark */
+
+  /* Dark Mode Text Hierarchy */
+  --color-text-primary-dark: rgba(255, 255, 255, 0.87);
+  --color-text-secondary-dark: rgba(255, 255, 255, 0.60);
+  --color-text-disabled-dark: rgba(255, 255, 255, 0.38);
+
+  /* Spacing System - 8-point grid */
+  --spacing-xs: 4px;   /* Tight groupings */
+  --spacing-sm: 8px;   /* Related elements */
+  --spacing-md: 16px;  /* Standard gaps */
+  --spacing-lg: 24px;  /* Section breaks */
+  --spacing-xl: 32px;  /* Major divisions */
+  --spacing-xxl: 48px; /* Page sections */
+
+  /* Elevation creates depth hierarchy */
+  --elevation-0: none;
+  --elevation-1: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.06);
+  --elevation-2: 0 3px 6px rgba(0,0,0,0.12), 0 2px 4px rgba(0,0,0,0.08);
+  --elevation-3: 0 10px 20px rgba(0,0,0,0.12), 0 3px 6px rgba(0,0,0,0.08);
+  --elevation-4: 0 15px 25px rgba(0,0,0,0.12), 0 5px 10px rgba(0,0,0,0.08);
+
+  /* Animation System */
+  --animation-fade-in: fadeIn 200ms ease-out;
+  --animation-fade-out: fadeIn 150ms ease-in reverse;
+  --animation-slide-up: slideUp 250ms cubic-bezier(0.4, 0, 0.2, 1);
+  --animation-slide-down: slideUp 200ms cubic-bezier(0.4, 0, 0.2, 1) reverse;
+  --animation-scale-in: scaleGrow 200ms cubic-bezier(0.34, 1.56, 0.64, 1);
+  --animation-scale-out: scaleGrow 150ms ease-in reverse;
+  --animation-pulse: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  --animation-number-increment: rollNumber 400ms cubic-bezier(0.4, 0, 0.2, 1);
+
+  /* Animation Timings */
+  --timing-instant: 0ms;
+  --timing-fast: 150ms;     /* hover states, small transitions */
+  --timing-normal: 250ms;   /* most animations */
+  --timing-slow: 400ms;     /* page transitions, complex animations */
+  --timing-extra-slow: 600ms; /* dramatic reveals, onboarding */
+
+  /* Component Specifications */
+  --button-height-desktop: 40px;
+  --button-height-mobile: 48px;
+  --button-padding-horizontal: 16px;
+  --button-border-radius: 4px;
+  --button-transition: all 150ms ease-out;
+
+  --card-padding: 24px;
+  --card-border-radius: 8px;
+  --card-transition: all 200ms ease-out;
+
+  --form-field-height: 48px;
+  --form-field-padding-vertical: 12px;
+  --form-field-padding-horizontal: 16px;
+  --form-field-border-width: 1px;
+  --form-field-border-width-focus: 2px;
+  --form-field-transition: all 200ms ease-out;
+
+  /* Legacy Bootstrap compatibility */
+  --primary-color: var(--color-primary-500);
+  --success-color: var(--color-success-main);
+  --warning-color: var(--color-warning-main);
+  --danger-color: var(--color-error-main);
+  --info-color: var(--color-primary-300);
+  --light-color: var(--color-neutral-50);
+  --dark-color: var(--color-neutral-900);
+  --border-radius: var(--card-border-radius);
+  --box-shadow: var(--elevation-1);
+  --transition: var(--button-transition);
+}
+
+/* Dark mode media query */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --color-primary-100: var(--color-primary-100-dark);
+    --color-primary-300: var(--color-primary-300-dark);
+    --color-primary-500: var(--color-primary-500-dark);
+    --color-primary-700: var(--color-primary-700-dark);
+    --color-primary-900: var(--color-primary-900-dark);
+    
+    --color-neutral-50: var(--color-background-dark);
+    --color-neutral-100: var(--color-surface-dark);
+    --color-neutral-300: var(--color-surface-raised-dark);
+    --color-neutral-600: var(--color-text-secondary-dark);
+    --color-neutral-900: var(--color-text-primary-dark);
+  }
+}
+
+/* Animation Keyframes */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideUp {
+  from { transform: translateY(20px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+@keyframes scaleGrow {
+  from { transform: scale(0.9); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.7; }
+}
+
+@keyframes rollNumber {
+  from { transform: translateY(-20px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+/* Global Styles */
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  background-color: var(--color-neutral-50);
+  color: var(--color-neutral-900);
+  line-height: 1.6;
+  margin: 0;
+  padding: 0;
+}
+
+/* Navigation - Updated to match PRD specifications */
+.navbar {
+  background: linear-gradient(135deg, var(--color-primary-500) 0%, var(--color-primary-700) 100%) !important;
+  backdrop-filter: blur(20px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: var(--elevation-2);
+}
+
+.navbar-brand {
+  font-weight: 600;
+  font-size: 1.25rem;
+  color: white !important;
+  transition: var(--button-transition);
+}
+
+.navbar-brand:hover {
+  transform: scale(1.02);
+  color: var(--color-primary-100) !important;
+}
+
+.navbar-nav .nav-link {
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.9) !important;
+  transition: var(--button-transition);
+  border-radius: var(--button-border-radius);
+  margin: 0 var(--spacing-xs);
+  padding: var(--spacing-sm) var(--spacing-md) !important;
+}
+
+.navbar-nav .nav-link:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+  color: white !important;
+  transform: translateY(-1px);
+}
+
+.navbar-nav .nav-link.active {
+  background-color: rgba(255, 255, 255, 0.2);
+  color: white !important;
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+/* Status Indicators */
+.status-indicator {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+  padding: var(--spacing-xs) var(--spacing-sm);
+  border-radius: var(--button-border-radius);
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+.status-online {
+  color: var(--color-success-main);
+  animation: var(--animation-pulse);
+}
+
+.status-offline {
+  color: var(--color-error-main);
+}
+
+.status-warning {
+  color: var(--color-warning-main);
+  animation: var(--animation-pulse);
+}
+
+/* Button Components - PRD Specifications */
+.btn {
+  height: var(--button-height-desktop);
+  padding: 0 var(--button-padding-horizontal);
+  border-radius: var(--button-border-radius);
+  font-weight: 500;
+  font-size: 0.875rem;
+  border: none;
+  cursor: pointer;
+  transition: var(--button-transition);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-xs);
+  text-decoration: none;
+  outline: none;
+}
+
+.btn:hover {
+  transform: translateY(-1px);
+  box-shadow: var(--elevation-2);
+}
+
+.btn:active {
+  transform: scale(0.98);
+}
+
+.btn-primary {
+  background-color: var(--color-primary-500);
+  color: white;
+}
+
+.btn-primary:hover {
+  background-color: var(--color-primary-700);
+  color: white;
+}
+
+.btn-success {
+  background-color: var(--color-success-main);
+  color: white;
+}
+
+.btn-success:hover {
+  background-color: #6BC91A;
+  color: white;
+}
+
+.btn-danger {
+  background-color: var(--color-error-main);
+  color: white;
+}
+
+.btn-danger:hover {
+  background-color: #E53E3E;
+  color: white;
+}
+
+.btn-outline-primary {
+  background-color: transparent;
+  color: var(--color-primary-500);
+  border: 1px solid var(--color-primary-500);
+}
+
+.btn-outline-primary:hover {
+  background-color: var(--color-primary-500);
+  color: white;
+}
+
+/* Mobile button adjustments */
+@media (max-width: 640px) {
+  .btn {
+    height: var(--button-height-mobile);
+    min-width: 44px;
+    min-height: 44px;
+  }
+}
+
+/* Card Components - PRD Specifications */
+.card, .document-card {
+  border: 1px solid var(--color-neutral-300);
+  border-radius: var(--card-border-radius);
+  background: var(--color-neutral-100);
+  box-shadow: var(--elevation-1);
+  transition: var(--card-transition);
+  margin-bottom: var(--spacing-md);
+  overflow: hidden;
+}
+
+.card:hover, .document-card:hover {
+  box-shadow: var(--elevation-2);
+  transform: translateY(-2px);
+}
+
+.card-header, .document-card .card-header {
+  background-color: var(--color-neutral-50);
+  border-bottom: 1px solid var(--color-neutral-300);
+  padding: var(--spacing-md) var(--card-padding);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.card-body, .document-card .card-body {
+  padding: var(--card-padding);
+}
+
+.document-title {
+  font-weight: 600;
+  color: var(--color-neutral-900);
+  margin-bottom: var(--spacing-sm);
+  font-size: 1.1rem;
+  line-height: 1.4;
+}
+
+.document-preview {
+  color: var(--color-neutral-600);
+  font-size: 0.9rem;
+  line-height: 1.5;
+  margin-bottom: var(--spacing-md);
+}
+
+/* Form Components - PRD Specifications */
+.form-control {
+  height: var(--form-field-height);
+  padding: var(--form-field-padding-vertical) var(--form-field-padding-horizontal);
+  border: var(--form-field-border-width) solid var(--color-neutral-300);
+  border-radius: var(--button-border-radius);
+  background-color: var(--color-neutral-100);
+  color: var(--color-neutral-900);
+  font-size: 0.875rem;
+  transition: var(--form-field-transition);
+}
+
+.form-control:focus {
+  border-width: var(--form-field-border-width-focus);
+  border-color: var(--color-primary-500);
+  box-shadow: 0 0 0 3px rgba(74, 144, 226, 0.1);
+  outline: none;
+}
+
+.form-label {
+  font-weight: 500;
+  color: var(--color-neutral-900);
+  margin-bottom: var(--spacing-xs);
+  font-size: 0.875rem;
+}
+
+/* Loading States - Skeleton Loading */
+.skeleton {
+  background: linear-gradient(90deg, var(--color-neutral-300) 25%, var(--color-neutral-100) 50%, var(--color-neutral-300) 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+}
+
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+.skeleton-text {
+  height: 1em;
+  border-radius: 2px;
+  margin-bottom: var(--spacing-xs);
+}
+
+.skeleton-text:nth-child(1) { width: 100%; }
+.skeleton-text:nth-child(2) { width: 100%; }
+.skeleton-text:nth-child(3) { width: 60%; }
+
+/* Error States */
+.error-state {
+  padding: var(--spacing-lg);
+  text-align: center;
+  color: var(--color-neutral-600);
+}
+
+.error-state .error-icon {
+  font-size: 3rem;
+  color: var(--color-error-main);
+  margin-bottom: var(--spacing-md);
+}
+
+.error-state .error-message {
+  font-size: 1.1rem;
+  font-weight: 500;
+  margin-bottom: var(--spacing-sm);
+}
+
+.error-state .error-description {
+  font-size: 0.9rem;
+  margin-bottom: var(--spacing-lg);
+}
+
+/* Responsive Design */
+@media (max-width: 640px) {
+  .card-body, .document-card .card-body {
+    padding: var(--spacing-md);
+  }
+  
+  .navbar-nav .nav-link {
+    margin: var(--spacing-xs) 0;
+  }
+}
+
+@media (max-width: 768px) {
+  .container-fluid {
+    padding: 0 var(--spacing-md);
+  }
+}
+
+/* Accessibility Improvements */
+.btn:focus-visible,
+.form-control:focus-visible,
+.nav-link:focus-visible {
+  outline: 2px solid var(--color-primary-500);
+  outline-offset: 2px;
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+  .card, .document-card {
+    border-width: 2px;
+  }
+  
+  .btn {
+    border: 2px solid currentColor;
+  }
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+  
+  .interactive-card:hover {
+    transform: none;
+  }
+  
+  .action-btn:hover {
+    transform: none;
+  }
+}
+
+/* Animation and interaction enhancements */
+.spinning {
+  animation: spin var(--animation-duration-medium) linear infinite;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+/* Skeleton loading */
+.skeleton-loading {
+  pointer-events: none;
+  opacity: 0.7;
+}
+
+.skeleton-line {
+  height: 1rem;
+  background: linear-gradient(90deg, var(--color-neutral-200) 25%, var(--color-neutral-100) 50%, var(--color-neutral-200) 75%);
+  background-size: 200% 100%;
+  animation: skeleton-loading 1.5s infinite;
+  border-radius: var(--border-radius-sm);
+  margin-bottom: var(--spacing-xs);
+}
+
+@keyframes skeleton-loading {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+/* Interactive cards */
+.interactive-card {
+  cursor: pointer;
+  transition: all var(--animation-duration-fast) var(--animation-easing-standard);
+}
+
+.interactive-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--elevation-medium);
+}
+
+.interactive-card:active {
+  transform: translateY(0);
+  transition-duration: var(--animation-duration-fast);
+}
+
+.action-btn {
+  transition: all var(--animation-duration-fast) var(--animation-easing-standard);
+}
+
+.action-btn:hover {
+  transform: scale(1.05);
+}
+
+/* Pull to refresh */
+.pull-to-refresh-indicator {
+  position: fixed;
+  top: var(--spacing-lg);
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--border-radius-lg);
+  padding: var(--spacing-sm) var(--spacing-md);
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+  z-index: 1050;
+  box-shadow: var(--elevation-medium);
+  transition: all var(--animation-duration-medium) var(--animation-easing-standard);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+.pull-to-refresh-indicator i {
+  color: var(--color-primary);
+}
+
+.pull-to-refresh-indicator span {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+  font-weight: 500;
+}
+
+/* Toast notifications */
+.toast-container {
+  position: fixed;
+  top: var(--spacing-lg);
+  right: var(--spacing-lg);
+  z-index: 1060;
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs);
+  max-width: 400px;
+}
+
+.toast-notification {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--border-radius-md);
+  box-shadow: var(--elevation-medium);
+  overflow: hidden;
+  transition: all var(--animation-duration-medium) var(--animation-easing-standard);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+.toast-content {
+  display: flex;
+  align-items: flex-start;
+  padding: var(--spacing-md);
+  gap: var(--spacing-sm);
+}
+
+.toast-icon {
+  flex-shrink: 0;
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.toast-text {
+  flex: 1;
+  min-width: 0;
+}
+
+.toast-title {
+  font-weight: 600;
+  font-size: var(--font-size-sm);
+  color: var(--color-text-primary);
+  margin-bottom: var(--spacing-xs);
+}
+
+.toast-message {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+  line-height: 1.4;
+}
+
+.toast-close {
+  flex-shrink: 0;
+  background: none;
+  border: none;
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  padding: var(--spacing-xs);
+  border-radius: var(--border-radius-sm);
+  transition: all var(--animation-duration-fast) var(--animation-easing-standard);
+}
+
+.toast-close:hover {
+  background: var(--color-neutral-100);
+  color: var(--color-text-primary);
+}
+
+/* Toast type variations */
+.toast-success .toast-icon {
+  color: var(--color-success);
+}
+
+.toast-error .toast-icon {
+  color: var(--color-error);
+}
+
+.toast-warning .toast-icon {
+  color: var(--color-warning);
+}
+
+.toast-info .toast-icon {
+  color: var(--color-info);
+}
+
+/* Empty state animations */
+.empty-state {
+  animation: fadeInUp var(--animation-duration-medium) var(--animation-easing-standard);
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Global loading indicator */
+#global-loader {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, var(--color-primary), var(--color-primary-light));
+  z-index: 1070;
+  animation: loading-bar 2s ease-in-out infinite;
+}
+
+@keyframes loading-bar {
+  0% { transform: translateX(-100%); }
+  50% { transform: translateX(0%); }
+  100% { transform: translateX(100%); }
+}
+
+/* Enhanced focus states for accessibility */
+.interactive-card:focus-visible,
+.action-btn:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+/* Mobile touch feedback */
+@media (hover: none) and (pointer: coarse) {
+  .interactive-card:active {
+    background: var(--color-neutral-50);
+  }
+  
+  .action-btn:active {
+    transform: scale(0.95);
+  }
+}
+
+/* Reduced motion preferences */
+@media (prefers-reduced-motion: reduce) {
+  .spinning,
+  .skeleton-line,
+  .interactive-card,
+  .action-btn,
+  .pull-to-refresh-indicator,
+  .toast-notification,
+  .empty-state,
+  #global-loader {
+    animation: none !important;
+    transition: none !important;
+  }
+  
+  .interactive-card:hover {
+    transform: none;
+  }
+  
+  .action-btn:hover {
+    transform: none;
+  }
+}

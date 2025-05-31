@@ -1,0 +1,36 @@
+{
+  "sources": [
+    {
+      "id": "example-static",
+      "type": "static",
+      "name": "Example Static Source",
+      "enabled": true,
+      "config": {
+        "path": "/data/static",
+        "format": "json"
+      }
+    },
+    {
+      "id": "example-semi-static",
+      "type": "semi-static",
+      "name": "Example Semi-Static Source",
+      "enabled": true,
+      "schedule": "0 0 * * 0",
+      "config": {
+        "url": "https://api.example.com/policies",
+        "apiKey": "${EXAMPLE_API_KEY}"
+      }
+    },
+    {
+      "id": "example-dynamic-consistent",
+      "type": "dynamic-consistent",
+      "name": "Example Dynamic Consistent Source",
+      "enabled": true,
+      "schedule": "0 2 * * *",
+      "config": {
+        "endpoint": "https://api.example.com/daily-data",
+        "batchSize": 100
+      }
+    }
+  ]
+}

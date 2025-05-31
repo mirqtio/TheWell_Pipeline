@@ -1,6 +1,7 @@
 const Queue = require('bull');
 const Redis = require('redis');
 const { EventEmitter } = require('events');
+const logger = require('../../utils/logger'); // Assuming logger is defined in a separate file
 
 /**
  * Queue Manager for TheWell Pipeline Ingestion System
@@ -344,6 +345,65 @@ class QueueManager extends EventEmitter {
       this.emit('shutdown');
     } catch (error) {
       throw new Error(`Failed to shutdown QueueManager: ${error.message}`);
+    }
+  }
+
+  /**
+   * Update queue configuration dynamically
+   */
+  async updateConfig(newConfig) {
+    logger.info('Updating queue configuration', { newConfig });
+    
+    try {
+      const previousConfig = { ...this.config };
+      
+      // Merge new configuration with existing
+      this.config = {
+        ...this.config,
+        ...newConfig,
+        redis: {
+          ...this.config.redis,
+          ...newConfig.redis
+        },
+        queues: {
+          ...this.config.queues,
+          ...newConfig.queues
+        }
+      };
+      
+      // Check if Redis configuration changed
+      const redisChanged = 
+        previousConfig.redis.host !== this.config.redis.host ||
+        previousConfig.redis.port !== this.config.redis.port ||
+        previousConfig.redis.db !== this.config.redis.db;
+      
+      if (redisChanged && this.isInitialized) {
+        logger.info('Redis configuration changed, reconnecting...');
+        await this.shutdown();
+        await this.initialize();
+      } else if (this.isInitialized) {
+        // Update existing queues with new configuration
+        for (const [queueName, queue] of this.queues) {
+          if (this.config.queues[queueName]) {
+            // Update queue settings that can be changed at runtime
+            const queueConfig = this.config.queues[queueName];
+            if (queueConfig.concurrency !== undefined) {
+              queue.concurrency = queueConfig.concurrency;
+            }
+          }
+        }
+      }
+      
+      this.emit('configUpdated', {
+        previousConfig,
+        newConfig: this.config
+      });
+      
+      logger.info('Queue configuration updated successfully');
+      
+    } catch (error) {
+      logger.error('Failed to update queue configuration', { error: error.message });
+      throw error;
     }
   }
 

@@ -1,0 +1,9 @@
+{
+  "batchSize": 100,
+  "maxRetries": 3,
+  "retryDelay": 5000,
+  "timeout": 30000,
+  "concurrency": 3,
+  "enableValidation": true,
+  "outputFormat": "json"
+}

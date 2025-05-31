@@ -26,7 +26,7 @@
             1
           ],
           "details": "The queue should support scaling, error handling, and integration with the source handlers. It must also provide visibility into job status and allow for manual intervention if needed. Testing requirements: 1) Write unit tests for queue operations and handlers, 2) Create integration tests with Redis for queue persistence, 3) Implement e2e tests for job lifecycle, 4) Run all tests and resolve any issues, 5) Merge to master and verify CI passes via GitHub logs.",
-          "status": "in-progress"
+          "status": "done"
         },
         {
           "id": 3,
@@ -36,7 +36,7 @@
             2
           ],
           "details": "This includes monitoring configuration files or endpoints, validating changes, and safely updating running components to reflect new settings. Testing requirements: 1) Write unit tests for configuration parsing and validation, 2) Create integration tests for hot-reload functionality, 3) Implement e2e tests for configuration changes, 4) Run all tests and resolve any issues, 5) Merge to master and verify CI passes via GitHub logs.",
-          "status": "pending"
+          "status": "done"
         },
         {
           "id": 4,
@@ -46,7 +46,7 @@
             3
           ],
           "details": "The UI should display job/document metadata, allow filtering and searching, and provide actions for reviewers to manage ingestion outcomes. Testing requirements: 1) Write unit tests for UI components and logic, 2) Create browser-based integration tests for UI interactions, 3) Implement e2e tests for complete review workflows, 4) Run all tests and resolve any issues, 5) Merge to master and verify CI passes via GitHub logs.",
-          "status": "pending"
+          "status": "done"
         },
         {
           "id": 5,
@@ -56,7 +56,7 @@
             4
           ],
           "details": "This includes tagging documents with visibility states, enforcing access policies, and integrating with the manual review process. Testing requirements: 1) Write unit tests for visibility logic and access control, 2) Create integration tests for visibility enforcement, 3) Implement e2e tests for visibility workflows, 4) Run all tests and resolve any issues, 5) Merge to master and verify CI passes via GitHub logs.",
-          "status": "pending"
+          "status": "done"
         },
         {
           "id": 6,
@@ -213,11 +213,11 @@
         {
           "id": 6,
           "title": "Caching Layer Implementation",
-          "description": "Design and implement a caching strategy to improve data retrieval performance and reduce database load.",
+          "description": "Build an intelligent caching layer to store frequent queries and retrieved documents",
           "dependencies": [
             1
           ],
-          "details": "Select appropriate caching technologies (e.g., Redis, Memcached). Identify cacheable queries and data, and implement cache invalidation policies. Add cache warming for common queries and implement TTL (Time-To-Live) configurations for different data types. Testing requirements: 1) Write unit tests for caching logic and invalidation, 2) Create integration tests for cache hit/miss scenarios, 3) Implement e2e tests for complete caching workflows, 4) Run all tests and resolve any issues, 5) Merge to master and verify CI passes via GitHub logs.",
+          "details": "Implement a multi-level caching strategy for query results, document embeddings, and generated responses. Create cache invalidation policies based on document updates. Add cache warming for common queries and implement TTL (Time-To-Live) configurations for different data types. Testing requirements: 1) Write unit tests for caching logic and invalidation, 2) Create integration tests for cache hit/miss scenarios, 3) Implement e2e tests for complete caching workflows, 4) Run all tests and resolve any issues, 5) Merge to master and verify CI passes via GitHub logs.",
           "status": "pending"
         },
         {

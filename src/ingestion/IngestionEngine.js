@@ -1,6 +1,8 @@
 const EventEmitter = require('events');
 const SourceHandlerFactory = require('./handlers/SourceHandlerFactory');
 const SourceHandlerRegistry = require('./handlers/SourceHandlerRegistry');
+const VisibilityManager = require('./VisibilityManager');
+const VisibilityDatabase = require('./VisibilityDatabase');
 const { SOURCE_TYPES } = require('./types');
 
 /**
@@ -16,6 +18,7 @@ class IngestionEngine extends EventEmitter {
       maxConcurrentDocuments: 10,
       retryAttempts: 3,
       retryDelay: 1000,
+      enableVisibilityManagement: true,
       ...options
     };
 
@@ -24,6 +27,25 @@ class IngestionEngine extends EventEmitter {
     this.sources = new Map();
     this.isInitialized = false;
     this.isShuttingDown = false;
+
+    // Initialize visibility management if enabled
+    if (this.options.enableVisibilityManagement) {
+      this.visibilityDatabase = new VisibilityDatabase(this.options.database);
+      this.visibilityManager = new VisibilityManager(this.options.visibility);
+      
+      // Connect visibility manager events
+      this.visibilityManager.on('visibilityChanged', (data) => {
+        this.emit('documentVisibilityChanged', data);
+      });
+      
+      this.visibilityManager.on('approvalRequested', (data) => {
+        this.emit('visibilityApprovalRequested', data);
+      });
+      
+      this.visibilityManager.on('error', (error) => {
+        this.emit('error', { type: 'visibility_error', error });
+      });
+    }
 
     // Register event handlers
     this.registry.on('handlerRegistered', (handlerId) => {
@@ -48,6 +70,11 @@ class IngestionEngine extends EventEmitter {
     }
 
     try {
+      // Initialize visibility database if enabled
+      if (this.options.enableVisibilityManagement && this.visibilityDatabase) {
+        await this.visibilityDatabase.initialize();
+      }
+      
       // Register built-in source handlers
       await this._registerBuiltInHandlers();
       
@@ -305,6 +332,297 @@ class IngestionEngine extends EventEmitter {
     }
 
     return stats;
+  }
+
+  /**
+   * Update sources configuration dynamically
+   */
+  async updateSources(newSources) {
+    logger.info('Updating sources configuration', { sourceCount: newSources.length });
+    
+    try {
+      // Remove sources that are no longer in the configuration
+      const newSourceIds = new Set(newSources.map(s => s.id));
+      const currentSourceIds = Array.from(this.sources.keys());
+      
+      for (const sourceId of currentSourceIds) {
+        if (!newSourceIds.has(sourceId)) {
+          await this.removeSource(sourceId);
+          logger.info('Removed source from configuration', { sourceId });
+        }
+      }
+      
+      // Add or update sources
+      for (const sourceConfig of newSources) {
+        if (this.sources.has(sourceConfig.id)) {
+          // Update existing source
+          await this.updateSource(sourceConfig.id, sourceConfig);
+          logger.info('Updated existing source', { sourceId: sourceConfig.id });
+        } else {
+          // Add new source
+          await this.addSource(sourceConfig);
+          logger.info('Added new source', { sourceId: sourceConfig.id });
+        }
+      }
+      
+      this.emit('sourcesUpdated', { 
+        totalSources: this.sources.size,
+        updatedSources: newSources.map(s => s.id)
+      });
+      
+    } catch (error) {
+      logger.error('Failed to update sources configuration', { error: error.message });
+      throw error;
+    }
+  }
+
+  /**
+   * Update ingestion settings dynamically
+   */
+  updateSettings(newSettings) {
+    logger.info('Updating ingestion settings', { newSettings });
+    
+    const previousSettings = { ...this.options };
+    
+    // Update options with new settings
+    this.options = {
+      ...this.options,
+      ...newSettings
+    };
+    
+    // Store settings for easy access
+    this.settings = this.options;
+    
+    this.emit('settingsUpdated', {
+      previousSettings,
+      newSettings: this.options
+    });
+    
+    logger.info('Ingestion settings updated successfully');
+  }
+
+  /**
+   * Get current active sources
+   */
+  getActiveSources() {
+    return Array.from(this.sources.values()).filter(source => source.enabled !== false);
+  }
+
+  /**
+   * Document Visibility Management Methods
+   */
+
+  /**
+   * Set document visibility
+   */
+  async setDocumentVisibility(documentId, visibility, userId, reason = null, metadata = {}) {
+    if (!this.options.enableVisibilityManagement) {
+      throw new Error('Visibility management is not enabled');
+    }
+
+    try {
+      return await this.visibilityManager.setDocumentVisibility(
+        documentId, 
+        visibility, 
+        { userId, reason, ...metadata }
+      );
+    } catch (error) {
+      this.emit('error', { type: 'visibility_set_failed', documentId, error: error.message });
+      throw error;
+    }
+  }
+
+  /**
+   * Get document visibility
+   */
+  async getDocumentVisibility(documentId) {
+    if (!this.options.enableVisibilityManagement) {
+      return { visibility: 'internal', documentId }; // Default fallback
+    }
+
+    try {
+      return await this.visibilityManager.getDocumentVisibility(documentId);
+    } catch (error) {
+      this.emit('error', { type: 'visibility_get_failed', documentId, error: error.message });
+      throw error;
+    }
+  }
+
+  /**
+   * Check if user has access to document
+   */
+  async checkDocumentAccess(documentId, userId, accessLevel = 'read') {
+    if (!this.options.enableVisibilityManagement) {
+      return true; // Default allow if visibility management disabled
+    }
+
+    try {
+      const hasAccess = await this.visibilityManager.checkAccess(documentId, userId, accessLevel);
+      
+      // Log access attempt
+      if (this.visibilityDatabase) {
+        await this.visibilityDatabase.logDocumentAccess(
+          documentId, 
+          userId, 
+          accessLevel, 
+          hasAccess,
+          { timestamp: new Date().toISOString() }
+        );
+      }
+      
+      return hasAccess;
+    } catch (error) {
+      this.emit('error', { type: 'access_check_failed', documentId, userId, error: error.message });
+      return false; // Deny access on error
+    }
+  }
+
+  /**
+   * Bulk update document visibilities
+   */
+  async bulkUpdateVisibility(updates, userId, reason = 'Bulk update') {
+    if (!this.options.enableVisibilityManagement) {
+      throw new Error('Visibility management is not enabled');
+    }
+
+    try {
+      return await this.visibilityManager.bulkUpdateVisibility(
+        updates, 
+        { userId, reason }
+      );
+    } catch (error) {
+      this.emit('error', { type: 'bulk_visibility_update_failed', error: error.message });
+      throw error;
+    }
+  }
+
+  /**
+   * Get pending visibility approvals
+   */
+  async getPendingApprovals(filters = {}) {
+    if (!this.options.enableVisibilityManagement) {
+      return [];
+    }
+
+    try {
+      return await this.visibilityManager.getPendingApprovals(filters);
+    } catch (error) {
+      this.emit('error', { type: 'get_pending_approvals_failed', error: error.message });
+      throw error;
+    }
+  }
+
+  /**
+   * Approve visibility change
+   */
+  async approveVisibilityChange(approvalId, approvedBy, notes = '') {
+    if (!this.options.enableVisibilityManagement) {
+      throw new Error('Visibility management is not enabled');
+    }
+
+    try {
+      return await this.visibilityManager.approveVisibilityChange(approvalId, approvedBy, notes);
+    } catch (error) {
+      this.emit('error', { type: 'approval_failed', approvalId, error: error.message });
+      throw error;
+    }
+  }
+
+  /**
+   * Reject visibility change
+   */
+  async rejectVisibilityChange(approvalId, rejectedBy, reason = '') {
+    if (!this.options.enableVisibilityManagement) {
+      throw new Error('Visibility management is not enabled');
+    }
+
+    try {
+      return await this.visibilityManager.rejectVisibilityChange(approvalId, rejectedBy, reason);
+    } catch (error) {
+      this.emit('error', { type: 'rejection_failed', approvalId, error: error.message });
+      throw error;
+    }
+  }
+
+  /**
+   * Apply visibility rules to document
+   */
+  async applyVisibilityRules(documentId, documentMetadata) {
+    if (!this.options.enableVisibilityManagement) {
+      return 'internal'; // Default visibility
+    }
+
+    try {
+      const suggestedVisibility = await this.visibilityManager.applyVisibilityRules(
+        documentId, 
+        documentMetadata
+      );
+      
+      // Auto-apply if no approval required
+      const requiresApproval = this.visibilityManager._requiresApproval(suggestedVisibility);
+      if (!requiresApproval) {
+        await this.setDocumentVisibility(
+          documentId, 
+          suggestedVisibility, 
+          'system', 
+          'Auto-applied via visibility rules',
+          { ruleApplied: true, documentMetadata }
+        );
+      }
+      
+      return suggestedVisibility;
+    } catch (error) {
+      this.emit('error', { type: 'rule_application_failed', documentId, error: error.message });
+      return 'internal'; // Fallback to default
+    }
+  }
+
+  /**
+   * Add visibility rule
+   */
+  addVisibilityRule(ruleId, rule) {
+    if (!this.options.enableVisibilityManagement) {
+      throw new Error('Visibility management is not enabled');
+    }
+
+    try {
+      return this.visibilityManager.addVisibilityRule(ruleId, rule);
+    } catch (error) {
+      this.emit('error', { type: 'add_rule_failed', ruleId, error: error.message });
+      throw error;
+    }
+  }
+
+  /**
+   * Remove visibility rule
+   */
+  removeVisibilityRule(ruleId) {
+    if (!this.options.enableVisibilityManagement) {
+      throw new Error('Visibility management is not enabled');
+    }
+
+    try {
+      return this.visibilityManager.removeVisibilityRule(ruleId);
+    } catch (error) {
+      this.emit('error', { type: 'remove_rule_failed', ruleId, error: error.message });
+      throw error;
+    }
+  }
+
+  /**
+   * Get visibility audit log for document
+   */
+  async getVisibilityAuditLog(documentId, limit = 50) {
+    if (!this.options.enableVisibilityManagement || !this.visibilityDatabase) {
+      return [];
+    }
+
+    try {
+      return await this.visibilityDatabase.getVisibilityAuditLog(documentId, limit);
+    } catch (error) {
+      this.emit('error', { type: 'audit_log_failed', documentId, error: error.message });
+      throw error;
+    }
   }
 
   /**
