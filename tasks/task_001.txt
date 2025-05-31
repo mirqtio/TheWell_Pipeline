@@ -1,0 +1,101 @@
+# Task ID: 1
+# Title: Multi-Source Ingestion Engine Setup
+# Status: in-progress
+# Dependencies: None
+# Priority: high
+# Description: Implement the core ingestion system supporting four source types with configurable processing strategies and manual curation gates.
+# Details:
+Create a Node.js-based ingestion service with the following components:
+
+1. Source type handlers for:
+   - Static sources (one-time bulk loads)
+   - Semi-static platform policies (weekly polling)
+   - Dynamic consistent sources (daily batch processing)
+   - Dynamic unstructured sources (weekly discovery runs)
+
+2. Bull/Redis job queue implementation:
+   ```javascript
+   // Example queue setup
+   const Queue = require('bull');
+   const staticSourceQueue = new Queue('static-source-processing');
+   const semiStaticQueue = new Queue('semi-static-processing');
+   const dynamicQueue = new Queue('dynamic-processing');
+   const discoveryQueue = new Queue('discovery-processing');
+   
+   // Process queue items
+   staticSourceQueue.process(async (job) => {
+     const { sourceConfig, files } = job.data;
+     return await processStaticSource(sourceConfig, files);
+   });
+   ```
+
+3. Hot-reloadable configuration system using file watchers:
+   ```javascript
+   const chokidar = require('chokidar');
+   const configWatcher = chokidar.watch('./config/sources/', {
+     persistent: true,
+     ignoreInitial: false
+   });
+   
+   configWatcher.on('change', async (path) => {
+     try {
+       const newConfig = await validateAndLoadConfig(path);
+       await applyConfigChanges(newConfig);
+     } catch (error) {
+       logger.error(`Config update failed: ${error.message}`);
+     }
+   });
+   ```
+
+4. Manual review interface for discovered sources with approval workflow
+
+5. Document visibility flag management (internal/external) with appropriate database schema support
+
+# Test Strategy:
+1. Unit tests for each source type handler with mock data
+2. Integration tests for the job queue system with Redis
+3. Configuration hot-reload tests with various change scenarios
+4. End-to-end tests for the complete ingestion workflow
+5. Load testing with simulated batch uploads
+6. Error handling tests for malformed sources and network failures
+7. Validation tests for document visibility flag enforcement
+8. Browser-based tests for manual review interface
+9. CI verification through GitHub logs via MCP or CLI
+
+# Subtasks:
+## 1. Implement Source Handlers for Each Source Type [in-progress]
+### Dependencies: None
+### Description: Develop and integrate source handler modules for each supported data source type, ensuring each can extract, transform, and forward data according to its unique requirements.
+### Details:
+Each source handler must encapsulate logic specific to its data source, handle authentication, data extraction, and error scenarios, and provide a consistent interface for the ingestion engine. Testing requirements: 1) Write unit tests for each handler with mock data sources, 2) Create integration tests for handler interactions, 3) Implement e2e tests for complete data flow, 4) Run all tests and resolve any issues, 5) Merge to master and verify CI passes via GitHub logs.
+
+## 2. Set Up Job Queue and Queue Management [pending]
+### Dependencies: 1.1
+### Description: Design and implement a robust job queue system to manage ingestion tasks, support asynchronous processing, retries, prioritization, and monitoring.
+### Details:
+The queue should support scaling, error handling, and integration with the source handlers. It must also provide visibility into job status and allow for manual intervention if needed. Testing requirements: 1) Write unit tests for queue operations and handlers, 2) Create integration tests with Redis for queue persistence, 3) Implement e2e tests for job lifecycle, 4) Run all tests and resolve any issues, 5) Merge to master and verify CI passes via GitHub logs.
+
+## 3. Implement Configuration Hot-Reload Mechanism [pending]
+### Dependencies: 1.2
+### Description: Enable the ingestion engine to detect and apply configuration changes at runtime without requiring restarts.
+### Details:
+This includes monitoring configuration files or endpoints, validating changes, and safely updating running components to reflect new settings. Testing requirements: 1) Write unit tests for configuration parsing and validation, 2) Create integration tests for hot-reload functionality, 3) Implement e2e tests for configuration changes, 4) Run all tests and resolve any issues, 5) Merge to master and verify CI passes via GitHub logs.
+
+## 4. Develop Manual Review UI for Ingestion Jobs [pending]
+### Dependencies: 1.3
+### Description: Create a user interface for manual review, approval, or rejection of ingested documents and jobs, supporting workflow and audit requirements.
+### Details:
+The UI should display job/document metadata, allow filtering and searching, and provide actions for reviewers to manage ingestion outcomes. Testing requirements: 1) Write unit tests for UI components and logic, 2) Create browser-based integration tests for UI interactions, 3) Implement e2e tests for complete review workflows, 4) Run all tests and resolve any issues, 5) Merge to master and verify CI passes via GitHub logs.
+
+## 5. Implement Document Visibility Management [pending]
+### Dependencies: 1.4
+### Description: Design and build mechanisms to control document visibility throughout the ingestion pipeline, supporting access controls and workflow states.
+### Details:
+This includes tagging documents with visibility states, enforcing access policies, and integrating with the manual review process. Testing requirements: 1) Write unit tests for visibility logic and access control, 2) Create integration tests for visibility enforcement, 3) Implement e2e tests for visibility workflows, 4) Run all tests and resolve any issues, 5) Merge to master and verify CI passes via GitHub logs.
+
+## 6. Apply Database Schema Changes and Integration Testing with Error Handling [pending]
+### Dependencies: 1.5
+### Description: Update the database schema to support new ingestion features, and conduct comprehensive integration testing, including robust error handling scenarios.
+### Details:
+Schema changes should support new metadata, job tracking, and visibility controls. Integration tests must cover end-to-end flows, error cases, and recovery mechanisms. Testing requirements: 1) Write unit tests for schema migrations and data access, 2) Create integration tests for database operations, 3) Implement e2e tests for complete data flows, 4) Run all tests and resolve any issues, 5) Merge to master and verify CI passes via GitHub logs.
+

@@ -1,0 +1,110 @@
+# Task ID: 6
+# Title: Manual Curation Interface
+# Status: pending
+# Dependencies: 1
+# Priority: medium
+# Description: Develop a user interface for manual review and curation of ingested content with approval workflows and audit trails.
+# Details:
+Create a curation interface with the following components:
+
+1. React-based dashboard for source review:
+   - Kanban-style board with Pending Review, In Review, and Processed columns
+   - Drag-and-drop functionality for moving items between columns
+   - Preview cards with source information and content samples
+
+2. Review workflow implementation:
+   ```javascript
+   // Backend API for curation actions
+   app.post('/api/v1/curation/decision', async (req, res) => {
+     const { itemId, decision, curatorId, notes } = req.body;
+     
+     // Validate curator has active lock
+     const validLock = await validateLock(itemId, curatorId);
+     if (!validLock) {
+       return res.status(403).json({ error: 'Invalid or expired lock' });
+     }
+     
+     if (decision === 'APPROVE') {
+       // Process approval
+       const approvedDocument = {
+         content: req.body.editedContent || item.content,
+         metadata: mergeMetadata(item.metadata, req.body.metadataUpdates),
+         visibility: req.body.visibilityFlag,
+         tags: req.body.tags,
+         curatorNotes: notes
+       };
+       
+       await moveToEnrichmentPipeline(approvedDocument);
+     } else if (decision === 'REJECT') {
+       // Process rejection
+       await storeRejection({
+         itemId,
+         reason: req.body.rejectionReason,
+         curatorId,
+         timestamp: new Date()
+       });
+       
+       await updateSourceReliabilityScore(item.sourceId, { negative: true });
+     }
+     
+     await releaseLock(itemId);
+     return res.json({ success: true });
+   });
+   ```
+
+3. Audit trail system:
+   - Logging of all curation decisions
+   - Timestamps and curator identification
+   - Reason tracking for rejections
+
+4. Bulk operations support:
+   - Multi-select functionality
+   - Batch approve/reject with common reasons
+
+5. Source reliability scoring:
+   - Track approval/rejection rates by source
+   - Adjust source priority based on historical quality
+
+# Test Strategy:
+1. UI component tests with React Testing Library
+2. Workflow integration tests for approval/rejection flows
+3. Audit trail verification tests
+4. Concurrent curation tests to verify locking mechanism
+5. Performance tests with large queues
+6. Usability tests with real curators
+7. Mobile responsiveness tests
+8. Accessibility compliance tests
+9. Browser-based e2e tests for complete curation workflows
+10. CI verification through GitHub logs via MCP or CLI
+
+# Subtasks:
+## 1. Design and Implement Dashboard UI [pending]
+### Dependencies: None
+### Description: Create a user-facing dashboard interface for curators to view, manage, and interact with curated data, including visualizations, filters, and actionable controls.
+### Details:
+This subtask involves wireframing, UI/UX design, and frontend development to ensure the dashboard is intuitive and supports the curation workflow. It should provide access to bulk operations, audit trails, and reliability scores. Testing requirements: 1) Write unit tests for UI components with React Testing Library, 2) Create browser-based integration tests for UI interactions, 3) Implement e2e tests for complete dashboard workflows, 4) Run all tests and resolve any issues, 5) Merge to master and verify CI passes via GitHub logs.
+
+## 2. Develop Workflow Backend Logic [pending]
+### Dependencies: 6.1
+### Description: Build backend services to handle curation workflows, including task assignment, state transitions, and integration with the dashboard UI.
+### Details:
+This includes implementing APIs and business logic for managing curation tasks, tracking progress, and supporting collaboration among curators. Testing requirements: 1) Write unit tests for workflow logic and APIs, 2) Create integration tests for workflow state transitions, 3) Implement e2e tests for complete curation workflows, 4) Run all tests and resolve any issues, 5) Merge to master and verify CI passes via GitHub logs.
+
+## 3. Implement Audit Trail System [pending]
+### Dependencies: 6.2
+### Description: Create an audit trail mechanism to log all curation actions, changes, and user activities for compliance and traceability.
+### Details:
+This subtask covers designing a schema for audit logs, integrating logging into workflow actions, and exposing audit data in the dashboard for review. Testing requirements: 1) Write unit tests for audit logging functions, 2) Create integration tests for audit trail persistence, 3) Implement e2e tests for audit trail workflows, 4) Run all tests and resolve any issues, 5) Merge to master and verify CI passes via GitHub logs.
+
+## 4. Enable Bulk Operations Functionality [pending]
+### Dependencies: 6.2
+### Description: Add support for bulk actions (e.g., tagging, approval, deletion) on curated data items through both the UI and backend.
+### Details:
+This involves designing efficient batch processing endpoints, updating the UI for multi-select and bulk action controls, and ensuring audit logging for bulk changes. Testing requirements: 1) Write unit tests for bulk operation logic, 2) Create browser-based integration tests for bulk UI interactions, 3) Implement e2e tests for complete bulk operation workflows, 4) Run all tests and resolve any issues, 5) Merge to master and verify CI passes via GitHub logs.
+
+## 5. Integrate Source Reliability Scoring [pending]
+### Dependencies: 6.2
+### Description: Develop and integrate a system for scoring and displaying the reliability of data sources within the curation interface.
+### Details:
+This includes defining reliability metrics, implementing scoring algorithms, storing scores, and presenting them in the dashboard to inform curator decisions. Testing requirements: 1) Write unit tests for scoring algorithms, 2) Create integration tests for score calculation and updates, 3) Implement e2e tests for reliability score workflows, 4) Run all tests and resolve any issues, 5) Merge to master and verify CI passes via GitHub logs.
+

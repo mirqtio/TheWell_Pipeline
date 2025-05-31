@@ -1,0 +1,124 @@
+# Task ID: 4
+# Title: RAG API Development
+# Status: pending
+# Dependencies: 3
+# Priority: high
+# Description: Build a high-performance RAG API with sub-2-second response time, hybrid search capabilities, and intelligent caching.
+# Details:
+Implement a RAG API service with the following components:
+
+1. Express.js API with OpenAPI/Swagger documentation:
+   ```javascript
+   const express = require('express');
+   const swaggerUi = require('swagger-ui-express');
+   const swaggerDocument = require('./swagger.json');
+   
+   const app = express();
+   app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
+   
+   // Search endpoint with tracing
+   app.post('/api/v1/rag/search', async (req, res) => {
+     const traceId = req.headers['x-trace-id'] || generateTraceId();
+     const span = tracer.startSpan('rag_search', { traceId });
+     
+     try {
+       // Cache check
+       const cacheKey = generateCacheKey(req.body, req.auth);
+       const cachedResult = await redis.get(cacheKey);
+       
+       if (cachedResult) {
+         span.addEvent('cache_hit');
+         return res.json(JSON.parse(cachedResult));
+       }
+       
+       // Execute search
+       const result = await executeHybridSearch(req.body, req.auth);
+       
+       // Cache result
+       if (shouldCache(req.body, result)) {
+         const ttl = calculateCacheTTL(req.body, result);
+         await redis.setex(cacheKey, ttl, JSON.stringify(result));
+       }
+       
+       return res.json(result);
+     } catch (error) {
+       span.setStatus({ code: SpanStatusCode.ERROR });
+       span.recordException(error);
+       return res.status(500).json({ error: error.message });
+     } finally {
+       span.end();
+     }
+   });
+   ```
+
+2. Hybrid search implementation:
+   - Vector similarity search with pgvector
+   - Keyword search with PostgreSQL full-text search
+   - Result fusion with reciprocal rank fusion
+
+3. Redis caching strategy:
+   - Cache key generation based on query and permissions
+   - TTL calculation based on query popularity and content volatility
+   - Intelligent invalidation on document updates
+
+4. Request tracing with unique IDs:
+   - Distributed tracing across components
+   - Performance monitoring for each processing step
+
+5. Visibility-aware querying with permission enforcement
+
+# Test Strategy:
+1. Performance tests to verify sub-2-second response time
+2. Load tests with concurrent requests
+3. Cache effectiveness tests
+4. Security tests for visibility enforcement
+5. Integration tests for hybrid search accuracy
+6. Tracing verification across system components
+7. Error handling tests for various failure scenarios
+8. API contract tests with OpenAPI validation
+9. Browser-based e2e tests for API interactions
+10. CI verification through GitHub logs via MCP or CLI
+
+# Subtasks:
+## 1. API Scaffolding and Core Architecture [pending]
+### Dependencies: None
+### Description: Set up the foundational API structure with endpoints for query processing, document retrieval, and response generation
+### Details:
+Create the basic API framework with proper routing, error handling, and logging. Implement the core RAG components: retriever, generator, input processor, and output formatter. Design the API contract with clear request/response schemas and authentication endpoints. Testing requirements: 1) Write unit tests for API endpoints and core components, 2) Create integration tests for API interactions, 3) Implement e2e tests for complete API workflows, 4) Run all tests and resolve any issues, 5) Merge to master and verify CI passes via GitHub logs.
+
+## 2. Hybrid Search Implementation [pending]
+### Dependencies: 4.1
+### Description: Develop a hybrid search system combining vector search and keyword-based retrieval for optimal document fetching
+### Details:
+Implement vector embedding generation for documents and queries. Create keyword-based search functionality with BM25 or similar algorithms. Develop a ranking system to combine results from both approaches. Include relevance scoring and filtering capabilities to improve search precision. Testing requirements: 1) Write unit tests for search algorithms and ranking logic, 2) Create integration tests for search result quality, 3) Implement e2e tests for complete search workflows, 4) Run all tests and resolve any issues, 5) Merge to master and verify CI passes via GitHub logs.
+
+## 3. Caching System Implementation [pending]
+### Dependencies: 4.1, 4.2
+### Description: Build an intelligent caching layer to store frequent queries and retrieved documents
+### Details:
+Implement a multi-level caching strategy for query results, document embeddings, and generated responses. Create cache invalidation policies based on document updates. Add cache warming for common queries and implement TTL (Time-To-Live) configurations for different data types. Testing requirements: 1) Write unit tests for caching logic and invalidation, 2) Create integration tests for cache hit/miss scenarios, 3) Implement e2e tests for complete caching workflows, 4) Run all tests and resolve any issues, 5) Merge to master and verify CI passes via GitHub logs.
+
+## 4. Distributed Tracing Integration [pending]
+### Dependencies: 4.1
+### Description: Add comprehensive tracing to monitor and debug the RAG pipeline
+### Details:
+Implement trace context propagation across all RAG components. Add span creation for key operations (query processing, document retrieval, response generation). Integrate with a tracing backend (Jaeger, Zipkin, etc.). Create custom attributes to capture RAG-specific metrics like retrieval quality and generation time. Testing requirements: 1) Write unit tests for tracing instrumentation, 2) Create integration tests for trace propagation, 3) Implement e2e tests for complete tracing workflows, 4) Run all tests and resolve any issues, 5) Merge to master and verify CI passes via GitHub logs.
+
+## 5. Permission Enforcement System [pending]
+### Dependencies: 4.1, 4.2
+### Description: Develop a robust permission model to control access to documents and knowledge sources
+### Details:
+Create a document-level access control system. Implement user/role-based permission filtering during retrieval. Add permission validation middleware for API endpoints. Design a secure token-based system for authenticating and authorizing requests across the RAG pipeline. Testing requirements: 1) Write unit tests for permission logic and validation, 2) Create integration tests for access control enforcement, 3) Implement e2e tests for permission-based workflows, 4) Run all tests and resolve any issues, 5) Merge to master and verify CI passes via GitHub logs.
+
+## 6. Performance Optimization [pending]
+### Dependencies: 4.2, 4.3, 4.5
+### Description: Optimize the RAG pipeline to achieve sub-2-second response times
+### Details:
+Implement parallel processing for document retrieval and embedding generation. Optimize database queries and vector search operations. Add request throttling and queue management for high-load scenarios. Conduct load testing to identify and resolve bottlenecks in the pipeline. Testing requirements: 1) Write unit tests for optimization components, 2) Create integration tests for performance metrics, 3) Implement e2e tests with performance benchmarks, 4) Run all tests and resolve any issues, 5) Merge to master and verify CI passes via GitHub logs.
+
+## 7. Contract Testing Implementation [pending]
+### Dependencies: 4.1, 4.2, 4.3, 4.5, 4.6
+### Description: Develop comprehensive testing framework to ensure API reliability and correctness
+### Details:
+Create contract tests for all API endpoints. Implement integration tests for the complete RAG pipeline. Add performance tests to verify response time requirements. Develop specialized tests for edge cases like empty results, permission boundaries, and cache behaviors. Testing requirements: 1) Write unit tests for contract validation, 2) Create integration tests for API contracts, 3) Implement browser-based e2e tests for API interactions, 4) Run all tests and resolve any issues, 5) Merge to master and verify CI passes via GitHub logs.
+
