@@ -198,6 +198,75 @@ CREATE TABLE document_enrichments (
 );
 
 -- =====================================================
+-- COST TRACKING TABLES
+-- =====================================================
+
+-- Cost Events: Track individual LLM usage costs
+CREATE TABLE cost_events (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    provider VARCHAR(50) NOT NULL, -- 'openai', 'anthropic', etc.
+    model VARCHAR(100) NOT NULL, -- 'gpt-4-turbo', 'claude-3-sonnet', etc.
+    operation VARCHAR(50) NOT NULL, -- 'enrichment', 'completion', 'classification', etc.
+    document_id UUID REFERENCES documents(id) ON DELETE SET NULL,
+    source_type VARCHAR(50), -- Source type for categorization
+    input_tokens INTEGER NOT NULL DEFAULT 0,
+    output_tokens INTEGER NOT NULL DEFAULT 0,
+    input_cost DECIMAL(10,6) NOT NULL DEFAULT 0,
+    output_cost DECIMAL(10,6) NOT NULL DEFAULT 0,
+    total_cost DECIMAL(10,6) NOT NULL DEFAULT 0,
+    metadata JSONB DEFAULT '{}', -- Additional cost-related metadata
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Cost Budgets: Define spending limits
+CREATE TABLE cost_budgets (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    name VARCHAR(100) NOT NULL UNIQUE,
+    budget_type VARCHAR(20) NOT NULL, -- 'daily', 'weekly', 'monthly', 'yearly'
+    limit_amount DECIMAL(10,2) NOT NULL,
+    alert_threshold DECIMAL(3,2) DEFAULT 0.8, -- Alert when 80% of budget is reached
+    provider_filter VARCHAR(50), -- Optional: limit to specific provider
+    operation_filter VARCHAR(50), -- Optional: limit to specific operation
+    source_type_filter VARCHAR(50), -- Optional: limit to specific source type
+    is_active BOOLEAN DEFAULT true,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Cost Alerts: Track budget alerts and notifications
+CREATE TABLE cost_alerts (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    budget_id UUID REFERENCES cost_budgets(id) ON DELETE CASCADE,
+    alert_type VARCHAR(20) NOT NULL, -- 'threshold', 'exceeded', 'daily_summary'
+    current_amount DECIMAL(10,2) NOT NULL,
+    limit_amount DECIMAL(10,2) NOT NULL,
+    percentage DECIMAL(5,2) NOT NULL, -- Percentage of budget used
+    period_start TIMESTAMP WITH TIME ZONE NOT NULL,
+    period_end TIMESTAMP WITH TIME ZONE NOT NULL,
+    message TEXT,
+    is_acknowledged BOOLEAN DEFAULT false,
+    acknowledged_by VARCHAR(255),
+    acknowledged_at TIMESTAMP WITH TIME ZONE,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Cost Reports: Store generated cost reports
+CREATE TABLE cost_reports (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    report_name VARCHAR(255) NOT NULL,
+    report_type VARCHAR(50) NOT NULL, -- 'daily', 'weekly', 'monthly', 'custom'
+    date_range_start TIMESTAMP WITH TIME ZONE NOT NULL,
+    date_range_end TIMESTAMP WITH TIME ZONE NOT NULL,
+    total_cost DECIMAL(10,2) NOT NULL,
+    total_tokens BIGINT NOT NULL,
+    record_count INTEGER NOT NULL,
+    report_data JSONB NOT NULL, -- Full report data
+    format VARCHAR(20) DEFAULT 'json', -- 'json', 'csv', 'html'
+    generated_by VARCHAR(255),
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- =====================================================
 -- CONFIGURATION TABLES
 -- =====================================================
 
@@ -265,6 +334,21 @@ CREATE INDEX idx_document_enrichments_document_id ON document_enrichments(docume
 CREATE INDEX idx_document_enrichments_type ON document_enrichments(enrichment_type);
 CREATE INDEX idx_document_enrichments_provider_id ON document_enrichments(provider_id);
 
+-- Cost tracking indexes
+CREATE INDEX idx_cost_events_provider ON cost_events(provider);
+CREATE INDEX idx_cost_events_model ON cost_events(model);
+CREATE INDEX idx_cost_events_operation ON cost_events(operation);
+CREATE INDEX idx_cost_events_document_id ON cost_events(document_id);
+CREATE INDEX idx_cost_events_created_at ON cost_events(created_at);
+CREATE INDEX idx_cost_events_provider_created_at ON cost_events(provider, created_at);
+CREATE INDEX idx_cost_budgets_budget_type ON cost_budgets(budget_type);
+CREATE INDEX idx_cost_budgets_is_active ON cost_budgets(is_active);
+CREATE INDEX idx_cost_alerts_budget_id ON cost_alerts(budget_id);
+CREATE INDEX idx_cost_alerts_alert_type ON cost_alerts(alert_type);
+CREATE INDEX idx_cost_alerts_created_at ON cost_alerts(created_at);
+CREATE INDEX idx_cost_reports_report_type ON cost_reports(report_type);
+CREATE INDEX idx_cost_reports_date_range ON cost_reports(date_range_start, date_range_end);
+
 -- =====================================================
 -- TRIGGERS FOR AUTOMATIC UPDATES
 -- =====================================================
@@ -286,6 +370,7 @@ CREATE TRIGGER update_document_visibility_updated_at BEFORE UPDATE ON document_v
 CREATE TRIGGER update_visibility_rules_updated_at BEFORE UPDATE ON visibility_rules FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 CREATE TRIGGER update_llm_providers_updated_at BEFORE UPDATE ON llm_providers FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 CREATE TRIGGER update_system_config_updated_at BEFORE UPDATE ON system_config FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+CREATE TRIGGER update_cost_budgets_updated_at BEFORE UPDATE ON cost_budgets FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
 -- Update search vector for documents
 CREATE OR REPLACE FUNCTION update_document_search_vector()
@@ -323,3 +408,14 @@ INSERT INTO system_config (key, value, description) VALUES
 ('llm.default_provider', '"OpenAI GPT-3.5"', 'Default LLM provider for enrichment'),
 ('review.session_timeout', '3600', 'Review session timeout in seconds'),
 ('visibility.default_level', '"internal"', 'Default visibility level for new documents');
+
+-- Insert default cost budgets
+INSERT INTO cost_budgets (name, budget_type, limit_amount, alert_threshold, is_active) VALUES
+('Daily Budget', 'daily', 50.00, 0.8, true),
+('Monthly Budget', 'monthly', 1000.00, 0.8, true),
+('OpenAI Daily Limit', 'daily', 30.00, 0.9, true),
+('Anthropic Daily Limit', 'daily', 20.00, 0.9, true);
+
+-- Update cost budgets with provider filters
+UPDATE cost_budgets SET provider_filter = 'openai' WHERE name = 'OpenAI Daily Limit';
+UPDATE cost_budgets SET provider_filter = 'anthropic' WHERE name = 'Anthropic Daily Limit';
