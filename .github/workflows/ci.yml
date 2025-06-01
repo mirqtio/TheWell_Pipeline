@@ -80,6 +80,10 @@ jobs:
     
     - name: Run E2E tests
       run: npm run test:e2e
+      timeout-minutes: 15
+      env:
+        CI: true
+        JEST_TIMEOUT: 60000
     
     - name: Run all tests with coverage
       run: npm run test:coverage

@@ -128,8 +128,8 @@ process.env.DB_USER = 'test_user';
 process.env.DB_PASSWORD = 'test_password';
 process.env.REDIS_URL = 'redis://localhost:6379';
 
-// Increase test timeout for integration tests
-jest.setTimeout(30000);
+// Increase test timeout for CI environment
+jest.setTimeout(process.env.JEST_TIMEOUT ? parseInt(process.env.JEST_TIMEOUT) : 30000);
 
 // Global test setup
 beforeAll(async () => {
