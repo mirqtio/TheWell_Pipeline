@@ -12,6 +12,8 @@
     "test:unit": "jest tests/unit",
     "test:integration": "jest tests/integration",
     "test:e2e": "jest tests/e2e",
+    "test:e2e:fast": "jest --config=jest.e2e.config.js",
+    "test:e2e:quick": "jest --config=jest.e2e.config.js --testPathIgnorePatterns=failover-scenarios",
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage",
     "lint": "eslint src tests",
@@ -70,10 +72,11 @@
     ],
     "coverageDirectory": "coverage",
     "coverageReporters": ["text", "lcov", "html"],
-    "testTimeout": 30000,
-    "maxWorkers": 1,
+    "testTimeout": 20000,
+    "maxWorkers": 2,
     "forceExit": true,
     "detectOpenHandles": true,
-    "verbose": false
+    "verbose": false,
+    "silent": true
   }
 }

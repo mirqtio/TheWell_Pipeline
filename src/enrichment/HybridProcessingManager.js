@@ -141,21 +141,21 @@ class HybridProcessingManager extends EventEmitter {
   /**
    * Select optimal processing strategy based on document analysis
    */
-  selectProcessingStrategy(analysis, constraints = {}) {
+  async _selectProcessingStrategy(document, metadata, _selectedStrategy) {
     const {
       size,
       complexity,
       sensitivity,
       estimatedCost,
       estimatedLatency
-    } = analysis;
+    } = await this.analyzeDocument(document, metadata);
 
     // Apply constraints (budget, time, data sensitivity)
     const effectiveConstraints = {
-      maxCost: constraints.maxCost || Infinity,
-      maxLatency: constraints.maxLatency || Infinity,
+      maxCost: metadata.maxCost || Infinity,
+      maxLatency: metadata.maxLatency || Infinity,
       requiresLocalProcessing: sensitivity >= this.config.sensitivityLevels.confidential,
-      ...constraints
+      ...metadata
     };
 
     let selectedStrategy = 'monolithic'; // default
@@ -186,7 +186,7 @@ class HybridProcessingManager extends EventEmitter {
     }
 
     // Check if hybrid strategy would be better
-    if (this.shouldUseHybridStrategy(analysis, selectedStrategy)) {
+    if (this.shouldUseHybridStrategy({ size, complexity, estimatedCost, estimatedLatency }, _selectedStrategy)) {
       selectedStrategy = 'hybrid';
     }
 
@@ -205,7 +205,7 @@ class HybridProcessingManager extends EventEmitter {
     return {
       strategy: selectedStrategy,
       config: this.config.strategies[selectedStrategy],
-      routing: this.determineProviderRouting(selectedStrategy, analysis, effectiveConstraints)
+      routing: this.determineProviderRouting(selectedStrategy, { size, complexity, estimatedCost, estimatedLatency }, effectiveConstraints)
     };
   }
 
@@ -237,18 +237,18 @@ class HybridProcessingManager extends EventEmitter {
 
     // Resource allocation based on strategy
     switch (strategy) {
-      case 'monolithic':
-        routing.resourceAllocation = { workers: 1, memory: 'standard' };
-        break;
-      case 'chunked':
-        routing.resourceAllocation = { workers: 2, memory: 'high' };
-        break;
-      case 'agent':
-        routing.resourceAllocation = { workers: 3, memory: 'high' };
-        break;
-      case 'hybrid':
-        routing.resourceAllocation = { workers: 2, memory: 'high' };
-        break;
+    case 'monolithic':
+      routing.resourceAllocation = { workers: 1, memory: 'standard' };
+      break;
+    case 'chunked':
+      routing.resourceAllocation = { workers: 2, memory: 'high' };
+      break;
+    case 'agent':
+      routing.resourceAllocation = { workers: 3, memory: 'high' };
+      break;
+    case 'hybrid':
+      routing.resourceAllocation = { workers: 2, memory: 'high' };
+      break;
     }
 
     return routing;
@@ -275,20 +275,20 @@ class HybridProcessingManager extends EventEmitter {
       let result;
 
       switch (strategy.strategy) {
-        case 'monolithic':
-          result = await this.executeMonolithicProcessing(document, metadata, strategy, providerManager);
-          break;
-        case 'chunked':
-          result = await this.executeChunkedProcessing(document, metadata, strategy, providerManager);
-          break;
-        case 'agent':
-          result = await this.executeAgentProcessing(document, metadata, strategy, providerManager);
-          break;
-        case 'hybrid':
-          result = await this.executeHybridProcessing(document, metadata, strategy, providerManager);
-          break;
-        default:
-          throw new Error(`Unknown processing strategy: ${strategy.strategy}`);
+      case 'monolithic':
+        result = await this.executeMonolithicProcessing(document, metadata, strategy, providerManager);
+        break;
+      case 'chunked':
+        result = await this.executeChunkedProcessing(document, metadata, strategy, providerManager);
+        break;
+      case 'agent':
+        result = await this.executeAgentProcessing(document, metadata, strategy, providerManager);
+        break;
+      case 'hybrid':
+        result = await this.executeHybridProcessing(document, metadata, strategy, providerManager);
+        break;
+      default:
+        throw new Error(`Unknown processing strategy: ${strategy.strategy}`);
       }
 
       const processingTime = Date.now() - startTime;
@@ -552,14 +552,14 @@ class HybridProcessingManager extends EventEmitter {
 
       let sectionResult;
       switch (sectionStrategy) {
-        case 'agent':
-          sectionResult = await this.executeAgentProcessing(section.content, sectionMetadata, strategy, providerManager);
-          break;
-        case 'chunked':
-          sectionResult = await this.executeChunkedProcessing(section.content, sectionMetadata, strategy, providerManager);
-          break;
-        default:
-          sectionResult = await this.executeMonolithicProcessing(section.content, sectionMetadata, strategy, providerManager);
+      case 'agent':
+        sectionResult = await this.executeAgentProcessing(section.content, sectionMetadata, strategy, providerManager);
+        break;
+      case 'chunked':
+        sectionResult = await this.executeChunkedProcessing(section.content, sectionMetadata, strategy, providerManager);
+        break;
+      default:
+        sectionResult = await this.executeMonolithicProcessing(section.content, sectionMetadata, strategy, providerManager);
       }
 
       sectionResults.push({
@@ -709,7 +709,7 @@ class HybridProcessingManager extends EventEmitter {
   /**
    * Check if hybrid strategy should be used
    */
-  shouldUseHybridStrategy(analysis, selectedStrategy) {
+  shouldUseHybridStrategy(analysis, _selectedStrategy) {
     // Use hybrid if document has mixed complexity sections
     return analysis.complexity > this.config.strategies.hybrid.adaptiveThreshold &&
            analysis.size > this.config.documentSizeThreshold * 0.8;

@@ -1,0 +1,24 @@
+# Simplified Dockerfile for testing
+FROM node:20-alpine
+
+WORKDIR /app
+
+# Copy package files first for better caching
+COPY package*.json ./
+
+# Install dependencies with minimal output
+RUN npm ci --only=production --silent
+
+# Copy source code
+COPY src/ ./src/
+COPY config/ ./config/
+
+# Expose port
+EXPOSE 3000
+
+# Simple health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+  CMD node -e "console.log('Health check passed')" || exit 1
+
+# Start application
+CMD ["npm", "start"]

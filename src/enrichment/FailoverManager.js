@@ -74,9 +74,9 @@ class FailoverManager extends EventEmitter {
   /**
    * Initialize state tracking for a provider
    * @param {string} name - Provider name
-   * @param {Object} provider - Provider instance
+   * @param {Object} _provider - Provider instance
    */
-  initializeProviderState(name, provider) {
+  initializeProviderState(name, _provider) {
     this.providerStates.set(name, {
       status: 'healthy',
       consecutiveFailures: 0,
@@ -126,7 +126,6 @@ class FailoverManager extends EventEmitter {
 
     for (const providerName of orderedProviders) {
       const provider = this.providers.get(providerName);
-      const circuitBreaker = this.circuitBreakers.get(providerName);
       
       // Check circuit breaker state
       if (!this.canExecuteWithProvider(providerName)) {
@@ -280,10 +279,10 @@ class FailoverManager extends EventEmitter {
   /**
    * Calculate provider score for selection
    * @param {string} providerName - Provider name
-   * @param {Object} request - Request context
+   * @param {Object} _request - Request context
    * @returns {number} Provider score
    */
-  calculateProviderScore(providerName, request) {
+  calculateProviderScore(providerName, _request) {
     const state = this.providerStates.get(providerName);
     const metrics = this.performanceMetrics.get(providerName);
     
@@ -458,9 +457,9 @@ class FailoverManager extends EventEmitter {
   /**
    * Update circuit breaker state
    * @param {string} providerName - Provider name
-   * @param {Error} error - Execution error
+   * @param {Error} _error - Execution error
    */
-  updateCircuitBreaker(providerName, error) {
+  updateCircuitBreaker(providerName, _error) {
     const circuitBreaker = this.circuitBreakers.get(providerName);
     
     circuitBreaker.failureCount++;

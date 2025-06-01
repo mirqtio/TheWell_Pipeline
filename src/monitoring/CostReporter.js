@@ -464,17 +464,17 @@ class CostReporter {
    */
   formatReport(report, format) {
     switch (format.toLowerCase()) {
-      case 'json':
-        return report;
+    case 'json':
+      return report;
       
-      case 'csv':
-        return this.formatAsCSV(report);
+    case 'csv':
+      return this.formatAsCSV(report);
       
-      case 'html':
-        return this.formatAsHTML(report);
+    case 'html':
+      return this.formatAsHTML(report);
       
-      default:
-        return report;
+    default:
+      return report;
     }
   }
 

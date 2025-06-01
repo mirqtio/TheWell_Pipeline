@@ -353,31 +353,32 @@ class CostTracker extends EventEmitter {
     const periodEnd = new Date(date);
     
     switch (budgetType) {
-      case 'daily':
-        periodStart.setHours(0, 0, 0, 0);
-        periodEnd.setHours(23, 59, 59, 999);
-        break;
-      case 'weekly':
-        const dayOfWeek = periodStart.getDay();
-        periodStart.setDate(periodStart.getDate() - dayOfWeek);
-        periodStart.setHours(0, 0, 0, 0);
-        periodEnd.setDate(periodStart.getDate() + 6);
-        periodEnd.setHours(23, 59, 59, 999);
-        break;
-      case 'monthly':
-        periodStart.setDate(1);
-        periodStart.setHours(0, 0, 0, 0);
-        periodEnd.setMonth(periodEnd.getMonth() + 1, 0);
-        periodEnd.setHours(23, 59, 59, 999);
-        break;
-      case 'yearly':
-        periodStart.setMonth(0, 1);
-        periodStart.setHours(0, 0, 0, 0);
-        periodEnd.setMonth(11, 31);
-        periodEnd.setHours(23, 59, 59, 999);
-        break;
-      default:
-        throw new Error(`Invalid budget type: ${budgetType}`);
+    case 'daily':
+      periodStart.setHours(0, 0, 0, 0);
+      periodEnd.setHours(23, 59, 59, 999);
+      break;
+    case 'weekly': {
+      const dayOfWeek = periodStart.getDay();
+      periodStart.setDate(periodStart.getDate() - dayOfWeek);
+      periodStart.setHours(0, 0, 0, 0);
+      periodEnd.setDate(periodStart.getDate() + 6);
+      periodEnd.setHours(23, 59, 59, 999);
+      break;
+    }
+    case 'monthly':
+      periodStart.setDate(1);
+      periodStart.setHours(0, 0, 0, 0);
+      periodEnd.setMonth(periodEnd.getMonth() + 1, 0);
+      periodEnd.setHours(23, 59, 59, 999);
+      break;
+    case 'yearly':
+      periodStart.setMonth(0, 1);
+      periodStart.setHours(0, 0, 0, 0);
+      periodEnd.setMonth(11, 31);
+      periodEnd.setHours(23, 59, 59, 999);
+      break;
+    default:
+      throw new Error(`Invalid budget type: ${budgetType}`);
     }
     
     return { periodStart, periodEnd };

@@ -41,24 +41,24 @@ class BaseProvider {
 
   /**
    * Execute a completion request
-   * @param {Object} request - The completion request
-   * @param {string} request.model - Model to use
-   * @param {string} request.prompt - Input prompt
-   * @param {Object} request.options - Additional options
+   * @param {Object} _request - The completion request
+   * @param {string} _request.model - Model to use
+   * @param {string} _request.prompt - Input prompt
+   * @param {Object} _request.options - Additional options
    * @returns {Promise<Object>} Completion response
    */
-  async complete(request) {
+  async complete(_request) {
     throw new Error('complete() must be implemented by subclass');
   }
 
   /**
    * Calculate cost for a request
-   * @param {string} model - Model used
-   * @param {number} inputTokens - Number of input tokens
-   * @param {number} outputTokens - Number of output tokens
+   * @param {string} _model - Model used
+   * @param {number} _inputTokens - Number of input tokens
+   * @param {number} _outputTokens - Number of output tokens
    * @returns {Object} Cost breakdown
    */
-  calculateCost(model, inputTokens, outputTokens) {
+  calculateCost(_model, _inputTokens, _outputTokens) {
     throw new Error('calculateCost() must be implemented by subclass');
   }
 
