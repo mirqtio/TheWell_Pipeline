@@ -43,12 +43,12 @@ class JobScheduler extends EventEmitter {
         const jobType = jobData.type || 'single';
         
         switch (jobType) {
-          case 'single':
-            return await this.jobProcessor.processJob(jobData, job);
-          case 'batch':
-            return await this.jobProcessor.processBatch(jobData, job);
-          default:
-            throw new Error(`Unknown job type: ${jobType}`);
+        case 'single':
+          return await this.jobProcessor.processJob(jobData, job);
+        case 'batch':
+          return await this.jobProcessor.processBatch(jobData, job);
+        default:
+          throw new Error(`Unknown job type: ${jobType}`);
         }
       });
 

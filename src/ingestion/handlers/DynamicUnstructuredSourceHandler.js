@@ -124,26 +124,26 @@ class DynamicUnstructuredSourceHandler extends BaseSourceHandler {
         let documents = [];
         
         switch (target.type) {
-          case 'web-crawler':
-            documents = await this._discoverWebCrawl(target);
-            break;
-          case 'sitemap':
-            documents = await this._discoverSitemap(target);
-            break;
-          case 'search-api':
-            documents = await this._discoverSearchApi(target);
-            break;
-          case 'social-media':
-            documents = await this._discoverSocialMedia(target);
-            break;
-          case 'rss-discovery':
-            documents = await this._discoverRssFeeds(target);
-            break;
-          default:
-            this.logger?.warn('Unknown target type', { 
-              targetType: target.type,
-              targetName: target.name 
-            });
+        case 'web-crawler':
+          documents = await this._discoverWebCrawl(target);
+          break;
+        case 'sitemap':
+          documents = await this._discoverSitemap(target);
+          break;
+        case 'search-api':
+          documents = await this._discoverSearchApi(target);
+          break;
+        case 'social-media':
+          documents = await this._discoverSocialMedia(target);
+          break;
+        case 'rss-discovery':
+          documents = await this._discoverRssFeeds(target);
+          break;
+        default:
+          this.logger?.warn('Unknown target type', { 
+            targetType: target.type,
+            targetName: target.name 
+          });
         }
 
         // Add target metadata to documents

@@ -202,15 +202,15 @@ class ManualReviewApp {
 
     try {
       switch (type) {
-        case 'review':
-          await this.refreshReviewData();
-          break;
-        case 'jobs':
-          await this.refreshJobsData();
-          break;
-        case 'stats':
-          await this.loadStatsData();
-          break;
+      case 'review':
+        await this.refreshReviewData();
+        break;
+      case 'jobs':
+        await this.refreshJobsData();
+        break;
+      case 'stats':
+        await this.loadStatsData();
+        break;
       }
     } finally {
       // Remove spinning animation
@@ -954,20 +954,20 @@ class ManualReviewApp {
     
     // Load data for the specific view
     switch (view) {
-      case 'review':
-        await this.loadReviewData();
-        break;
-      case 'jobs':
-        await this.loadJobsData();
-        break;
-      case 'stats':
-        await this.loadStatsData();
-        break;
-      case 'visibility':
-        await this.loadVisibilityData();
-        break;
-      default:
-        console.warn(`Unknown view: ${view}`);
+    case 'review':
+      await this.loadReviewData();
+      break;
+    case 'jobs':
+      await this.loadJobsData();
+      break;
+    case 'stats':
+      await this.loadStatsData();
+      break;
+    case 'visibility':
+      await this.loadVisibilityData();
+      break;
+    default:
+      console.warn(`Unknown view: ${view}`);
     }
   }
 
@@ -1010,18 +1010,18 @@ class ManualReviewApp {
    */
   async refreshCurrentView() {
     switch (this.currentView) {
-      case 'review':
-        await this.loadReviewData();
-        break;
-      case 'jobs':
-        await this.loadJobsData();
-        break;
-      case 'stats':
-        await this.loadStatsData();
-        break;
-      case 'visibility':
-        await this.loadVisibilityData();
-        break;
+    case 'review':
+      await this.loadReviewData();
+      break;
+    case 'jobs':
+      await this.loadJobsData();
+      break;
+    case 'stats':
+      await this.loadStatsData();
+      break;
+    case 'visibility':
+      await this.loadVisibilityData();
+      break;
     }
   }
 

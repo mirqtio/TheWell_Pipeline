@@ -110,7 +110,8 @@ describe('Enhanced Failover E2E Scenarios', () => {
       for (const doc of documents) {
         const request = {
           prompt: `Summarize this document: ${doc.content}`,
-          taskType: 'summarization'
+          taskType: 'summarization',
+          testType: 'circuit-breaker'
         };
         
         const result = await providerManager.execute(request);

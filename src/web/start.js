@@ -207,18 +207,18 @@ class MockIngestionEngine {
 
     if (filter !== 'all') {
       switch (filter) {
-        case 'flagged':
-          filteredDocs = filteredDocs.filter(doc => doc.flags.length > 0);
-          break;
-        case 'assigned':
-          filteredDocs = filteredDocs.filter(doc => doc.assignedTo);
-          break;
-        case 'unassigned':
-          filteredDocs = filteredDocs.filter(doc => !doc.assignedTo);
-          break;
-        case 'priority':
-          filteredDocs = filteredDocs.filter(doc => doc.priority > 0);
-          break;
+      case 'flagged':
+        filteredDocs = filteredDocs.filter(doc => doc.flags.length > 0);
+        break;
+      case 'assigned':
+        filteredDocs = filteredDocs.filter(doc => doc.assignedTo);
+        break;
+      case 'unassigned':
+        filteredDocs = filteredDocs.filter(doc => !doc.assignedTo);
+        break;
+      case 'priority':
+        filteredDocs = filteredDocs.filter(doc => doc.priority > 0);
+        break;
       }
     }
 
@@ -324,7 +324,7 @@ async function startWebServer() {
 
     await webServer.start();
     
-    logger.info(`Manual Review Web Interface started successfully`);
+    logger.info('Manual Review Web Interface started successfully');
     logger.info(`Server running at http://${host}:${webServer.port}`);
     logger.info('Available endpoints:');
     logger.info('  - GET  /              - Manual Review Interface');

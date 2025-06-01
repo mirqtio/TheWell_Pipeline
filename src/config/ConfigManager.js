@@ -47,7 +47,7 @@ class ConfigManager extends EventEmitter {
       
       // Create watcher for configuration directory
       this.watcher = chokidar.watch(this.configDir, {
-        ignored: /(^|[\/\\])\../, // ignore dotfiles
+        ignored: /(^|[\\])\../, // ignore dotfiles
         persistent: true,
         ...this.watchOptions
       });
@@ -209,14 +209,14 @@ class ConfigManager extends EventEmitter {
       });
 
       switch (eventType) {
-        case 'add':
-        case 'change':
-          await this.handleConfigUpdate(configType, filePath);
-          break;
+      case 'add':
+      case 'change':
+        await this.handleConfigUpdate(configType, filePath);
+        break;
           
-        case 'unlink':
-          await this.handleConfigRemoval(configType, filePath);
-          break;
+      case 'unlink':
+        await this.handleConfigRemoval(configType, filePath);
+        break;
       }
       
     } catch (error) {

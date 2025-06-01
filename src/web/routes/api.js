@@ -62,20 +62,20 @@ module.exports = (dependencies = {}) => {
     const now = new Date();
     let since;
     switch (timeframe) {
-      case '5m':
-        since = new Date(now.getTime() - 5 * 60 * 1000);
-        break;
-      case '1h':
-        since = new Date(now.getTime() - 60 * 60 * 1000);
-        break;
-      case '24h':
-        since = new Date(now.getTime() - 24 * 60 * 60 * 1000);
-        break;
-      case '7d':
-        since = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
-        break;
-      default:
-        since = new Date(now.getTime() - 60 * 60 * 1000);
+    case '5m':
+      since = new Date(now.getTime() - 5 * 60 * 1000);
+      break;
+    case '1h':
+      since = new Date(now.getTime() - 60 * 60 * 1000);
+      break;
+    case '24h':
+      since = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+      break;
+    case '7d':
+      since = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+      break;
+    default:
+      since = new Date(now.getTime() - 60 * 60 * 1000);
     }
 
     // Get queue metrics
@@ -278,20 +278,20 @@ module.exports = (dependencies = {}) => {
     const now = new Date();
     let since;
     switch (timeframe) {
-      case '1h':
-        since = new Date(now.getTime() - 60 * 60 * 1000);
-        break;
-      case '24h':
-        since = new Date(now.getTime() - 24 * 60 * 60 * 1000);
-        break;
-      case '7d':
-        since = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
-        break;
-      case '30d':
-        since = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
-        break;
-      default:
-        since = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+    case '1h':
+      since = new Date(now.getTime() - 60 * 60 * 1000);
+      break;
+    case '24h':
+      since = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+      break;
+    case '7d':
+      since = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+      break;
+    case '30d':
+      since = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+      break;
+    default:
+      since = new Date(now.getTime() - 24 * 60 * 60 * 1000);
     }
 
     let data = [];

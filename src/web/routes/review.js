@@ -508,4 +508,4 @@ module.exports = (dependencies = {}) => {
   }));
 
   return router;
-}
+};

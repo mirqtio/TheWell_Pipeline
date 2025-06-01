@@ -102,9 +102,9 @@ describe('IngestionJobProcessor', () => {
       mockRegistry.getHandler.mockReturnValue(mockHandler);
       mockHandler.discover.mockResolvedValue(mockDocuments);
       mockHandler.extract.mockResolvedValueOnce(mockExtracted[0])
-                          .mockResolvedValueOnce(mockExtracted[1]);
+        .mockResolvedValueOnce(mockExtracted[1]);
       mockHandler.transform.mockResolvedValueOnce(mockTransformed[0])
-                           .mockResolvedValueOnce(mockTransformed[1]);
+        .mockResolvedValueOnce(mockTransformed[1]);
 
       const result = await processor.processJob(jobData, mockJob);
 
@@ -157,7 +157,7 @@ describe('IngestionJobProcessor', () => {
       mockRegistry.getHandler.mockReturnValue(mockHandler);
       mockHandler.discover.mockResolvedValue(mockDocuments);
       mockHandler.extract.mockResolvedValueOnce({ id: 'doc1', content: 'content1' })
-                          .mockRejectedValueOnce(new Error('Extract failed'));
+        .mockRejectedValueOnce(new Error('Extract failed'));
       mockHandler.transform.mockResolvedValueOnce({ id: 'doc1', title: 'Title 1', content: 'content1' });
 
       const result = await processor.processJob(jobData, mockJob);
@@ -262,7 +262,7 @@ describe('IngestionJobProcessor', () => {
       };
 
       mockRegistry.registerHandler.mockResolvedValueOnce('source1')
-                                  .mockRejectedValueOnce(new Error('Registration failed'));
+        .mockRejectedValueOnce(new Error('Registration failed'));
       mockRegistry.getHandler.mockReturnValue(mockHandler);
       mockHandler.discover.mockResolvedValue([]);
 

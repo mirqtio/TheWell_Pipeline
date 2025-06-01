@@ -619,16 +619,17 @@ class DynamicConsistentSourceHandler extends BaseSourceHandler {
     
     if (source.authentication) {
       switch (source.authentication.type) {
-        case 'bearer':
-          headers.Authorization = `Bearer ${source.authentication.token}`;
-          break;
-        case 'api_key':
-          headers[source.authentication.header || 'X-API-Key'] = source.authentication.key;
-          break;
-        case 'basic':
-          const credentials = Buffer.from(`${source.authentication.username}:${source.authentication.password}`).toString('base64');
-          headers.Authorization = `Basic ${credentials}`;
-          break;
+      case 'bearer':
+        headers.Authorization = `Bearer ${source.authentication.token}`;
+        break;
+      case 'api_key':
+        headers[source.authentication.header || 'X-API-Key'] = source.authentication.key;
+        break;
+      case 'basic': {
+        const credentials = Buffer.from(`${source.authentication.username}:${source.authentication.password}`).toString('base64');
+        headers.Authorization = `Basic ${credentials}`;
+        break;
+      }
       }
     }
     
@@ -679,7 +680,7 @@ class DynamicConsistentSourceHandler extends BaseSourceHandler {
       .replace(/&lt;/g, '<')
       .replace(/&gt;/g, '>')
       .replace(/&quot;/g, '"')
-      .replace(/&#39;/g, "'")
+      .replace(/&#39;/g, '\'')
       .replace(/&nbsp;/g, ' ');
     
     // Normalize whitespace
