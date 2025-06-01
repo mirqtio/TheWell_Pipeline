@@ -11,7 +11,9 @@ describe('Jobs Routes', () => {
   let mockQueueManager;
 
   beforeEach(() => {
-    // Mock queue manager
+    jest.clearAllMocks();
+    
+    // Setup basic mock returns
     mockQueueManager = {
       getJobs: jest.fn(),
       getJob: jest.fn(),
@@ -22,8 +24,19 @@ describe('Jobs Routes', () => {
       resumeQueue: jest.fn(),
       cleanQueue: jest.fn(),
       getQueueStats: jest.fn(),
-      getQueues: jest.fn()
+      getQueues: jest.fn(),
+      getQueueNames: jest.fn().mockReturnValue(['ingestion', 'manual-review', 'enrichment'])
     };
+
+    mockQueueManager.getJobs.mockResolvedValue([]);
+    mockQueueManager.getQueueStats.mockResolvedValue({
+      waiting: 0,
+      active: 0,
+      completed: 0,
+      failed: 0,
+      delayed: 0,
+      paused: false
+    });
 
     app = express();
     app.use(express.json());
@@ -58,26 +71,26 @@ describe('Jobs Routes', () => {
         }
       ];
 
-      mockQueueManager.getQueues.mockResolvedValue(['ingestion', 'enrichment']);
-      mockQueueManager.getJobs.mockResolvedValue(mockJobs);
+      mockQueueManager.getJobs
+        .mockResolvedValueOnce(mockJobs)
+        .mockResolvedValue([]);
 
       const response = await request(app)
-        .get('/api/jobs')
-        .expect(200);
-
+        .get('/api/jobs');
+      
+      expect(response.status).toBe(200);
       expect(response.body.jobs).toHaveLength(1);
       expect(response.body.jobs[0].id).toBe('job-1');
     });
 
     it('should handle query parameters correctly', async () => {
-      mockQueueManager.getQueues.mockResolvedValue(['ingestion']);
       mockQueueManager.getJobs.mockResolvedValue([]);
 
       await request(app)
         .get('/api/jobs?page=2&limit=25&status=failed&queue=ingestion')
         .expect(200);
 
-      expect(mockQueueManager.getQueues).toHaveBeenCalled();
+      expect(mockQueueManager.getQueueNames).toHaveBeenCalled();
     });
   });
 
@@ -89,7 +102,8 @@ describe('Jobs Routes', () => {
         queue: { name: 'ingestion' },
         data: { filename: 'test.pdf' },
         progress: 100,
-        logs: [{ message: 'Started processing' }, { message: 'Completed successfully' }]
+        logs: [{ message: 'Started processing' }, { message: 'Completed successfully' }],
+        getState: jest.fn().mockReturnValue('completed')
       };
 
       mockQueueManager.getJob.mockResolvedValue(mockJob);
@@ -116,52 +130,66 @@ describe('Jobs Routes', () => {
     it('should retry failed job successfully', async () => {
       const mockJob = {
         id: 'job-1',
-        failedReason: 'Network timeout'
+        failedReason: 'Network timeout',
+        getState: jest.fn().mockReturnValue('failed'),
+        retry: jest.fn().mockResolvedValue()
       };
 
       mockQueueManager.getJob.mockResolvedValue(mockJob);
-      mockQueueManager.retryJob.mockResolvedValue({ success: true });
 
       const response = await request(app)
         .post('/api/jobs/ingestion/job-1/retry')
         .expect(200);
 
       expect(response.body.success).toBe(true);
-      expect(mockQueueManager.retryJob).toHaveBeenCalledWith('ingestion', 'job-1');
+      expect(mockJob.retry).toHaveBeenCalled();
     });
 
     it('should handle retry errors', async () => {
-      mockQueueManager.getJob.mockResolvedValue({ id: 'job-1' });
-      mockQueueManager.retryJob.mockRejectedValue(new Error('Cannot retry active job'));
+      const mockJob = {
+        id: 'job-1',
+        getState: jest.fn().mockReturnValue('active'),
+        retry: jest.fn().mockResolvedValue()
+      };
+      
+      mockQueueManager.getJob.mockResolvedValue(mockJob);
 
       await request(app)
         .post('/api/jobs/ingestion/job-1/retry')
-        .expect(500);
+        .expect(400); // ValidationError for non-failed job should return 400
     });
   });
 
   describe('DELETE /:queue/:jobId', () => {
     it('should remove job successfully', async () => {
-      const mockJob = { id: 'job-1' };
+      const mockJob = { 
+        id: 'job-1',
+        getState: jest.fn().mockReturnValue('completed'),
+        remove: jest.fn().mockResolvedValue()
+      };
       
       mockQueueManager.getJob.mockResolvedValue(mockJob);
-      mockQueueManager.removeJob.mockResolvedValue({ success: true });
 
       const response = await request(app)
         .delete('/api/jobs/ingestion/job-1')
         .expect(200);
 
       expect(response.body.success).toBe(true);
-      expect(mockQueueManager.removeJob).toHaveBeenCalledWith('ingestion', 'job-1');
+      expect(mockJob.remove).toHaveBeenCalled();
     });
 
     it('should handle removal errors', async () => {
-      mockQueueManager.getJob.mockResolvedValue({ id: 'job-1' });
-      mockQueueManager.removeJob.mockRejectedValue(new Error('Job not found'));
+      const mockJob = {
+        id: 'job-1',
+        getState: jest.fn().mockReturnValue('completed'),
+        remove: jest.fn().mockRejectedValue(new Error('Job not found'))
+      };
+      
+      mockQueueManager.getJob.mockResolvedValue(mockJob);
 
       await request(app)
         .delete('/api/jobs/ingestion/job-1')
-        .expect(500);
+        .expect(500); // Internal error from job.remove() failure
     });
   });
 
@@ -178,7 +206,7 @@ describe('Jobs Routes', () => {
         }
       };
 
-      mockQueueManager.getQueues.mockResolvedValue(['ingestion', 'enrichment']);
+      mockQueueManager.getQueueStats.mockResolvedValue({ waiting: 5, active: 2, completed: 150, failed: 3 });
       mockQueueManager.getJobs.mockResolvedValue([]);
 
       const response = await request(app)

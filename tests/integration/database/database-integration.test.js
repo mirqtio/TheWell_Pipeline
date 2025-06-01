@@ -1,3 +1,6 @@
+// Unmock pg for integration tests that require real database connections
+jest.unmock('pg');
+
 const DatabaseManager = require('../../../src/database/DatabaseManager');
 const DocumentDAO = require('../../../src/database/DocumentDAO');
 const JobDAO = require('../../../src/database/JobDAO');

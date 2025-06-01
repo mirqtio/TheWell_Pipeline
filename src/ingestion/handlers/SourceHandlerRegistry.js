@@ -185,22 +185,39 @@ class SourceHandlerRegistry extends EventEmitter {
    */
   async discoverAll() {
     const enabledHandlers = this.getEnabledHandlers();
-    const allDocuments = [];
+    const results = [];
 
     for (const handler of enabledHandlers) {
       try {
         const documents = await handler.discover();
         if (Array.isArray(documents)) {
-          allDocuments.push(...documents);
+          results.push({
+            success: true,
+            handlerId: handler.config?.id,
+            documents: documents
+          });
           this.stats.discoveredDocuments += documents.length;
+        } else {
+          results.push({
+            success: false,
+            handlerId: handler.config?.id,
+            documents: [],
+            error: 'Handler did not return array of documents'
+          });
         }
       } catch (error) {
         // Log error but continue with other handlers
         this.logger.error(`Handler discovery failed for ${handler.config?.id}:`, error.message);
+        results.push({
+          success: false,
+          handlerId: handler.config?.id,
+          documents: [],
+          error: error.message
+        });
       }
     }
 
-    return allDocuments;
+    return results;
   }
 
   /**

@@ -473,10 +473,11 @@ class LLMProviderManager {
       const processedContent = this.substitutePromptVariables(prompt.content, variables);
 
       // Execute with failover
-      const result = await this.executeWithFailover(taskType, {
+      const result = await this.executeWithFailover({
+        taskType,
         prompt: processedContent,
         ...executeOptions
-      }, provider);
+      });
 
       // Add prompt metadata to result
       return {

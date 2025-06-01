@@ -178,7 +178,7 @@ describe('Source Handlers Integration Tests', () => {
 
       // Cleanup
       await registry.unregisterHandler('registry-test');
-      expect(registry.getHandler('registry-test')).toBeUndefined();
+      expect(registry.getHandler('registry-test')).toBeNull();
     });
 
     test('should handle multiple handlers', async () => {

@@ -39,6 +39,15 @@ class SemiStaticSourceHandler extends BaseSourceHandler {
       this._configureAuthentication();
     }
 
+    // Validate endpoint accessibility
+    for (const endpoint of this.config.config.endpoints) {
+      try {
+        await this.httpClient.head(endpoint.url);
+      } catch (error) {
+        throw new Error(`Failed to validate endpoint ${endpoint.name}: ${error.message}`);
+      }
+    }
+
     this.logger?.info('SemiStaticSourceHandler initialized successfully');
   }
 
@@ -46,7 +55,7 @@ class SemiStaticSourceHandler extends BaseSourceHandler {
    * Validate semi-static source configuration
    */
   async validateConfig(config) {
-    const required = ['endpoints'];
+    const required = ['baseUrl', 'endpoints'];
     const missing = required.filter(field => !config.config?.[field]);
     
     if (missing.length > 0) {
@@ -62,6 +71,25 @@ class SemiStaticSourceHandler extends BaseSourceHandler {
     for (const endpoint of config.config.endpoints) {
       if (!endpoint.url || !endpoint.name) {
         throw new Error('Each endpoint must have url and name properties');
+      }
+    }
+
+    // Validate authentication if present
+    if (config.config.authentication) {
+      const validAuthTypes = ['bearer', 'basic', 'api-key'];
+      if (!validAuthTypes.includes(config.config.authentication.type)) {
+        throw new Error(`Invalid authentication type: ${config.config.authentication.type}`);
+      }
+    }
+
+    // Validate endpoint accessibility if httpClient is available
+    if (this.httpClient) {
+      for (const endpoint of config.config.endpoints) {
+        try {
+          await this.httpClient.head(endpoint.url);
+        } catch (error) {
+          throw new Error('Endpoint validation failed');
+        }
       }
     }
 
@@ -203,9 +231,10 @@ class SemiStaticSourceHandler extends BaseSourceHandler {
       documentId: extractedContent.id 
     });
 
-    const contentType = extractedContent.metadata.responseHeaders?.['content-type'] || '';
+    const contentType = extractedContent.metadata.responseHeaders?.['content-type'] || 
+                        extractedContent.metadata.contentType || '';
     let transformedContent = extractedContent.content;
-    let title = extractedContent.metadata.endpointName;
+    let title = extractedContent.metadata.endpointName || extractedContent.metadata.endpoint;
 
     // Transform based on content type
     if (contentType.includes('text/html')) {
@@ -213,7 +242,9 @@ class SemiStaticSourceHandler extends BaseSourceHandler {
       transformedContent = htmlTransform.content;
       title = htmlTransform.title || title;
     } else if (contentType.includes('application/json')) {
-      transformedContent = this._transformJson(extractedContent.content);
+      const jsonTransform = this._transformJson(extractedContent.content);
+      transformedContent = jsonTransform.content;
+      title = jsonTransform.title || title;
     } else if (contentType.includes('text/plain')) {
       transformedContent = this._transformPlainText(extractedContent.content);
     }
@@ -271,6 +302,38 @@ class SemiStaticSourceHandler extends BaseSourceHandler {
   }
 
   /**
+   * Check if document has changed since last fetch using ETag or last-modified
+   */
+  async _checkForChanges(document) {
+    try {
+      const response = await this.httpClient.head(document.url);
+      const currentEtag = response.headers.etag;
+      const currentLastModified = response.headers['last-modified'];
+      
+      // Check ETag first if available
+      if (currentEtag && document.metadata.etag) {
+        return currentEtag !== document.metadata.etag;
+      }
+      
+      // Fallback to last-modified comparison
+      if (currentLastModified && document.metadata.lastModified) {
+        const currentDate = new Date(currentLastModified);
+        const storedDate = new Date(document.metadata.lastModified);
+        return currentDate > storedDate;
+      }
+      
+      // If no comparison data available, assume changed
+      return true;
+    } catch (error) {
+      this.logger?.debug('Could not check for changes', { 
+        documentId: document.id,
+        error: error.message 
+      });
+      return true; // Assume changed on error
+    }
+  }
+
+  /**
    * Generate appropriate Accept header based on content type
    */
   _getAcceptHeader(contentType) {
@@ -307,8 +370,9 @@ class SemiStaticSourceHandler extends BaseSourceHandler {
     const titleMatch = html.match(/<title[^>]*>([^<]+)<\/title>/i);
     const title = titleMatch ? titleMatch[1].trim() : null;
     
-    // Remove HTML tags and extract text content
-    const content = html
+    // Remove title, scripts, styles, then extract text content
+    let content = html
+      .replace(/<title[^>]*>[\s\S]*?<\/title>/gi, '') // Remove title
       .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, '') // Remove scripts
       .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '') // Remove styles
       .replace(/<[^>]+>/g, ' ') // Remove HTML tags
@@ -319,18 +383,37 @@ class SemiStaticSourceHandler extends BaseSourceHandler {
   }
 
   /**
-   * Transform JSON content
+   * Transform JSON content by extracting title and content
    */
   _transformJson(json) {
     if (typeof json === 'string') {
       try {
         json = JSON.parse(json);
       } catch (error) {
-        return json; // Return as-is if not valid JSON
+        return { content: json, title: null }; // Return as-is if not valid JSON
       }
     }
     
-    return JSON.stringify(json, null, 2);
+    // Extract title and content from JSON
+    let title = null;
+    let content = null;
+    
+    if (json && typeof json === 'object') {
+      // Try common title fields
+      title = json.title || json.name || json.heading || null;
+      
+      // Try common content fields
+      content = json.content || json.body || json.text || json.description || null;
+      
+      // If no specific content field, use the whole JSON as content
+      if (!content) {
+        content = JSON.stringify(json, null, 2);
+      }
+    } else {
+      content = JSON.stringify(json, null, 2);
+    }
+    
+    return { title, content };
   }
 
   /**

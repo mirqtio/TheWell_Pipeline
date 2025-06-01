@@ -44,7 +44,7 @@ describe('DatabaseManager', () => {
             const db = new DatabaseManager();
             expect(db.config.host).toBe('localhost');
             expect(db.config.port).toBe(5432);
-            expect(db.config.database).toBe('thewell_pipeline');
+            expect(db.config.database).toBe('thewell_pipeline_test');
         });
 
         it('should use provided configuration', () => {
@@ -60,7 +60,7 @@ describe('DatabaseManager', () => {
             
             const db = new DatabaseManager();
             expect(db.config.host).toBe('env-host');
-            expect(db.config.port).toBe('3306');
+            expect(db.config.port).toBe(3306);
             expect(db.config.database).toBe('env-db');
             
             // Clean up

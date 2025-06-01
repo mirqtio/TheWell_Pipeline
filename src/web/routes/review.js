@@ -41,12 +41,9 @@ module.exports = (dependencies = {}) => {
       });
     } else {
       // Fallback to queueManager implementation
-      const jobs = await queueManager.getJobs('manual-review', {
-        page: parseInt(page),
-        limit: parseInt(limit)
-      });
+      const jobs = await queueManager.getJobs('manual-review', ['waiting', 'active']);
 
-      const documents = jobs.jobs.map(job => ({
+      const documents = jobs.map(job => ({
         id: job.id,
         jobId: job.id,
         title: job.data.document?.title || 'Untitled Document',
@@ -70,7 +67,11 @@ module.exports = (dependencies = {}) => {
 
       result = {
         documents,
-        pagination: jobs.pagination
+        pagination: {
+          page: parseInt(page),
+          limit: parseInt(limit),
+          total: documents.length
+        }
       };
     }
 
@@ -455,19 +456,16 @@ module.exports = (dependencies = {}) => {
       result = await ingestionEngine.getReviewStats({ timeframe });
     } else {
       // Fallback to queueManager implementation
-      const queueStats = await queueManager.getQueueStats();
+      const queueStats = await queueManager.getQueueStats('manual-review');
       
       // Get recent completed jobs for analysis
       const timeframeMins = timeframe === '24h' ? 1440 : timeframe === '7d' ? 10080 : 60;
       const since = new Date(Date.now() - timeframeMins * 60 * 1000);
       
-      const recentJobs = await queueManager.getJobs('manual-review', {
-        status: 'completed',
-        since: since.toISOString()
-      });
+      const recentJobs = await queueManager.getJobs('manual-review', ['completed'], 0, -1);
 
       // Calculate approval/rejection rates
-      const completedJobs = recentJobs.jobs || [];
+      const completedJobs = recentJobs || [];
       const approved = completedJobs.filter(job => job.data?.decision === 'approve').length;
       const rejected = completedJobs.filter(job => job.data?.decision === 'reject').length;
       const flagged = completedJobs.filter(job => job.data?.flags?.length > 0).length;
@@ -488,7 +486,7 @@ module.exports = (dependencies = {}) => {
         stats: {
           queue: {
             waiting: queueStats.waiting || 0,
-            reviewing: queueStats.active || 0,
+            active: queueStats.active || 0,
             completed: queueStats.completed || 0
           },
           recent: {

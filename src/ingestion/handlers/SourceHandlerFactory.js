@@ -26,10 +26,15 @@ class SourceHandlerFactory {
   /**
    * Register a handler class for a source type
    */
-  registerHandler(sourceType, handlerClass) {
+  registerHandler(sourceType, handlerClass, force = false) {
     if (!sourceType || !handlerClass) {
       throw new Error('Source type and handler class are required');
     }
+    
+    if (this.handlers.has(sourceType) && !force) {
+      throw new Error(`Handler for type ${sourceType} is already registered`);
+    }
+    
     this.handlers.set(sourceType, handlerClass);
   }
 
@@ -44,13 +49,17 @@ class SourceHandlerFactory {
    * Create a handler instance for the given configuration
    */
   createHandler(config) {
-    if (!config || !config.type) {
-      throw new Error('Configuration with type is required');
+    if (!config) {
+      throw new Error('Configuration is required');
+    }
+    
+    if (!config.type) {
+      throw new Error('Configuration must specify a type');
     }
 
     const HandlerClass = this.handlers.get(config.type);
     if (!HandlerClass) {
-      throw new Error(`No handler registered for source type: ${config.type}`);
+      throw new Error(`No handler registered for type: ${config.type}`);
     }
 
     return new HandlerClass(config);

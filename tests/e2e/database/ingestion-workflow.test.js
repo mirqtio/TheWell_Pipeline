@@ -2,6 +2,9 @@ const DatabaseManager = require('../../../src/database/DatabaseManager');
 const DocumentDAO = require('../../../src/database/DocumentDAO');
 const JobDAO = require('../../../src/database/JobDAO');
 
+// Unmock pg for E2E tests - we need real database connections
+jest.unmock('pg');
+
 // E2E tests for complete ingestion workflow scenarios
 let skipIfNoDatabase = process.env.SKIP_DB_TESTS === 'true';
 
@@ -20,8 +23,8 @@ describe('Ingestion Workflow E2E Tests', () => {
             host: process.env.TEST_DB_HOST || 'localhost',
             port: process.env.TEST_DB_PORT || 5432,
             database: process.env.TEST_DB_NAME || 'thewell_pipeline_test',
-            user: process.env.TEST_DB_USER || 'postgres',
-            password: process.env.TEST_DB_PASSWORD || 'password'
+            user: process.env.TEST_DB_USER || 'charlieirwin',
+            password: process.env.TEST_DB_PASSWORD || ''
         };
 
         databaseManager = new DatabaseManager(testConfig);
@@ -137,7 +140,7 @@ describe('Ingestion Workflow E2E Tests', () => {
                 const visibility = document.title.includes('1') ? 'public' : 'internal';
                 
                 await databaseManager.query(
-                    'INSERT INTO document_visibility (document_id, visibility_level, assigned_by, reason) VALUES ($1, $2, $3, $4)',
+                    'INSERT INTO document_visibility (document_id, visibility_level, approved_by, reason) VALUES ($1, $2, $3, $4)',
                     [document.id, visibility, 'system', 'Auto-assigned based on content analysis']
                 );
 
@@ -191,8 +194,8 @@ describe('Ingestion Workflow E2E Tests', () => {
                 };
 
                 await databaseManager.query(
-                    'INSERT INTO document_enrichments (document_id, enrichment_type, enrichment_data, llm_provider, confidence_score) VALUES ($1, $2, $3, $4, $5)',
-                    [document.id, 'full_analysis', JSON.stringify(enrichmentData), 'openai', enrichmentData.confidence_scores.sentiment]
+                    'INSERT INTO document_enrichments (document_id, enrichment_type, result) VALUES ($1, $2, $3)',
+                    [document.id, 'full_analysis', JSON.stringify(enrichmentData)]
                 );
 
                 await jobDAO.updateStatus(enrichmentJob.id, 'completed', {
@@ -238,8 +241,9 @@ describe('Ingestion Workflow E2E Tests', () => {
             // Check job dependencies were respected
             for (const visibilityJob of visibilityJobs) {
                 const job = await jobDAO.findById(visibilityJob.id);
-                expect(job.started_at).toBeNull() || 
-                expect(new Date(job.started_at)).toBeGreaterThanOrEqual(new Date(finalIngestionJob.completed_at));
+                if (job.started_at !== null) {
+                    expect(new Date(job.started_at).getTime()).toBeGreaterThanOrEqual(new Date(finalIngestionJob.completed_at).getTime());
+                }
             }
 
             // Verify search functionality works with enriched documents
@@ -584,13 +588,13 @@ describe('Ingestion Workflow E2E Tests', () => {
 
             // Add visibility and enrichment data
             await databaseManager.query(
-                'INSERT INTO document_visibility (document_id, visibility_level, assigned_by) VALUES ($1, $2, $3)',
-                [document.id, 'internal', 'system']
+                'INSERT INTO document_visibility (document_id, visibility_level, approved_by, reason) VALUES ($1, $2, $3, $4)',
+                [document.id, 'internal', 'system', 'Auto-assigned based on content analysis']
             );
 
             await databaseManager.query(
-                'INSERT INTO document_enrichments (document_id, enrichment_type, enrichment_data, llm_provider) VALUES ($1, $2, $3, $4)',
-                [document.id, 'test', '{}', 'test-provider']
+                'INSERT INTO document_enrichments (document_id, enrichment_type, result) VALUES ($1, $2, $3)',
+                [document.id, 'test', '{}']
             );
 
             // Verify all data exists

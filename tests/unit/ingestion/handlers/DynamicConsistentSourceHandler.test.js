@@ -120,7 +120,9 @@ describe('DynamicConsistentSourceHandler', () => {
     });
 
     test('should discover documents from RSS feeds', async () => {
-      const mockRssResponse = `<?xml version="1.0"?>
+      await handler.initialize();
+      
+      const mockRssResponse = `<?xml version="1.0" encoding="UTF-8"?>
         <rss version="2.0">
           <channel>
             <item>
@@ -158,6 +160,20 @@ describe('DynamicConsistentSourceHandler', () => {
     });
 
     test('should discover documents from API endpoints', async () => {
+      await handler.initialize();
+      
+      const mockRssResponse = `<?xml version="1.0" encoding="UTF-8"?>
+        <rss version="2.0">
+          <channel>
+            <item>
+              <title>RSS Article 1</title>
+              <link>https://example.com/rss-article-1</link>
+              <description>RSS content 1</description>
+              <pubDate>Mon, 01 Jan 2023 00:00:00 GMT</pubDate>
+            </item>
+          </channel>
+        </rss>`;
+
       const mockApiResponse = {
         articles: [
           {
@@ -190,16 +206,16 @@ describe('DynamicConsistentSourceHandler', () => {
       expect(documents.length).toBeGreaterThan(0);
       const apiDocs = documents.filter(d => d.metadata.contentType === 'api');
       expect(apiDocs.length).toBeGreaterThan(0);
+      expect(apiDocs[0]).toMatchObject({
+        title: 'API Article 1',
+        content: 'API content 1'
+      });
     });
 
     test('should handle source discovery errors gracefully', async () => {
-      mockedAxios.get
-        .mockRejectedValueOnce(new Error('RSS feed unavailable'))
-        .mockResolvedValueOnce({
-          status: 200,
-          data: { articles: [] },
-          headers: { 'content-type': 'application/json' }
-        });
+      await handler.initialize();
+      
+      mockedAxios.get.mockRejectedValue(new Error('Network error'));
 
       const documents = await handler.discover();
 
@@ -207,7 +223,7 @@ describe('DynamicConsistentSourceHandler', () => {
         'Source discovery failed',
         expect.objectContaining({ sourceUrl: 'https://example.com/feed.xml' })
       );
-      expect(documents).toBeDefined();
+      expect(documents).toEqual([]);
     });
 
     test('should apply deduplication', async () => {
@@ -243,6 +259,8 @@ describe('DynamicConsistentSourceHandler', () => {
 
   describe('Content Extraction', () => {
     test('should extract RSS item content', async () => {
+      await handler.initialize();
+      
       const mockDocument = {
         id: 'test-rss-doc',
         url: 'https://example.com/article1',
@@ -291,10 +309,15 @@ describe('DynamicConsistentSourceHandler', () => {
     });
 
     test('should handle extraction errors', async () => {
+      await handler.initialize();
+      
       const mockDocument = {
         id: 'test-doc',
         url: 'https://example.com/article1',
-        metadata: { contentType: 'rss' }
+        metadata: {
+          contentType: 'rss',
+          sourceUrl: 'https://example.com/feed.xml'
+        }
       };
 
       mockedAxios.get.mockRejectedValue(new Error('Page not found'));

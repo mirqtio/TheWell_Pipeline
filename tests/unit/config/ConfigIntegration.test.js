@@ -1,24 +1,26 @@
-const ConfigIntegration = require('../../../src/config/ConfigIntegration');
 const ConfigManager = require('../../../src/config/ConfigManager');
 
 // Mock ConfigManager
 jest.mock('../../../src/config/ConfigManager');
 
+// Mock logger before requiring ConfigIntegration
+jest.mock('../../../src/utils/logger', () => ({
+  info: jest.fn(),
+  warn: jest.fn(),
+  error: jest.fn(),
+  debug: jest.fn()
+}));
+
+const ConfigIntegration = require('../../../src/config/ConfigIntegration');
+const logger = require('../../../src/utils/logger');
+
 describe('ConfigIntegration', () => {
   let configIntegration;
   let mockConfigManager;
-  let mockLogger;
 
   beforeEach(() => {
-    // Mock logger
-    mockLogger = {
-      info: jest.fn(),
-      warn: jest.fn(),
-      error: jest.fn(),
-      debug: jest.fn()
-    };
-    
-    jest.doMock('../../../src/utils/logger', () => mockLogger);
+    // Clear all mocks
+    jest.clearAllMocks();
     
     // Create mock ConfigManager instance
     mockConfigManager = {
@@ -45,17 +47,35 @@ describe('ConfigIntegration', () => {
     it('should initialize with default options', () => {
       expect(configIntegration.components).toBeInstanceOf(Map);
       expect(configIntegration.isInitialized).toBe(false);
-      expect(ConfigManager).toHaveBeenCalledWith(undefined);
+      expect(ConfigManager).toHaveBeenCalledWith({});
     });
 
     it('should initialize with custom options', () => {
       const options = {
-        configManager: { configDir: '/custom/path' }
+        configDir: '/custom/path'
       };
       
       new ConfigIntegration(options);
       
-      expect(ConfigManager).toHaveBeenCalledWith(options.configManager);
+      expect(ConfigManager).toHaveBeenCalledWith(options);
+    });
+
+    it('should use provided configManager instance', () => {
+      const mockConfigManager = {
+        startWatching: jest.fn(),
+        stopWatching: jest.fn(),
+        on: jest.fn(),
+        off: jest.fn()
+      };
+      
+      const options = {
+        configManager: mockConfigManager
+      };
+      
+      const integration = new ConfigIntegration(options);
+      
+      expect(integration.configManager).toBe(mockConfigManager);
+      expect(ConfigManager).not.toHaveBeenCalledWith(mockConfigManager);
     });
   });
 
@@ -75,7 +95,7 @@ describe('ConfigIntegration', () => {
       
       await configIntegration.initialize();
       
-      expect(mockLogger.warn).toHaveBeenCalledWith('ConfigIntegration is already initialized');
+      expect(logger.warn).toHaveBeenCalledWith('ConfigIntegration is already initialized');
       expect(mockConfigManager.startWatching).not.toHaveBeenCalled();
     });
 
@@ -84,7 +104,7 @@ describe('ConfigIntegration', () => {
       mockConfigManager.startWatching.mockRejectedValue(error);
       
       await expect(configIntegration.initialize()).rejects.toThrow('Initialization failed');
-      expect(mockLogger.error).toHaveBeenCalledWith('Failed to initialize ConfigIntegration', { error: error.message });
+      expect(logger.error).toHaveBeenCalledWith('Failed to initialize ConfigIntegration', { error: error.message });
     });
   });
 
@@ -116,7 +136,7 @@ describe('ConfigIntegration', () => {
       mockConfigManager.stopWatching.mockRejectedValue(error);
       
       await expect(configIntegration.shutdown()).rejects.toThrow('Shutdown failed');
-      expect(mockLogger.error).toHaveBeenCalledWith('Error during ConfigIntegration shutdown', { error: error.message });
+      expect(logger.error).toHaveBeenCalledWith('Error during ConfigIntegration shutdown', { error: error.message });
     });
   });
 
@@ -194,7 +214,7 @@ describe('ConfigIntegration', () => {
       await configIntegration.reloadConfig(filePath);
       
       expect(mockConfigManager.loadConfig).toHaveBeenCalledWith(filePath);
-      expect(mockLogger.info).toHaveBeenCalledWith('Configuration reloaded successfully', { filePath });
+      expect(logger.info).toHaveBeenCalledWith('Configuration reloaded successfully', { filePath });
     });
 
     it('should handle reload errors', async () => {
@@ -203,7 +223,7 @@ describe('ConfigIntegration', () => {
       mockConfigManager.loadConfig.mockRejectedValue(error);
       
       await expect(configIntegration.reloadConfig(filePath)).rejects.toThrow('Reload failed');
-      expect(mockLogger.error).toHaveBeenCalledWith('Failed to reload configuration', { filePath, error: error.message });
+      expect(logger.error).toHaveBeenCalledWith('Failed to reload configuration', { filePath, error: error.message });
     });
   });
 
@@ -251,7 +271,7 @@ describe('ConfigIntegration', () => {
       await configIntegration.handleConfigChange(event);
       
       expect(mockComponent.updateConfig).toHaveBeenCalledTimes(2);
-      expect(mockLogger.info).toHaveBeenCalledWith('Configuration rollback successful', { configType: 'sources' });
+      expect(logger.info).toHaveBeenCalledWith('Configuration rollback successful', { configType: 'sources' });
     });
 
     it('should handle rollback failure', async () => {
@@ -268,7 +288,7 @@ describe('ConfigIntegration', () => {
       
       await configIntegration.handleConfigChange(event);
       
-      expect(mockLogger.error).toHaveBeenCalledWith('Configuration rollback failed', {
+      expect(logger.error).toHaveBeenCalledWith('Configuration rollback failed', {
         configType: 'sources',
         error: 'Rollback failed'
       });
@@ -419,7 +439,7 @@ describe('ConfigIntegration', () => {
       
       configIntegration.handleConfigError(event);
       
-      expect(mockLogger.error).toHaveBeenCalledWith('Configuration error occurred', {
+      expect(logger.error).toHaveBeenCalledWith('Configuration error occurred', {
         type: 'config-change-error',
         filePath: '/path/to/config.json',
         error: 'Test error'

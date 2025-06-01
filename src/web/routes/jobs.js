@@ -124,6 +124,42 @@ module.exports = (dependencies = {}) => {
   }));
 
   /**
+   * Get overview statistics
+   */
+  router.get('/stats/overview', requirePermission('read'), asyncHandler(async (req, res) => {
+    logger.info('Fetching job overview statistics', {
+      userId: req.user.id
+    });
+
+    const queueNames = queueManager.getQueueNames();
+    let totalStats = {
+      waiting: 0,
+      active: 0,
+      completed: 0,
+      failed: 0,
+      delayed: 0
+    };
+
+    for (const queueName of queueNames) {
+      try {
+        const stats = await queueManager.getQueueStats(queueName);
+        totalStats.waiting += stats.waiting || 0;
+        totalStats.active += stats.active || 0;
+        totalStats.completed += stats.completed || 0;
+        totalStats.failed += stats.failed || 0;
+        totalStats.delayed += stats.delayed || 0;
+      } catch (error) {
+        logger.warn(`Failed to get stats for queue ${queueName}`, { error: error.message });
+      }
+    }
+
+    res.json({
+      stats: totalStats,
+      timestamp: new Date().toISOString()
+    });
+  }));
+
+  /**
    * Get queue statistics
    */
   router.get('/stats/queues', requirePermission('read'), asyncHandler(async (req, res) => {

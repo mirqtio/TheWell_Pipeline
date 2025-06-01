@@ -395,8 +395,7 @@ describe('JobDAO', () => {
             const result = await jobDAO.cleanup(retentionDays);
 
             expect(mockDb.query).toHaveBeenCalledWith(
-                expect.stringContaining('DELETE FROM jobs'),
-                ['30 days']
+                expect.stringContaining('DELETE FROM jobs')
             );
             expect(result).toBe(150);
         });
@@ -407,8 +406,7 @@ describe('JobDAO', () => {
             await jobDAO.cleanup();
 
             expect(mockDb.query).toHaveBeenCalledWith(
-                expect.anything(),
-                ['7 days']
+                expect.anything()
             );
         });
     });

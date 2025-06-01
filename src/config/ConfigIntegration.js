@@ -1,5 +1,5 @@
-const ConfigManager = require('./ConfigManager');
 const logger = require('../utils/logger');
+const ConfigManager = require('./ConfigManager');
 
 /**
  * ConfigIntegration handles the integration between ConfigManager and the ingestion system
@@ -7,7 +7,7 @@ const logger = require('../utils/logger');
  */
 class ConfigIntegration {
   constructor(options = {}) {
-    this.configManager = new ConfigManager(options.configManager);
+    this.configManager = options.configManager || new ConfigManager(options);
     this.components = new Map();
     this.isInitialized = false;
     

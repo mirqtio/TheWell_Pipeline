@@ -45,10 +45,9 @@ describe('Review Routes', () => {
       next();
     });
 
-    // Create routes with dependencies
+    // Create routes with dependencies (no ingestionEngine to test queueManager fallback)
     const reviewRoutes = createReviewRoutes({
-      queueManager: mockQueueManager,
-      ingestionEngine: mockIngestionEngine
+      queueManager: mockQueueManager
     });
 
     app.use('/api/review', reviewRoutes);

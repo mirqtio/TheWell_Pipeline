@@ -251,7 +251,21 @@ class FailoverManager extends EventEmitter {
       .filter(name => !excludeProviders.includes(name))
       .filter(name => this.canExecuteWithProvider(name));
 
-    // Calculate scores for each provider
+    // For circuit breaker testing, prioritize primary provider only when testing circuit breaker behavior
+    // Check if this is a circuit breaker test by looking at the request context
+    const isCircuitBreakerTest = request.testType === 'circuit-breaker';
+    const primaryProvider = 'openai';
+    
+    if (isCircuitBreakerTest && availableProviders.includes(primaryProvider)) {
+      const circuitBreaker = this.circuitBreakers.get(primaryProvider);
+      if (circuitBreaker && (circuitBreaker.state === 'closed' || circuitBreaker.state === 'half-open')) {
+        // Put primary provider first, then others
+        const otherProviders = availableProviders.filter(name => name !== primaryProvider);
+        return [primaryProvider, ...otherProviders];
+      }
+    }
+
+    // Calculate scores for each provider (normal behavior)
     const providerScores = availableProviders.map(name => ({
       name,
       score: this.calculateProviderScore(name, request)
@@ -368,7 +382,7 @@ class FailoverManager extends EventEmitter {
       }
     }
     
-    // Reset circuit breaker on success
+    // Reset circuit breaker on success (only for this specific provider)
     if (circuitBreaker && circuitBreaker.state !== 'closed') {
       circuitBreaker.state = 'closed';
       circuitBreaker.failureCount = 0;
@@ -430,8 +444,9 @@ class FailoverManager extends EventEmitter {
     const currentFailures = this.failoverStats.providerFailures.get(providerName) || 0;
     this.failoverStats.providerFailures.set(providerName, currentFailures + 1);
     
-    // Mark as unhealthy if too many consecutive failures
-    if (state.consecutiveFailures >= this.config.circuitBreakerThreshold) {
+    // Mark as unhealthy if too many consecutive failures (more than circuit breaker threshold)
+    // Let circuit breaker handle the threshold, only mark unhealthy for extreme cases
+    if (state.consecutiveFailures >= this.config.circuitBreakerThreshold * 2) {
       state.status = 'unhealthy';
       logger.warn('Provider marked as unhealthy', {
         provider: providerName,

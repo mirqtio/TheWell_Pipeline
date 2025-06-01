@@ -13,6 +13,12 @@ class MockQueueManager {
   constructor() {
     this.initialized = true;
     this.connected = true;
+    this.isInitialized = true;
+    this.isConnected = true;
+  }
+
+  getQueueNames() {
+    return ['ingestion', 'enrichment', 'export'];
   }
 
   async getJobs(options = {}) {
@@ -103,6 +109,12 @@ class MockQueueManager {
 class MockIngestionEngine {
   constructor() {
     this.initialized = true;
+    this.isInitialized = true;
+    this.isRunning = true;
+  }
+
+  getRegisteredSources() {
+    return ['documents', 'web-scraper', 'api-feeds'];
   }
 
   async getPendingDocuments(options = {}) {
@@ -299,19 +311,21 @@ async function startWebServer() {
     logger.info('Starting TheWell Pipeline Manual Review Web Interface...');
 
     // Create and start server
+    const port = process.env.WEB_PORT || 3001;
+    const host = process.env.WEB_HOST || 'localhost';
+    
     const webServer = new ManualReviewServer({
+      port: port === '0' ? 0 : parseInt(port), // Handle port 0 for dynamic assignment
+      host,
       queueManager,
       ingestionEngine,
       logger
     });
 
-    const port = process.env.WEB_PORT || 3001;
-    const host = process.env.WEB_HOST || 'localhost';
-
     await webServer.start();
     
     logger.info(`Manual Review Web Interface started successfully`);
-    logger.info(`Server running at http://${host}:${port}`);
+    logger.info(`Server running at http://${host}:${webServer.port}`);
     logger.info('Available endpoints:');
     logger.info('  - GET  /              - Manual Review Interface');
     logger.info('  - GET  /api/status    - System Status');

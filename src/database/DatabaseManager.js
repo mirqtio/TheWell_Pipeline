@@ -10,7 +10,7 @@ class DatabaseManager {
     constructor(config = {}) {
         this.config = {
             host: config.host || process.env.DB_HOST || 'localhost',
-            port: config.port || process.env.DB_PORT || 5432,
+            port: parseInt(config.port || process.env.DB_PORT || 5432),
             database: config.database || process.env.DB_NAME || 'thewell_pipeline',
             user: config.user || process.env.DB_USER || 'postgres',
             password: config.password || process.env.DB_PASSWORD || '',
@@ -114,6 +114,11 @@ class DatabaseManager {
             
             return true;
         } catch (error) {
+            // Ignore "already exists" errors for idempotent schema application
+            if (error.message.includes('already exists')) {
+                logger.info('Database schema already exists, skipping application');
+                return true;
+            }
             logger.error('Failed to apply database schema', { error: error.message });
             throw error;
         }

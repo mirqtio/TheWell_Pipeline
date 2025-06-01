@@ -61,15 +61,13 @@ describe('Error Handler Middleware', () => {
   });
 
   describe('errorHandler', () => {
-    beforeEach(() => {
-      app.use(errorHandler.errorHandler);
-    });
-
     it('should handle ValidationError with 400 status', async () => {
       app.get('/test', (req, res, next) => {
         const error = new errorHandler.ValidationError('Invalid input');
         next(error);
       });
+
+      app.use(errorHandler.errorHandler);
 
       const response = await request(app)
         .get('/test')
@@ -85,6 +83,8 @@ describe('Error Handler Middleware', () => {
         next(error);
       });
 
+      app.use(errorHandler.errorHandler);
+
       const response = await request(app)
         .get('/test')
         .expect(401);
@@ -98,6 +98,8 @@ describe('Error Handler Middleware', () => {
         const error = new errorHandler.AuthorizationError('Access denied');
         next(error);
       });
+
+      app.use(errorHandler.errorHandler);
 
       const response = await request(app)
         .get('/test')
@@ -113,6 +115,8 @@ describe('Error Handler Middleware', () => {
         next(error);
       });
 
+      app.use(errorHandler.errorHandler);
+
       const response = await request(app)
         .get('/test')
         .expect(404);
@@ -123,8 +127,11 @@ describe('Error Handler Middleware', () => {
 
     it('should handle generic errors with 500 status', async () => {
       app.get('/test', (req, res, next) => {
-        next(new Error('Generic error'));
+        const error = new Error('Something went wrong');
+        next(error);
       });
+
+      app.use(errorHandler.errorHandler);
 
       const response = await request(app)
         .get('/test')
@@ -140,6 +147,8 @@ describe('Error Handler Middleware', () => {
       app.get('/test', (req, res, next) => {
         next(new Error('Development error'));
       });
+
+      app.use(errorHandler.errorHandler);
 
       const response = await request(app)
         .get('/test')
@@ -158,6 +167,8 @@ describe('Error Handler Middleware', () => {
       app.get('/test', (req, res, next) => {
         next(new Error('Production error'));
       });
+
+      app.use(errorHandler.errorHandler);
 
       const response = await request(app)
         .get('/test')

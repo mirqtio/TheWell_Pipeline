@@ -1,10 +1,15 @@
 const DynamicUnstructuredSourceHandler = require('../../../../src/ingestion/handlers/DynamicUnstructuredSourceHandler');
 const { SOURCE_TYPES, VISIBILITY_LEVELS } = require('../../../../src/ingestion/types');
 const puppeteer = require('puppeteer');
+const axios = require('axios');
 
 // Mock puppeteer
 jest.mock('puppeteer');
 const mockedPuppeteer = puppeteer;
+
+// Mock axios
+jest.mock('axios');
+const mockedAxios = axios;
 
 describe('DynamicUnstructuredSourceHandler', () => {
   let handler;
@@ -31,7 +36,11 @@ describe('DynamicUnstructuredSourceHandler', () => {
       screenshot: jest.fn(),
       close: jest.fn(),
       setUserAgent: jest.fn(),
-      setViewport: jest.fn()
+      setViewport: jest.fn(),
+      url: jest.fn().mockReturnValue('https://example.com/page1'),
+      $: jest.fn(),
+      waitForNavigation: jest.fn(),
+      click: jest.fn()
     };
 
     mockBrowser = {
@@ -40,6 +49,19 @@ describe('DynamicUnstructuredSourceHandler', () => {
     };
 
     mockedPuppeteer.launch.mockResolvedValue(mockBrowser);
+
+    // Setup axios mock
+    mockedAxios.create = jest.fn().mockReturnValue({
+      get: jest.fn().mockResolvedValue({
+        data: '<html><body>Test content</body></html>',
+        status: 200,
+        headers: { 'content-type': 'text/html; charset=utf-8' }
+      }),
+      head: jest.fn().mockResolvedValue({
+        status: 200,
+        headers: { 'content-type': 'text/html; charset=utf-8' }
+      })
+    });
 
     mockConfig = {
       id: 'dynamic-unstructured-test',
@@ -51,7 +73,13 @@ describe('DynamicUnstructuredSourceHandler', () => {
         targets: [
           {
             name: 'News Site',
+            type: 'web-crawler',
             baseUrl: 'https://news.example.com',
+            config: {
+              startUrls: ['https://news.example.com'],
+              maxDepth: 2,
+              maxPages: 50
+            },
             selectors: {
               articleLinks: 'a.article-link',
               title: 'h1.article-title',
@@ -243,7 +271,7 @@ describe('DynamicUnstructuredSourceHandler', () => {
       mockPage.goto.mockResolvedValue(undefined);
       mockPage.evaluate.mockResolvedValue({
         title: 'Test Article Title',
-        content: 'This is the article content with multiple paragraphs.',
+        content: 'This is the article content with multiple paragraphs. It contains detailed information about the topic being discussed. The content is comprehensive and provides valuable insights for readers. This article covers various aspects of the subject matter and includes relevant examples and explanations. The information presented here is well-researched and thoroughly documented.',
         author: 'John Doe',
         publishDate: '2023-01-01'
       });
@@ -252,7 +280,7 @@ describe('DynamicUnstructuredSourceHandler', () => {
 
       expect(result).toMatchObject({
         id: 'test-doc',
-        content: 'This is the article content with multiple paragraphs.',
+        content: 'This is the article content with multiple paragraphs. It contains detailed information about the topic being discussed. The content is comprehensive and provides valuable insights for readers. This article covers various aspects of the subject matter and includes relevant examples and explanations. The information presented here is well-researched and thoroughly documented.',
         extractedAt: expect.any(Date),
         metadata: {
           targetName: 'News Site',
@@ -345,7 +373,7 @@ describe('DynamicUnstructuredSourceHandler', () => {
           publishDate: '2023-01-01',
           transformedAt: expect.any(Date),
           wordCount: 7,
-          characterCount: 42
+          characterCount: 46
         }
       });
     });
@@ -400,6 +428,14 @@ describe('DynamicUnstructuredSourceHandler', () => {
         }
       };
 
+      // Mock URL changes after each click
+      let pageNumber = 1;
+      mockPage.url.mockImplementation(() => `https://example.com/page${pageNumber}`);
+      mockPage.click.mockImplementation(() => {
+        pageNumber++;
+        return Promise.resolve();
+      });
+
       mockPage.waitForSelector
         .mockResolvedValueOnce(true)
         .mockResolvedValueOnce(true)
@@ -423,7 +459,17 @@ describe('DynamicUnstructuredSourceHandler', () => {
         }
       };
 
-      mockPage.waitForSelector.mockResolvedValue(true); // Always has next
+      // Mock URL changes after each click
+      let pageNumber = 1;
+      mockPage.url.mockImplementation(() => `https://example.com/page${pageNumber}`);
+      mockPage.click.mockImplementation(() => {
+        pageNumber++;
+        return Promise.resolve();
+      });
+
+      mockPage.waitForSelector
+        .mockResolvedValueOnce(true)
+        .mockResolvedValueOnce(false);
 
       const urls = [];
       const collectUrls = (url) => urls.push(url);

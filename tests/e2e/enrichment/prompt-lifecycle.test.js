@@ -38,25 +38,33 @@ describe('Prompt Lifecycle E2E Tests', () => {
       // Simulate different responses based on prompt content
       let response = 'Default LLM response';
       
-      if (prompt.includes('summarize') || prompt.includes('summary')) {
-        response = 'This is a comprehensive summary of the document content.';
-      } else if (prompt.includes('sentiment') || prompt.includes('analyze')) {
-        response = 'The sentiment is positive with a confidence score of 85%.';
-      } else if (prompt.includes('extract') || prompt.includes('entities')) {
-        response = 'Entities found: Person: John Doe, Location: New York, Date: 2024-01-01';
+      if (prompt.includes('Focus on') || prompt.includes('Main themes') || prompt.includes('summary')) {
+        response = 'This is a comprehensive summary of the document content with key insights and main points.';
+      } else if (prompt.includes('sentiment') || prompt.includes('analyze') || prompt.includes('emotional tone')) {
+        response = 'The sentiment analysis shows positive sentiment with a confidence score of 85%.';
+      } else if (prompt.includes('entities') || prompt.includes('Extract') || prompt.includes('Person') || prompt.includes('Location')) {
+        response = 'Extracted entities include: Person: John Doe, Location: New York, Date: 2024-01-01';
+      } else if (prompt.includes('content-extraction') || prompt.includes('Extract the main content')) {
+        response = 'Extracted content: This document contains important information about data processing.';
+      } else if (prompt.includes('quality-assessment') || prompt.includes('Assess the quality')) {
+        response = 'Quality assessment: High quality content with good structure and clarity.';
+      } else if (prompt.includes('metadata-enhancement') || prompt.includes('Enhance the metadata')) {
+        response = 'Enhanced metadata: Category: Technical, Complexity: Medium, Audience: Professional';
       }
 
       return Promise.resolve({
         ok: true,
         json: async () => ({
           choices: [{
-            message: { content: response }
+            message: { content: response },
+            finish_reason: 'stop'
           }],
           usage: {
             prompt_tokens: prompt.length / 4, // Rough estimate
             completion_tokens: response.length / 4,
             total_tokens: (prompt.length + response.length) / 4
-          }
+          },
+          model: 'gpt-3.5-turbo'
         })
       });
     });

@@ -21,8 +21,7 @@ describe('Configuration Hot-Reload - Basic Integration', () => {
     
     // Create ConfigManager
     configManager = new ConfigManager({
-      configDir: tempDir,
-      watchOptions: { persistent: false }
+      configDir: tempDir
     });
 
     // Create ConfigIntegration
@@ -71,6 +70,15 @@ describe('Configuration Hot-Reload - Basic Integration', () => {
   it('should initialize configuration system', async () => {
     await configIntegration.initialize();
     
+    // Poll for watcher to be ready (handles async timing issues)
+    let attempts = 0;
+    const maxAttempts = 50; // 500ms total wait time
+    while (!configManager.isWatching && attempts < maxAttempts) {
+      await new Promise(resolve => setTimeout(resolve, 10));
+      attempts++;
+    }
+    
+    // Check watcher status after initialization and ready
     expect(configIntegration.isInitialized).toBe(true);
     expect(configManager.isWatching).toBe(true);
     
@@ -118,7 +126,7 @@ describe('Configuration Hot-Reload - Basic Integration', () => {
       type: 'config-changed',
       configType: 'queue',
       filePath: path.join(tempDir, 'queue.json'),
-      config: {
+      newConfig: {
         redis: {
           host: 'localhost',
           port: 6379,
@@ -138,7 +146,7 @@ describe('Configuration Hot-Reload - Basic Integration', () => {
     // Verify QueueManager was updated
     expect(updateConfigSpy).toHaveBeenCalledWith(
       'queue',
-      configEvent.config,
+      configEvent.newConfig,
       undefined
     );
     
@@ -149,19 +157,19 @@ describe('Configuration Hot-Reload - Basic Integration', () => {
     // Create an invalid queue configuration
     const invalidConfig = {
       redis: {
-        host: 'localhost'
-        // Missing required port
+        host: 'localhost',
+        port: 'invalid-port' // This should be a number
       },
       queues: {
-        'invalid-queue': { concurrency: -1 } // Invalid concurrency
+        concurrency: 'invalid' // This should be a number
       }
     };
 
     const configPath = path.join(tempDir, 'queue.json');
     await fs.writeFile(configPath, JSON.stringify(invalidConfig, null, 2));
 
-    // Loading invalid config should not throw but should log error
-    await expect(configManager.loadConfig(configPath)).rejects.toThrow();
+    // Loading invalid config should throw validation error
+    await expect(configManager.loadConfig(configPath)).rejects.toThrow('"redis.port" must be a number');
   });
 
   it('should provide configuration statistics', async () => {

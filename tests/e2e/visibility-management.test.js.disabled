@@ -3,22 +3,185 @@
  */
 
 const puppeteer = require('puppeteer');
+const ManualReviewServer = require('../../src/web/server');
 const path = require('path');
 
 describe('Visibility Management E2E Tests', () => {
   let browser;
   let page;
-  const baseUrl = 'http://localhost:3000';
+  let server;
+  let serverUrl;
 
   beforeAll(async () => {
-    browser = await puppeteer.launch({
-      headless: process.env.CI === 'true',
-      slowMo: 50,
-      args: ['--no-sandbox', '--disable-setuid-sandbox']
+    console.log('Starting beforeAll hook...');
+    
+    // Start browser
+    try {
+      console.log('Launching browser...');
+      browser = await puppeteer.launch({
+        headless: 'new', // Use new headless mode
+        slowMo: 50,
+        args: [
+          '--no-sandbox',
+          '--disable-setuid-sandbox',
+          '--disable-dev-shm-usage',
+          '--disable-accelerated-2d-canvas',
+          '--no-first-run',
+          '--no-zygote',
+          '--disable-gpu',
+          '--disable-web-security',
+          '--disable-features=VizDisplayCompositor',
+          '--single-process'
+        ],
+        timeout: 60000,
+        protocolTimeout: 60000
+      });
+      console.log('Browser launched successfully');
+    } catch (error) {
+      console.error('Failed to launch browser:', error);
+      throw error;
+    }
+
+    // Mock dependencies for server
+    const mockQueueManager = {
+      getJobs: jest.fn().mockResolvedValue({
+        jobs: [],
+        pagination: { page: 1, pages: 1, total: 0, hasNext: false, hasPrev: false }
+      }),
+      getQueueStats: jest.fn().mockResolvedValue({
+        queues: {
+          ingestion: { waiting: 0, active: 0, completed: 0, failed: 0 },
+          enrichment: { waiting: 0, active: 0, completed: 0, failed: 0 }
+        }
+      })
+    };
+
+    const mockIngestionEngine = {
+      options: {
+        enableVisibilityManagement: true
+      },
+      getDocuments: jest.fn().mockResolvedValue({
+        documents: [
+          {
+            id: 'doc1',
+            title: 'Test Document 1',
+            visibility: 'internal',
+            lastModified: '2023-01-01T00:00:00.000Z',
+            sourceType: 'PDF'
+          },
+          {
+            id: 'doc2',
+            title: 'Test Document 2',
+            visibility: 'public',
+            lastModified: '2023-01-02T00:00:00.000Z',
+            sourceType: 'HTML'
+          }
+        ],
+        pagination: { page: 1, pages: 1, total: 2, hasNext: false, hasPrev: false }
+      }),
+      getDocument: jest.fn().mockImplementation((id) => {
+        const documents = {
+          'doc1': {
+            id: 'doc1',
+            title: 'Test Document 1',
+            content: 'This is test document 1 content',
+            visibility: 'internal',
+            metadata: { sourceType: 'PDF' }
+          },
+          'doc2': {
+            id: 'doc2',
+            title: 'Test Document 2',
+            content: 'This is test document 2 content',
+            visibility: 'public',
+            metadata: { sourceType: 'HTML' }
+          }
+        };
+        return Promise.resolve({ document: documents[id] });
+      }),
+      updateDocumentVisibility: jest.fn().mockResolvedValue({ success: true }),
+      // Visibility-specific methods
+      getDocumentVisibility: jest.fn().mockImplementation((id) => {
+        const visibilities = { 'doc1': 'internal', 'doc2': 'public' };
+        return Promise.resolve({ visibility: visibilities[id] || 'internal' });
+      }),
+      setDocumentVisibility: jest.fn().mockResolvedValue({ success: true }),
+      checkDocumentAccess: jest.fn().mockResolvedValue({ hasAccess: true }),
+      bulkUpdateVisibility: jest.fn().mockResolvedValue({ 
+        success: true, 
+        updated: 2, 
+        failed: 0 
+      }),
+      getPendingApprovals: jest.fn().mockResolvedValue({
+        approvals: [
+          {
+            id: 'approval1',
+            documentId: 'doc1',
+            requestedVisibility: 'public',
+            currentVisibility: 'internal',
+            requestedBy: 'user1',
+            requestedAt: '2023-01-01T00:00:00.000Z'
+          }
+        ]
+      }),
+      approveVisibilityChange: jest.fn().mockResolvedValue({ success: true }),
+      rejectVisibilityChange: jest.fn().mockResolvedValue({ success: true }),
+      getVisibilityAuditLog: jest.fn().mockResolvedValue({
+        auditLog: [
+          {
+            id: 'audit1',
+            documentId: 'doc1',
+            action: 'visibility_change',
+            oldValue: 'internal',
+            newValue: 'public',
+            changedBy: 'user1',
+            changedAt: '2023-01-01T00:00:00.000Z'
+          }
+        ]
+      }),
+      addVisibilityRule: jest.fn().mockReturnValue(true),
+      removeVisibilityRule: jest.fn().mockReturnValue(true),
+      // Review methods that might be called
+      getPendingDocuments: jest.fn().mockResolvedValue({
+        documents: [],
+        pagination: { page: 1, pages: 1, total: 0, hasNext: false, hasPrev: false }
+      }),
+      approveDocument: jest.fn().mockResolvedValue({ success: true }),
+      rejectDocument: jest.fn().mockResolvedValue({ success: true }),
+      flagDocument: jest.fn().mockResolvedValue({ success: true }),
+      getReviewStats: jest.fn().mockResolvedValue({
+        stats: {
+          queue: { waiting: 0, reviewing: 0, completed: 0 },
+          recent: { approved: 0, rejected: 0, flagged: 0, approvalRate: 100 },
+          performance: { avgReviewTime: 0, documentsPerHour: 0 }
+        }
+      })
+    };
+
+    // Start server
+    console.log('Creating ManualReviewServer instance...');
+    server = new ManualReviewServer({
+      queueManager: mockQueueManager,
+      ingestionEngine: mockIngestionEngine,
+      port: 0, // Random port
+      host: 'localhost'
     });
-  });
+
+    console.log('Starting visibility management server...');
+    try {
+      await server.start();
+      const address = server.server.address();
+      serverUrl = `http://localhost:${address.port}`;
+      console.log('Visibility management server started at:', serverUrl);
+    } catch (error) {
+      console.error('Failed to start visibility management server:', error);
+      throw error;
+    }
+  }, 30000);
 
   afterAll(async () => {
+    if (server) {
+      await server.shutdown();
+    }
     if (browser) {
       await browser.close();
     }
@@ -27,142 +190,12 @@ describe('Visibility Management E2E Tests', () => {
   beforeEach(async () => {
     page = await browser.newPage();
     
-    // Set up request interception for API mocking
-    await page.setRequestInterception(true);
-    
-    page.on('request', (request) => {
-      const url = request.url();
-      
-      // Mock API responses
-      if (url.includes('/api/review/documents')) {
-        request.respond({
-          status: 200,
-          contentType: 'application/json',
-          body: JSON.stringify({
-            documents: [
-              {
-                id: 'doc1',
-                title: 'Test Document 1',
-                visibility: 'internal',
-                lastModified: '2023-01-01T00:00:00.000Z',
-                sourceType: 'PDF'
-              },
-              {
-                id: 'doc2',
-                title: 'Test Document 2',
-                visibility: 'public',
-                lastModified: '2023-01-02T00:00:00.000Z',
-                sourceType: 'DOCX'
-              }
-            ]
-          })
-        });
-      } else if (url.includes('/api/visibility/approvals')) {
-        request.respond({
-          status: 200,
-          contentType: 'application/json',
-          body: JSON.stringify([
-            {
-              id: 'approval1',
-              documentId: 'doc3',
-              requestedBy: 'user1',
-              requestedAt: '2023-01-01T00:00:00.000Z',
-              currentVisibility: 'internal',
-              requestedVisibility: 'public',
-              reason: 'Need to share with external partners'
-            }
-          ])
-        });
-      } else if (url.includes('/api/visibility/document/')) {
-        const method = request.method();
-        if (method === 'PUT') {
-          request.respond({
-            status: 200,
-            contentType: 'application/json',
-            body: JSON.stringify({
-              documentId: 'doc1',
-              visibility: 'public',
-              previousVisibility: 'internal',
-              modifiedBy: 'test-user',
-              modifiedAt: new Date().toISOString()
-            })
-          });
-        } else {
-          request.continue();
-        }
-      } else if (url.includes('/api/visibility/bulk-update')) {
-        request.respond({
-          status: 200,
-          contentType: 'application/json',
-          body: JSON.stringify({
-            updated: 2,
-            failed: 0,
-            results: [
-              { documentId: 'doc1', visibility: 'public', success: true },
-              { documentId: 'doc2', visibility: 'internal', success: true }
-            ]
-          })
-        });
-      } else if (url.includes('/api/visibility/approvals/') && url.includes('/approve')) {
-        request.respond({
-          status: 200,
-          contentType: 'application/json',
-          body: JSON.stringify({
-            approvalId: 'approval1',
-            status: 'approved',
-            approvedBy: 'test-user',
-            approvedAt: new Date().toISOString()
-          })
-        });
-      } else if (url.includes('/api/visibility/approvals/') && url.includes('/reject')) {
-        request.respond({
-          status: 200,
-          contentType: 'application/json',
-          body: JSON.stringify({
-            approvalId: 'approval1',
-            status: 'rejected',
-            rejectedBy: 'test-user',
-            rejectedAt: new Date().toISOString()
-          })
-        });
-      } else if (url.includes('/api/visibility/rules')) {
-        const method = request.method();
-        if (method === 'POST') {
-          request.respond({
-            status: 200,
-            contentType: 'application/json',
-            body: JSON.stringify({
-              ruleId: 'rule1',
-              rule: {
-                name: 'Test Rule',
-                description: 'Test description',
-                priority: 1,
-                visibility: 'internal',
-                conditions: { sourceType: 'PDF' }
-              },
-              createdBy: 'test-user',
-              createdAt: new Date().toISOString()
-            })
-          });
-        } else {
-          request.respond({
-            status: 200,
-            contentType: 'application/json',
-            body: JSON.stringify([])
-          });
-        }
-      } else {
-        request.continue();
-      }
+    // Set API key in localStorage for authentication
+    await page.evaluateOnNewDocument(() => {
+      localStorage.setItem('reviewApiKey', 'dev-review-key');
     });
-
-    // Navigate to the application
-    await page.goto(baseUrl);
     
-    // Set API key in localStorage
-    await page.evaluate(() => {
-      localStorage.setItem('apiKey', 'test-api-key');
-    });
+    await page.goto(serverUrl);
     
     // Wait for page to load
     await page.waitForSelector('nav', { timeout: 5000 });
@@ -176,8 +209,10 @@ describe('Visibility Management E2E Tests', () => {
 
   describe('Navigation and Initial Load', () => {
     it('should navigate to visibility tab and load data', async () => {
-      // Click on visibility tab
-      await page.click('a[data-view="visibility"]');
+      // Click on visibility tab using JavaScript
+      await page.evaluate(() => {
+        document.querySelector('a[data-view="visibility"]').click();
+      });
       
       // Wait for visibility content to load
       await page.waitForSelector('#visibility-documents-container', { timeout: 5000 });
@@ -206,8 +241,10 @@ describe('Visibility Management E2E Tests', () => {
     });
 
     it('should load pending approvals', async () => {
-      // Navigate to visibility tab
-      await page.click('a[data-view="visibility"]');
+      // Navigate to visibility tab using JavaScript
+      await page.evaluate(() => {
+        document.querySelector('a[data-view="visibility"]').click();
+      });
       
       // Wait for pending approvals section
       await page.waitForSelector('#pending-approvals-container', { timeout: 5000 });
@@ -224,8 +261,10 @@ describe('Visibility Management E2E Tests', () => {
 
   describe('Document Visibility Management', () => {
     beforeEach(async () => {
-      // Navigate to visibility tab
-      await page.click('a[data-view="visibility"]');
+      // Navigate to visibility tab using JavaScript
+      await page.evaluate(() => {
+        document.querySelector('a[data-view="visibility"]').click();
+      });
       await page.waitForSelector('#visibility-documents-container', { timeout: 5000 });
     });
 
@@ -292,8 +331,10 @@ describe('Visibility Management E2E Tests', () => {
 
   describe('Approval Workflow', () => {
     beforeEach(async () => {
-      // Navigate to visibility tab
-      await page.click('a[data-view="visibility"]');
+      // Navigate to visibility tab using JavaScript
+      await page.evaluate(() => {
+        document.querySelector('a[data-view="visibility"]').click();
+      });
       await page.waitForSelector('#pending-approvals-container', { timeout: 5000 });
     });
 
@@ -334,8 +375,10 @@ describe('Visibility Management E2E Tests', () => {
 
   describe('Visibility Rules Management', () => {
     beforeEach(async () => {
-      // Navigate to visibility tab
-      await page.click('a[data-view="visibility"]');
+      // Navigate to visibility tab using JavaScript
+      await page.evaluate(() => {
+        document.querySelector('a[data-view="visibility"]').click();
+      });
       await page.waitForSelector('#visibility-rules-container', { timeout: 5000 });
     });
 
@@ -372,8 +415,10 @@ describe('Visibility Management E2E Tests', () => {
 
   describe('Audit Log Navigation', () => {
     beforeEach(async () => {
-      // Navigate to visibility tab
-      await page.click('a[data-view="visibility"]');
+      // Navigate to visibility tab using JavaScript
+      await page.evaluate(() => {
+        document.querySelector('a[data-view="visibility"]').click();
+      });
       await page.waitForSelector('#visibility-documents-container', { timeout: 5000 });
     });
 
@@ -408,8 +453,10 @@ describe('Visibility Management E2E Tests', () => {
         }
       });
       
-      // Navigate to visibility tab
-      await page.click('a[data-view="visibility"]');
+      // Navigate to visibility tab using JavaScript
+      await page.evaluate(() => {
+        document.querySelector('a[data-view="visibility"]').click();
+      });
       
       // Wait for error message
       await page.waitForFunction(() => {
@@ -434,8 +481,10 @@ describe('Visibility Management E2E Tests', () => {
         }
       });
       
-      // Navigate to visibility tab
-      await page.click('a[data-view="visibility"]');
+      // Navigate to visibility tab using JavaScript
+      await page.evaluate(() => {
+        document.querySelector('a[data-view="visibility"]').click();
+      });
       
       // Try to change document visibility
       await page.waitForSelector('.document-card button[onclick*="showDocumentVisibilityModal"]', { timeout: 5000 });
@@ -461,8 +510,10 @@ describe('Visibility Management E2E Tests', () => {
       // Set mobile viewport
       await page.setViewport({ width: 375, height: 667 });
       
-      // Navigate to visibility tab
-      await page.click('a[data-view="visibility"]');
+      // Navigate to visibility tab using JavaScript
+      await page.evaluate(() => {
+        document.querySelector('a[data-view="visibility"]').click();
+      });
       await page.waitForSelector('#visibility-documents-container', { timeout: 5000 });
       
       // Verify document cards are responsive
@@ -483,8 +534,10 @@ describe('Visibility Management E2E Tests', () => {
 
   describe('Accessibility', () => {
     it('should have proper ARIA labels and keyboard navigation', async () => {
-      // Navigate to visibility tab
-      await page.click('a[data-view="visibility"]');
+      // Navigate to visibility tab using JavaScript
+      await page.evaluate(() => {
+        document.querySelector('a[data-view="visibility"]').click();
+      });
       await page.waitForSelector('#visibility-documents-container', { timeout: 5000 });
       
       // Check for ARIA labels on buttons

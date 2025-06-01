@@ -72,7 +72,7 @@ function requirePermission(permission) {
       });
     }
 
-    if (!req.user.permissions.includes(permission)) {
+    if (!req.user.permissions || !req.user.permissions.includes(permission)) {
       return res.status(403).json({
         error: 'Forbidden',
         message: `Permission '${permission}' required`
@@ -106,6 +106,29 @@ function requireRole(role) {
   };
 }
 
+/**
+ * Utility function to check if user has specific permission
+ */
+function hasPermission(user, permission) {
+  if (!user || !user.permissions) {
+    return false;
+  }
+  return user.permissions.includes(permission);
+}
+
+/**
+ * Utility function to check if user has specific role
+ */
+function hasRole(user, role) {
+  if (!user || !user.role) {
+    return false;
+  }
+  return user.role === role;
+}
+
 module.exports = authMiddleware;
+module.exports.authenticateRequest = authMiddleware; // Alias for tests
 module.exports.requirePermission = requirePermission;
 module.exports.requireRole = requireRole;
+module.exports.hasPermission = hasPermission;
+module.exports.hasRole = hasRole;

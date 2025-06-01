@@ -1,9 +1,36 @@
+// Mock filesystem before any imports
+jest.mock('fs', () => ({
+  promises: {
+    access: jest.fn(),
+    readdir: jest.fn(),
+    stat: jest.fn(),
+    readFile: jest.fn()
+  }
+}));
+
+// Mock Puppeteer to prevent import issues
+jest.mock('puppeteer', () => ({
+  launch: jest.fn().mockResolvedValue({
+    newPage: jest.fn().mockResolvedValue({
+      goto: jest.fn().mockResolvedValue(undefined),
+      evaluate: jest.fn().mockResolvedValue({}),
+      waitForSelector: jest.fn().mockResolvedValue({}),
+      click: jest.fn().mockResolvedValue(undefined),
+      url: jest.fn().mockReturnValue('https://example.com'),
+      close: jest.fn().mockResolvedValue(undefined)
+    }),
+    close: jest.fn().mockResolvedValue(undefined)
+  })
+}));
+
 const SourceHandlerFactory = require('../../../../src/ingestion/handlers/SourceHandlerFactory');
 const { SOURCE_TYPES } = require('../../../../src/ingestion/types');
 const StaticSourceHandler = require('../../../../src/ingestion/handlers/StaticSourceHandler');
 const SemiStaticSourceHandler = require('../../../../src/ingestion/handlers/SemiStaticSourceHandler');
 const DynamicConsistentSourceHandler = require('../../../../src/ingestion/handlers/DynamicConsistentSourceHandler');
 const DynamicUnstructuredSourceHandler = require('../../../../src/ingestion/handlers/DynamicUnstructuredSourceHandler');
+
+const fs = require('fs').promises;
 
 describe('SourceHandlerFactory', () => {
   let factory;
@@ -16,6 +43,9 @@ describe('SourceHandlerFactory', () => {
       error: jest.fn(),
       debug: jest.fn()
     };
+
+    // Mock filesystem access to always succeed for unit tests
+    fs.access.mockResolvedValue();
 
     factory = new SourceHandlerFactory(mockLogger);
   });

@@ -4,6 +4,7 @@ const SourceHandlerRegistry = require('./handlers/SourceHandlerRegistry');
 const VisibilityManager = require('./VisibilityManager');
 const VisibilityDatabase = require('./VisibilityDatabase');
 const { SOURCE_TYPES } = require('./types');
+const logger = require('../utils/logger');
 
 /**
  * Main ingestion engine that orchestrates document discovery and processing
@@ -19,8 +20,13 @@ class IngestionEngine extends EventEmitter {
       retryAttempts: 3,
       retryDelay: 1000,
       enableVisibilityManagement: true,
+      batchSize: 50,
+      maxRetries: 3,
       ...options
     };
+
+    // Initialize settings for easy access
+    this.settings = this.options;
 
     this.factory = new SourceHandlerFactory();
     this.registry = new SourceHandlerRegistry(this.factory);
@@ -670,10 +676,10 @@ class IngestionEngine extends EventEmitter {
     const DynamicUnstructuredSourceHandler = require('./handlers/DynamicUnstructuredSourceHandler');
 
     // Register handlers with factory
-    this.factory.registerHandler(SOURCE_TYPES.STATIC, StaticSourceHandler);
-    this.factory.registerHandler(SOURCE_TYPES.SEMI_STATIC, SemiStaticSourceHandler);
-    this.factory.registerHandler(SOURCE_TYPES.DYNAMIC_CONSISTENT, DynamicConsistentSourceHandler);
-    this.factory.registerHandler(SOURCE_TYPES.DYNAMIC_UNSTRUCTURED, DynamicUnstructuredSourceHandler);
+    this.factory.registerHandler(SOURCE_TYPES.STATIC, StaticSourceHandler, true);
+    this.factory.registerHandler(SOURCE_TYPES.SEMI_STATIC, SemiStaticSourceHandler, true);
+    this.factory.registerHandler(SOURCE_TYPES.DYNAMIC_CONSISTENT, DynamicConsistentSourceHandler, true);
+    this.factory.registerHandler(SOURCE_TYPES.DYNAMIC_UNSTRUCTURED, DynamicUnstructuredSourceHandler, true);
   }
 }
 

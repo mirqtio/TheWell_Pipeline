@@ -349,10 +349,10 @@ class JobDAO {
             const query = `
                 DELETE FROM jobs 
                 WHERE status IN ('completed', 'failed', 'cancelled') 
-                AND completed_at < NOW() - INTERVAL $1
+                AND completed_at < NOW() - INTERVAL '${retentionDays} days'
             `;
             
-            const result = await this.db.query(query, [`${retentionDays} days`]);
+            const result = await this.db.query(query);
             logger.info('Job cleanup completed', { deleted_count: result.rowCount });
             
             return result.rowCount;

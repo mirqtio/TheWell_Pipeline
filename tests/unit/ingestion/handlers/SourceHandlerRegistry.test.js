@@ -324,19 +324,33 @@ describe('SourceHandlerRegistry', () => {
       mockHandler1.discover.mockResolvedValue(mockDocuments1);
       mockHandler2.discover.mockResolvedValue(mockDocuments2);
 
-      const allDocuments = await registry.discoverAll();
+      const results = await registry.discoverAll();
 
-      expect(allDocuments).toHaveLength(3);
-      expect(allDocuments).toEqual([...mockDocuments1, ...mockDocuments2]);
+      expect(results).toHaveLength(2);
+      expect(results[0]).toEqual({
+        success: true,
+        handlerId: 'handler-1',
+        documents: mockDocuments1
+      });
+      expect(results[1]).toEqual({
+        success: true,
+        handlerId: 'handler-2',
+        documents: mockDocuments2
+      });
     });
 
     test('should skip disabled handlers in discovery', async () => {
       registry.disableHandler('handler-2');
       mockHandler1.discover.mockResolvedValue([{ id: 'doc1' }]);
 
-      const allDocuments = await registry.discoverAll();
+      const results = await registry.discoverAll();
 
-      expect(allDocuments).toHaveLength(1);
+      expect(results).toHaveLength(1);
+      expect(results[0]).toEqual({
+        success: true,
+        handlerId: 'handler-1',
+        documents: [{ id: 'doc1' }]
+      });
       expect(mockHandler1.discover).toHaveBeenCalled();
       expect(mockHandler2.discover).not.toHaveBeenCalled();
     });
@@ -345,9 +359,20 @@ describe('SourceHandlerRegistry', () => {
       mockHandler1.discover.mockResolvedValue([{ id: 'doc1' }]);
       mockHandler2.discover.mockRejectedValue(new Error('Discovery failed'));
 
-      const allDocuments = await registry.discoverAll();
+      const results = await registry.discoverAll();
 
-      expect(allDocuments).toHaveLength(1);
+      expect(results).toHaveLength(2);
+      expect(results[0]).toEqual({
+        success: true,
+        handlerId: 'handler-1',
+        documents: [{ id: 'doc1' }]
+      });
+      expect(results[1]).toEqual({
+        success: false,
+        handlerId: 'handler-2',
+        documents: [],
+        error: 'Discovery failed'
+      });
       expect(mockLogger.error).toHaveBeenCalledWith(
         'Handler discovery failed for handler-2:',
         'Discovery failed'

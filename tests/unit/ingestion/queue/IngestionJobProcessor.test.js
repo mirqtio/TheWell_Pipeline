@@ -2,14 +2,14 @@
 jest.mock('../../../../src/ingestion/handlers/SourceHandlerRegistry', () => {
   return jest.fn().mockImplementation(() => ({
     initialize: jest.fn().mockResolvedValue(undefined),
-    registerSource: jest.fn().mockResolvedValue('test-source-id'),
-    hasSource: jest.fn().mockReturnValue(false),
+    registerHandler: jest.fn().mockResolvedValue('test-source-id'),
+    hasHandler: jest.fn().mockReturnValue(false),
     getHandler: jest.fn().mockReturnValue({
       discover: jest.fn(),
       extract: jest.fn(),
       transform: jest.fn()
     }),
-    unregisterSource: jest.fn().mockResolvedValue(undefined),
+    unregisterHandler: jest.fn().mockResolvedValue(undefined),
     cleanup: jest.fn().mockResolvedValue(undefined)
   }));
 });
@@ -42,26 +42,16 @@ describe('IngestionJobProcessor', () => {
       transform: jest.fn()
     };
 
-    // Mock registry
-    mockRegistry = new SourceHandlerRegistry();
-    mockRegistry.initialize.mockResolvedValue(undefined);
-    mockRegistry.registerSource.mockResolvedValue('test-source-id');
-    mockRegistry.hasSource.mockReturnValue(false);
-    mockRegistry.getHandler.mockReturnValue(mockHandler);
-    mockRegistry.unregisterSource.mockResolvedValue(undefined);
-    mockRegistry.cleanup.mockResolvedValue(undefined);
-
-    // Mock engine
-    mockEngine = new IngestionEngine();
-    mockEngine.initialize.mockResolvedValue(undefined);
-    mockEngine.shutdown.mockResolvedValue(undefined);
+    processor = new IngestionJobProcessor();
+    
+    // Get the actual mocked instances created by the processor
+    mockRegistry = processor.sourceHandlerRegistry;
+    mockEngine = processor.ingestionEngine;
 
     // Mock job
     mockJob = {
       progress: jest.fn().mockResolvedValue(undefined)
     };
-
-    processor = new IngestionJobProcessor();
   });
 
   describe('Initialization', () => {
@@ -109,6 +99,7 @@ describe('IngestionJobProcessor', () => {
         { id: 'doc2', title: 'Title 2', content: 'content2' }
       ];
 
+      mockRegistry.getHandler.mockReturnValue(mockHandler);
       mockHandler.discover.mockResolvedValue(mockDocuments);
       mockHandler.extract.mockResolvedValueOnce(mockExtracted[0])
                           .mockResolvedValueOnce(mockExtracted[1]);
@@ -117,14 +108,14 @@ describe('IngestionJobProcessor', () => {
 
       const result = await processor.processJob(jobData, mockJob);
 
-      expect(mockRegistry.registerSource).toHaveBeenCalledWith(jobData.sourceConfig);
+      expect(mockRegistry.registerHandler).toHaveBeenCalledWith(jobData.sourceConfig);
       expect(mockHandler.discover).toHaveBeenCalled();
       expect(mockHandler.extract).toHaveBeenCalledTimes(2);
       expect(mockHandler.transform).toHaveBeenCalledTimes(2);
       expect(mockJob.progress).toHaveBeenCalledWith(100);
 
       expect(result).toMatchObject({
-        sourceId: 'test-source-id',
+        handlerId: 'test-source',
         documentsProcessed: 2,
         documentsTotal: 2,
         errors: 0
@@ -139,14 +130,15 @@ describe('IngestionJobProcessor', () => {
         }
       };
 
-      mockRegistry.hasSource.mockReturnValue(true);
+      mockRegistry.hasHandler.mockReturnValue(true);
+      mockRegistry.getHandler.mockReturnValue(mockHandler);
       mockHandler.discover.mockResolvedValue([]);
 
       const result = await processor.processJob(jobData, mockJob);
 
-      expect(mockRegistry.registerSource).not.toHaveBeenCalled();
+      expect(mockRegistry.registerHandler).not.toHaveBeenCalled();
       expect(mockRegistry.getHandler).toHaveBeenCalledWith('existing-source');
-      expect(result.sourceId).toBe('existing-source');
+      expect(result.handlerId).toBe('existing-source');
     });
 
     test('should handle document processing errors', async () => {
@@ -162,6 +154,7 @@ describe('IngestionJobProcessor', () => {
         { id: 'doc2', url: 'file2.md' }
       ];
 
+      mockRegistry.getHandler.mockReturnValue(mockHandler);
       mockHandler.discover.mockResolvedValue(mockDocuments);
       mockHandler.extract.mockResolvedValueOnce({ id: 'doc1', content: 'content1' })
                           .mockRejectedValueOnce(new Error('Extract failed'));
@@ -195,6 +188,7 @@ describe('IngestionJobProcessor', () => {
         { id: 'doc2', url: 'file2.md' }
       ];
 
+      mockRegistry.getHandler.mockReturnValue(mockHandler);
       mockHandler.discover.mockResolvedValue(mockDocuments);
       mockHandler.extract.mockRejectedValue(new Error('Extract failed'));
 
@@ -223,10 +217,12 @@ describe('IngestionJobProcessor', () => {
         }
       };
 
+      mockRegistry.getHandler.mockReturnValue(mockHandler);
+      mockRegistry.hasHandler.mockReturnValue(true);
       mockHandler.discover.mockRejectedValue(new Error('Discovery failed'));
 
       await expect(processor.processJob(jobData, mockJob)).rejects.toThrow('Ingestion job failed');
-      expect(mockRegistry.unregisterSource).toHaveBeenCalledWith('test-source-id');
+      expect(mockRegistry.unregisterHandler).toHaveBeenCalledWith('test-source');
     });
   });
 
@@ -244,6 +240,7 @@ describe('IngestionJobProcessor', () => {
         ]
       };
 
+      mockRegistry.getHandler.mockReturnValue(mockHandler);
       mockHandler.discover.mockResolvedValue([{ id: 'doc1', url: 'file1.md' }]);
       mockHandler.extract.mockResolvedValue({ id: 'doc1', content: 'content1' });
       mockHandler.transform.mockResolvedValue({ id: 'doc1', title: 'Title 1', content: 'content1' });
@@ -264,8 +261,9 @@ describe('IngestionJobProcessor', () => {
         ]
       };
 
-      mockRegistry.registerSource.mockResolvedValueOnce('source1')
+      mockRegistry.registerHandler.mockResolvedValueOnce('source1')
                                   .mockRejectedValueOnce(new Error('Registration failed'));
+      mockRegistry.getHandler.mockReturnValue(mockHandler);
       mockHandler.discover.mockResolvedValue([]);
 
       const result = await processor.processBatch(jobData, mockJob);
@@ -285,7 +283,7 @@ describe('IngestionJobProcessor', () => {
         }
       };
 
-      mockRegistry.registerSource.mockRejectedValue(new Error('Registration failed'));
+      mockRegistry.registerHandler.mockRejectedValue(new Error('Registration failed'));
 
       await expect(processor.processBatch(jobData, mockJob)).rejects.toThrow('Batch ingestion job failed');
     });
@@ -307,6 +305,7 @@ describe('IngestionJobProcessor', () => {
         sources: [{ id: 'source1', type: 'static' }]
       };
 
+      mockRegistry.getHandler.mockReturnValue(mockHandler);
       mockHandler.discover.mockResolvedValue([]);
 
       const result = await processor.processBatch(jobData, mockJob);
@@ -356,6 +355,7 @@ describe('IngestionJobProcessor', () => {
         { id: 'doc2', url: 'file2.md' }
       ];
 
+      mockRegistry.getHandler.mockReturnValue(mockHandler);
       mockHandler.discover.mockResolvedValue(mockDocuments);
       mockHandler.extract.mockResolvedValue({ id: 'doc1', content: 'content1' });
       mockHandler.transform.mockResolvedValue({ id: 'doc1', title: 'Title 1', content: 'content1' });
@@ -374,6 +374,7 @@ describe('IngestionJobProcessor', () => {
         sources: [{ id: 'source1', type: 'static' }]
       };
 
+      mockRegistry.getHandler.mockReturnValue(mockHandler);
       mockHandler.discover.mockResolvedValue([]);
 
       await processor.processBatch(jobData, mockJob);

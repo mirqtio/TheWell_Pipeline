@@ -1,5 +1,5 @@
-const { SourceHandlerRegistry } = require('../handlers/SourceHandlerRegistry');
-const { IngestionEngine } = require('../IngestionEngine');
+const SourceHandlerRegistry = require('../handlers/SourceHandlerRegistry');
+const IngestionEngine = require('../IngestionEngine');
 
 /**
  * Ingestion Job Processor
@@ -47,17 +47,20 @@ class IngestionJobProcessor {
       // Report initial progress
       await job.progress(0);
 
-      // Step 1: Register source if not already registered
+      // Step 1: Register handler if not already registered
       await job.progress(10);
-      let sourceId = sourceConfig.id;
+      let handlerId = sourceConfig.id;
       
-      if (!this.sourceHandlerRegistry.hasSource(sourceId)) {
-        sourceId = await this.sourceHandlerRegistry.registerSource(sourceConfig);
+      if (!this.sourceHandlerRegistry.hasHandler(handlerId)) {
+        await this.sourceHandlerRegistry.registerHandler(sourceConfig);
       }
 
       // Step 2: Discover documents
       await job.progress(25);
-      const handler = this.sourceHandlerRegistry.getHandler(sourceId);
+      const handler = this.sourceHandlerRegistry.getHandler(handlerId);
+      if (!handler) {
+        throw new Error(`Handler not found for source: ${handlerId}`);
+      }
       const documents = await handler.discover();
 
       // Step 3: Process each document
@@ -98,7 +101,7 @@ class IngestionJobProcessor {
       await job.progress(95);
       
       const result = {
-        sourceId,
+        handlerId,
         documentsProcessed: processedDocuments.length,
         documentsTotal: totalDocuments,
         errors: errors.length,
@@ -112,12 +115,12 @@ class IngestionJobProcessor {
 
     } catch (error) {
       // Clean up on error
-      if (sourceConfig.id && this.sourceHandlerRegistry.hasSource(sourceConfig.id)) {
+      if (sourceConfig.id && this.sourceHandlerRegistry.hasHandler(sourceConfig.id)) {
         try {
-          await this.sourceHandlerRegistry.unregisterSource(sourceConfig.id);
+          await this.sourceHandlerRegistry.unregisterHandler(sourceConfig.id);
         } catch (cleanupError) {
           // Log cleanup error but don't mask original error
-          console.error('Failed to cleanup source after error:', cleanupError.message);
+          console.error('Failed to cleanup handler after error:', cleanupError.message);
         }
       }
       

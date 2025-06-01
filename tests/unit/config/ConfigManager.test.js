@@ -1,27 +1,64 @@
 const fs = require('fs').promises;
 const path = require('path');
 const os = require('os');
+
+// Mock chokidar for ConfigManager tests
+jest.mock('chokidar', () => ({
+  watch: jest.fn(() => {
+    const eventHandlers = new Map();
+    
+    const mockWatcher = {
+      on: jest.fn((event, callback) => {
+        if (!eventHandlers.has(event)) {
+          eventHandlers.set(event, []);
+        }
+        eventHandlers.get(event).push(callback);
+        
+        // Emit ready event immediately for tests
+        if (event === 'ready') {
+          setTimeout(() => callback(), 10);
+        }
+        
+        return mockWatcher;
+      }),
+      close: jest.fn().mockResolvedValue(undefined),
+      add: jest.fn(),
+      unwatch: jest.fn(),
+      removeAllListeners: jest.fn(() => {
+        eventHandlers.clear();
+      }),
+      emit: jest.fn((event, ...args) => {
+        if (eventHandlers.has(event)) {
+          eventHandlers.get(event).forEach(callback => callback(...args));
+        }
+      })
+    };
+    
+    return mockWatcher;
+  })
+}));
+
+// Mock logger before requiring ConfigManager
+jest.mock('../../../src/utils/logger', () => ({
+  info: jest.fn(),
+  warn: jest.fn(),
+  error: jest.fn(),
+  debug: jest.fn()
+}));
+
 const ConfigManager = require('../../../src/config/ConfigManager');
+const logger = require('../../../src/utils/logger');
 
 describe('ConfigManager', () => {
   let configManager;
   let tempDir;
-  let mockLogger;
 
   beforeEach(async () => {
+    // Clear all mocks
+    jest.clearAllMocks();
+    
     // Create temporary directory for tests
     tempDir = await fs.mkdtemp(path.join(os.tmpdir(), 'config-test-'));
-    
-    // Mock logger
-    mockLogger = {
-      info: jest.fn(),
-      warn: jest.fn(),
-      error: jest.fn(),
-      debug: jest.fn()
-    };
-    
-    // Mock the logger module
-    jest.doMock('../../../src/utils/logger', () => mockLogger);
     
     configManager = new ConfigManager({
       configDir: tempDir,
@@ -297,19 +334,12 @@ describe('ConfigManager', () => {
       // Try to start again
       await configManager.startWatching();
       
-      expect(mockLogger.warn).toHaveBeenCalledWith('ConfigManager is already watching');
+      expect(logger.warn).toHaveBeenCalledWith('ConfigManager is already watching');
     });
 
     it('should handle file changes', async () => {
       const changeHandler = jest.fn();
       configManager.on('config-changed', changeHandler);
-      
-      await configManager.startWatching();
-      
-      // Wait for watcher to be ready
-      await new Promise(resolve => {
-        configManager.on('ready', resolve);
-      });
       
       // Create a configuration file
       const configPath = path.join(tempDir, 'sources.json');
@@ -327,8 +357,8 @@ describe('ConfigManager', () => {
       
       await fs.writeFile(configPath, JSON.stringify(configData));
       
-      // Wait for file change to be processed
-      await new Promise(resolve => setTimeout(resolve, 100));
+      // Directly call handleFileChange instead of relying on file watcher
+      await configManager.handleFileChange('change', configPath);
       
       expect(changeHandler).toHaveBeenCalled();
     });
@@ -395,15 +425,19 @@ describe('ConfigManager', () => {
       const errorHandler = jest.fn();
       configManager.on('error', errorHandler);
       
+      // Create a valid sources config file first
+      const testFilePath = path.join(tempDir, 'sources.json');
+      await fs.writeFile(testFilePath, '{"sources": []}');
+      
       // Mock validation to throw error
       const mockValidator = {
         validate: jest.fn().mockReturnValue({
           error: new Error('Validation failed')
         })
       };
-      configManager.registerValidator('test', mockValidator);
+      configManager.registerValidator('sources', mockValidator);
       
-      await configManager.handleFileChange('change', path.join(tempDir, 'test.json'));
+      await configManager.handleFileChange('change', testFilePath);
       
       expect(errorHandler).toHaveBeenCalledWith(
         expect.objectContaining({

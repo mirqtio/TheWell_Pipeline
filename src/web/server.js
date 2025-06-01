@@ -144,6 +144,8 @@ class ManualReviewServer {
       return new Promise((resolve, reject) => {
         this.server = this.app.listen(this.port, this.host, () => {
           this.isRunning = true;
+          // Update port to actual assigned port (important when using port 0)
+          this.port = this.server.address().port;
           logger.info('Manual review server started', {
             host: this.host,
             port: this.port,

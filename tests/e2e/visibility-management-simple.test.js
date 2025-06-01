@@ -10,24 +10,35 @@ const path = require('path');
 describe('Visibility Management E2E Workflow', () => {
   let serverProcess;
   let baseUrl;
+  let startupTimeout;
 
   beforeAll(async () => {
     // Start the web server
     return new Promise((resolve, reject) => {
       const serverPath = path.join(__dirname, '../../src/web/start.js');
       serverProcess = spawn('node', [serverPath], {
-        env: { ...process.env, PORT: '0' }, // Use random port
+        env: { 
+          ...process.env, 
+          WEB_PORT: '0', // Use random port with correct env var
+          NODE_ENV: 'development' // Bypass authentication
+        },
         stdio: ['pipe', 'pipe', 'pipe']
       });
 
       let output = '';
       serverProcess.stdout.on('data', (data) => {
         output += data.toString();
+        console.log('Server output:', data.toString()); // Debug output
         // Look for server started message
         if (output.includes('Manual review server started')) {
-          const portMatch = output.match(/port:\s*(\d+)/);
+          const portMatch = output.match(/port[:\s]*(\d+)/i);
           if (portMatch) {
             baseUrl = `http://localhost:${portMatch[1]}`;
+            console.log('Server started at:', baseUrl); // Debug output
+            if (startupTimeout) {
+              clearTimeout(startupTimeout);
+              startupTimeout = null;
+            }
             resolve();
           }
         }
@@ -40,19 +51,32 @@ describe('Visibility Management E2E Workflow', () => {
       serverProcess.on('error', reject);
 
       // Timeout after 10 seconds
-      setTimeout(() => {
+      startupTimeout = setTimeout(() => {
         reject(new Error('Server failed to start within timeout'));
       }, 10000);
     });
   }, 15000);
 
   afterAll(async () => {
+    if (startupTimeout) {
+      clearTimeout(startupTimeout);
+      startupTimeout = null;
+    }
+    
     if (serverProcess) {
       serverProcess.kill();
       // Wait for process to exit
       await new Promise((resolve) => {
-        serverProcess.on('exit', resolve);
-        setTimeout(resolve, 1000); // Fallback timeout
+        let exitTimeout;
+        const onExit = () => {
+          if (exitTimeout) {
+            clearTimeout(exitTimeout);
+          }
+          resolve();
+        };
+        
+        serverProcess.on('exit', onExit);
+        exitTimeout = setTimeout(onExit, 1000); // Fallback timeout
       });
     }
   });
@@ -86,13 +110,13 @@ describe('Visibility Management E2E Workflow', () => {
         .expect(200);
 
       expect(response.body).toHaveProperty('status');
-      expect(response.body).toHaveProperty('timestamp');
+      expect(response.body.status).toHaveProperty('timestamp');
     });
 
     it('should handle review API endpoints', async () => {
       // Test documents endpoint (should work even without auth for basic structure)
       const response = await request(baseUrl)
-        .get('/api/review/documents')
+        .get('/api/review/pending')
         .expect(200);
 
       expect(response.body).toHaveProperty('documents');
@@ -100,11 +124,12 @@ describe('Visibility Management E2E Workflow', () => {
     });
 
     it('should handle jobs API endpoints', async () => {
+      // Test jobs endpoint (should work even without auth for basic structure)
       const response = await request(baseUrl)
-        .get('/api/jobs/status')
+        .get('/api/jobs/stats/overview')
         .expect(200);
 
-      expect(response.body).toHaveProperty('status');
+      expect(response.body).toHaveProperty('stats');
     });
   });
 

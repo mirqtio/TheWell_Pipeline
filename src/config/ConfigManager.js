@@ -14,22 +14,23 @@ class ConfigManager extends EventEmitter {
     super();
     
     this.configDir = options.configDir || path.join(process.cwd(), 'config');
-    this.watchOptions = {
-      persistent: true,
-      ignoreInitial: false,
-      depth: 2,
-      ...options.watchOptions
-    };
-    
-    this.configs = new Map();
-    this.validators = new Map();
+    this.watchOptions = options.watchOptions || {};
     this.watcher = null;
     this.isWatching = false;
+    this.validators = new Map();
+    this.loadedConfigs = new Map();
     
     // Default configuration schema
     this.registerValidator('sources', this.getSourceConfigSchema());
     this.registerValidator('ingestion', this.getIngestionConfigSchema());
     this.registerValidator('queue', this.getQueueConfigSchema());
+  }
+
+  /**
+   * Backward compatibility getter for configs
+   */
+  get configs() {
+    return this.loadedConfigs;
   }
 
   /**
@@ -44,19 +45,42 @@ class ConfigManager extends EventEmitter {
     try {
       await this.ensureConfigDirectory();
       
-      // Initialize chokidar watcher
+      // Create watcher for configuration directory
       this.watcher = chokidar.watch(this.configDir, {
         ignored: /(^|[\/\\])\../, // ignore dotfiles
         persistent: true,
         ...this.watchOptions
       });
 
+      // Debug: log what we're watching
+      logger.debug('Creating watcher for directory', { 
+        configDir: this.configDir,
+        watchOptions: { persistent: true, ...this.watchOptions }
+      });
+
+      // Ensure watcher was created successfully
+      if (!this.watcher) {
+        throw new Error('Failed to create file watcher');
+      }
+
       // Set up event handlers
       this.watcher
-        .on('add', (filePath) => this.handleFileChange('add', filePath))
-        .on('change', (filePath) => this.handleFileChange('change', filePath))
-        .on('unlink', (filePath) => this.handleFileChange('unlink', filePath))
-        .on('error', (error) => this.handleWatcherError(error));
+        .on('add', (filePath) => {
+          logger.debug('Watcher detected file add', { filePath });
+          this.handleFileChange('add', filePath);
+        })
+        .on('change', (filePath) => {
+          logger.debug('Watcher detected file change', { filePath });
+          this.handleFileChange('change', filePath);
+        })
+        .on('unlink', (filePath) => {
+          logger.debug('Watcher detected file unlink', { filePath });
+          this.handleFileChange('unlink', filePath);
+        })
+        .on('error', (error) => this.handleWatcherError(error))
+        .on('all', (eventType, filePath) => {
+          logger.debug('Watcher detected any event', { eventType, filePath });
+        });
 
       // Wait for watcher to be ready
       await new Promise((resolve, reject) => {
@@ -134,14 +158,14 @@ class ConfigManager extends EventEmitter {
    * Get current configuration for a specific type
    */
   getConfig(configType) {
-    return this.configs.get(configType);
+    return this.loadedConfigs.get(configType);
   }
 
   /**
    * Get all current configurations
    */
   getAllConfigs() {
-    return Object.fromEntries(this.configs);
+    return Object.fromEntries(this.loadedConfigs);
   }
 
   /**
@@ -223,8 +247,11 @@ class ConfigManager extends EventEmitter {
         return;
       }
 
+      // Substitute environment variables
+      const configWithEnvVars = this.substituteEnvironmentVariables(config);
+
       // Validate configuration
-      const validatedConfig = await this.validateConfig(configType, config);
+      const validatedConfig = await this.validateConfig(configType, configWithEnvVars);
       
       // Apply changes
       await this.applyConfigChange(configType, validatedConfig, filePath);
@@ -244,10 +271,10 @@ class ConfigManager extends EventEmitter {
    */
   async handleConfigRemoval(configType, filePath) {
     try {
-      const previousConfig = this.configs.get(configType);
+      const previousConfig = this.loadedConfigs.get(configType);
       
       if (previousConfig) {
-        this.configs.delete(configType);
+        this.loadedConfigs.delete(configType);
         
         logger.info('Configuration removed', { configType, filePath });
         
@@ -273,10 +300,10 @@ class ConfigManager extends EventEmitter {
    */
   async applyConfigChange(configType, newConfig, filePath) {
     try {
-      const previousConfig = this.configs.get(configType);
+      const previousConfig = this.loadedConfigs.get(configType);
       
       // Store new configuration
-      this.configs.set(configType, newConfig);
+      this.loadedConfigs.set(configType, newConfig);
       
       logger.info('Configuration updated successfully', {
         configType,
@@ -475,10 +502,18 @@ class ConfigManager extends EventEmitter {
     return {
       isWatching: this.isWatching,
       configDir: this.configDir,
-      configCount: this.configs.size,
+      configCount: this.loadedConfigs.size,
       validatorCount: this.validators.size,
-      configTypes: Array.from(this.configs.keys())
+      configTypes: Array.from(this.loadedConfigs.keys())
     };
+  }
+
+  /**
+   * Substitute environment variables in configuration
+   */
+  substituteEnvironmentVariables(config) {
+    const envRegex = /\${([^}]+)}/g;
+    return JSON.parse(JSON.stringify(config).replace(envRegex, (match, varName) => process.env[varName] || match));
   }
 }
 

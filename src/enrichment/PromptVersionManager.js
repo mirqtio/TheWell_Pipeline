@@ -29,6 +29,7 @@ class PromptVersionManager extends EventEmitter {
     
     this.promptCache = new Map();
     this.versionHistory = new Map();
+    this.versionCounters = new Map(); // Track version counters for atomic increments
     this.isInitialized = false;
     
     // Ensure prompts directory exists
@@ -127,6 +128,12 @@ class PromptVersionManager extends EventEmitter {
         const promptId = path.basename(file, '.json');
         this.promptCache.set(promptId, promptData);
         
+        // Initialize version counter based on current version
+        if (promptData.version) {
+          const [, , patch] = promptData.version.split('.').map(Number);
+          this.versionCounters.set(promptId, patch || 0);
+        }
+        
         if (this.config.gitEnabled) {
           await this.loadVersionHistory(promptId);
         }
@@ -210,6 +217,10 @@ class PromptVersionManager extends EventEmitter {
       // Update cache
       this.promptCache.set(promptId, promptWithMetadata);
 
+      // Update version counter to match the saved version
+      const [, , patch] = version.split('.').map(Number);
+      this.versionCounters.set(promptId, patch);
+
       // Git operations
       if (this.config.gitEnabled && this.config.autoCommit) {
         await this.commitPrompt(promptId, commitMessage);
@@ -285,11 +296,25 @@ class PromptVersionManager extends EventEmitter {
     const existingPrompt = this.promptCache.get(promptId);
     
     if (!existingPrompt || !existingPrompt.version) {
+      // Initialize version counter for new prompts
+      this.versionCounters.set(promptId, 0);
       return '1.0.0';
     }
 
     const [major, minor, patch] = existingPrompt.version.split('.').map(Number);
-    return `${major}.${minor}.${patch + 1}`;
+    
+    // Get or initialize the version counter for this prompt
+    let currentCounter = this.versionCounters.get(promptId);
+    if (currentCounter === undefined) {
+      // Initialize counter to current patch version for existing prompts
+      currentCounter = patch;
+    }
+    
+    // Atomically increment the version counter
+    const nextCounter = currentCounter + 1;
+    this.versionCounters.set(promptId, nextCounter);
+    
+    return `${major}.${minor}.${nextCounter}`;
   }
 
   /**
