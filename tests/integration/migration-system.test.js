@@ -23,7 +23,8 @@ describe('Migration System Integration Tests', () => {
     }
         
     // Create temporary migrations directory for testing
-    testMigrationsPath = path.join(__dirname, '../temp/migrations');
+    const timestamp = new Date().toISOString().replace(/:/g, '-').replace(/\..+/, '');
+    testMigrationsPath = path.join(__dirname, '../temp/migrations', timestamp);
     await fs.mkdir(testMigrationsPath, { recursive: true });
         
     // Initialize migration manager with test path
@@ -71,6 +72,18 @@ describe('Migration System Integration Tests', () => {
       await db.query('DROP TABLE IF EXISTS test_migration_table');
     } catch (error) {
       // Ignore if tables don't exist
+    }
+
+    // Clean up any existing test migration files
+    try {
+      const files = await fs.readdir(testMigrationsPath);
+      for (const file of files) {
+        if (file.endsWith('.sql')) {
+          await fs.unlink(path.join(testMigrationsPath, file));
+        }
+      }
+    } catch (error) {
+      // Ignore if directory doesn't exist
     }
         
     // Initialize migration system for each test
