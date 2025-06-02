@@ -193,29 +193,29 @@ class ResponseCache extends CacheManager {
     let ttl = this.config.ttl.responses;
 
     switch (responseType) {
-      case 'enrichment':
-        ttl = this.config.ttl.enrichment;
-        break;
-      case 'summary':
-        ttl = this.config.ttl.summary;
-        break;
-      case 'translation':
-        ttl = this.config.ttl.translation;
-        break;
-      case 'classification':
-        ttl = this.config.ttl.classification;
-        break;
-      case 'extraction':
-        ttl = this.config.ttl.extraction;
-        break;
-      case 'generation':
-        ttl = this.config.ttl.generation;
-        break;
-      case 'analysis':
-        ttl = Math.max(this.config.ttl.responses, 3600); // At least 1 hour
-        break;
-      default:
-        ttl = this.config.ttl.responses;
+    case 'enrichment':
+      ttl = this.config.ttl.enrichment;
+      break;
+    case 'summary':
+      ttl = this.config.ttl.summary;
+      break;
+    case 'translation':
+      ttl = this.config.ttl.translation;
+      break;
+    case 'classification':
+      ttl = this.config.ttl.classification;
+      break;
+    case 'extraction':
+      ttl = this.config.ttl.extraction;
+      break;
+    case 'generation':
+      ttl = this.config.ttl.generation;
+      break;
+    case 'analysis':
+      ttl = Math.max(this.config.ttl.responses, 3600); // At least 1 hour
+      break;
+    default:
+      ttl = this.config.ttl.responses;
     }
 
     // Adjust based on content stability

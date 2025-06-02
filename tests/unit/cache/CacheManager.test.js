@@ -18,7 +18,6 @@ jest.mock('redis', () => ({
     del: jest.fn(),
     keys: jest.fn().mockResolvedValue([]),
     flushDb: jest.fn(),
-    disconnect: jest.fn().mockResolvedValue(),
     ping: jest.fn().mockResolvedValue('PONG'),
     on: jest.fn(),
     isReady: true
@@ -42,7 +41,6 @@ describe('CacheManager', () => {
     
     mockRedisClient = {
       connect: jest.fn().mockResolvedValue(),
-      disconnect: jest.fn().mockResolvedValue(),
       get: jest.fn().mockImplementation((key) => {
         // For health check keys, return 'ok'
         if (key.startsWith('health:check:')) {

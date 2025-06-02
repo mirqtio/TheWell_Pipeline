@@ -355,7 +355,7 @@ describe('EmbeddingCache', () => {
       ];
       
       mockCacheManager.set.mockImplementationOnce(() => Promise.resolve())
-                          .mockImplementationOnce(() => Promise.reject(new Error('Cache error')));
+        .mockImplementationOnce(() => Promise.reject(new Error('Cache error')));
       
       const results = await embeddingCache.batchCacheEmbeddings(embeddings);
       
