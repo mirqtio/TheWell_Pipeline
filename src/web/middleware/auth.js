@@ -105,16 +105,12 @@ function requirePermission(permissionName, resourceType = null) {
         // Use simple array check for unit tests
         hasPermissionResult = req.user.permissions.includes(permissionName);
       } else {
-        try {
-          hasPermissionResult = await permissionManager.hasPermission(
-            req.user.id,
-            permissionName,
-            resourceType,
-            resourceId
-          );
-        } catch (error) {
-          throw error;
-        }
+        hasPermissionResult = await permissionManager.hasPermission(
+          req.user.id,
+          permissionName,
+          resourceType,
+          resourceId
+        );
       }
 
       if (!hasPermissionResult) {

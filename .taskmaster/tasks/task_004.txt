@@ -104,7 +104,7 @@ Implement a multi-level caching strategy for query results, document embeddings,
 ### Details:
 Implement trace context propagation across all RAG components. Add span creation for key operations (query processing, document retrieval, response generation). Integrate with a tracing backend (Jaeger, Zipkin, etc.). Create custom attributes to capture RAG-specific metrics like retrieval quality and generation time. Testing requirements: 1) Write unit tests for tracing instrumentation, 2) Create integration tests for trace propagation, 3) Implement e2e tests for complete tracing workflows, 4) Run all tests and resolve any issues, 5) Merge to master and verify CI passes via GitHub logs.
 
-## 5. Permission Enforcement System [in-progress]
+## 5. Permission Enforcement System [done]
 ### Dependencies: 4.1, 4.2
 ### Description: Develop a robust permission model to control access to documents and knowledge sources
 ### Details:

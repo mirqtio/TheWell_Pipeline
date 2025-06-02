@@ -47,97 +47,97 @@ module.exports = (dependencies = {}) => {
     requirePermission('document.read'), 
     requireDocumentAccess('read'),
     asyncHandler(async (req, res) => {
-    const traceId = req.headers['x-trace-id'] || generateTraceId();
-    const startTime = Date.now();
+      const traceId = req.headers['x-trace-id'] || generateTraceId();
+      const startTime = Date.now();
 
-    try {
-      logger.info('RAG search request received', {
-        traceId,
-        userId: req.user.id,
-        queryLength: req.body.query?.length
-      });
-
-      // Validate request
-      const { error, value } = searchRequestSchema.validate(req.body);
-      if (error) {
-        return res.status(400).json({
-          success: false,
-          error: {
-            message: `Invalid request: ${error.details[0].message}`,
-            type: 'ValidationError',
-            trace_id: traceId
-          }
+      try {
+        logger.info('RAG search request received', {
+          traceId,
+          userId: req.user.id,
+          queryLength: req.body.query?.length
         });
-      }
 
-      // Add trace ID to request data
-      value.traceId = traceId;
-
-      // Check cache if enabled
-      let cacheKey = null;
-      if (cacheManager && shouldCache(value, req.user)) {
-        cacheKey = generateCacheKey(value, req.user);
-        const cachedResult = await cacheManager.get(cacheKey);
-        
-        if (cachedResult) {
-          logger.info('Cache hit for RAG search', { traceId, cacheKey });
-          return res.json({
-            ...cachedResult,
-            cached: true,
-            cache_hit_at: new Date().toISOString()
+        // Validate request
+        const { error, value } = searchRequestSchema.validate(req.body);
+        if (error) {
+          return res.status(400).json({
+            success: false,
+            error: {
+              message: `Invalid request: ${error.details[0].message}`,
+              type: 'ValidationError',
+              trace_id: traceId
+            }
           });
         }
-      }
 
-      // Process RAG query
-      const result = await ragManager.processQuery(value, {
-        userId: req.user.id,
-        roles: req.user.roles || [],
-        permissions: req.user.permissions || []
-      });
+        // Add trace ID to request data
+        value.traceId = traceId;
 
-      // Cache result if appropriate
-      if (cacheManager && cacheKey && shouldCacheResult(result)) {
-        const ttl = calculateCacheTTL(value, result);
-        await cacheManager.setex(cacheKey, ttl, JSON.stringify(result));
-        logger.debug('Result cached', { traceId, cacheKey, ttl });
-      }
-
-      // Add request metadata
-      result.request_metadata = {
-        trace_id: traceId,
-        processing_time_ms: Date.now() - startTime,
-        cached: false
-      };
-
-      logger.info('RAG search completed successfully', {
-        traceId,
-        processingTime: Date.now() - startTime,
-        confidence: result.data?.confidence
-      });
-
-      res.json(result);
-
-    } catch (error) {
-      logger.error('RAG search failed', {
-        traceId,
-        error: error.message,
-        processingTime: Date.now() - startTime
-      });
-
-      const errorResponse = {
-        success: false,
-        error: {
-          message: error.message || 'Internal server error',
-          type: error.name || 'UnknownError',
-          trace_id: traceId,
-          timestamp: new Date().toISOString()
+        // Check cache if enabled
+        let cacheKey = null;
+        if (cacheManager && shouldCache(value, req.user)) {
+          cacheKey = generateCacheKey(value, req.user);
+          const cachedResult = await cacheManager.get(cacheKey);
+        
+          if (cachedResult) {
+            logger.info('Cache hit for RAG search', { traceId, cacheKey });
+            return res.json({
+              ...cachedResult,
+              cached: true,
+              cache_hit_at: new Date().toISOString()
+            });
+          }
         }
-      };
 
-      res.status(500).json(errorResponse);
-    }
-  }));
+        // Process RAG query
+        const result = await ragManager.processQuery(value, {
+          userId: req.user.id,
+          roles: req.user.roles || [],
+          permissions: req.user.permissions || []
+        });
+
+        // Cache result if appropriate
+        if (cacheManager && cacheKey && shouldCacheResult(result)) {
+          const ttl = calculateCacheTTL(value, result);
+          await cacheManager.setex(cacheKey, ttl, JSON.stringify(result));
+          logger.debug('Result cached', { traceId, cacheKey, ttl });
+        }
+
+        // Add request metadata
+        result.request_metadata = {
+          trace_id: traceId,
+          processing_time_ms: Date.now() - startTime,
+          cached: false
+        };
+
+        logger.info('RAG search completed successfully', {
+          traceId,
+          processingTime: Date.now() - startTime,
+          confidence: result.data?.confidence
+        });
+
+        res.json(result);
+
+      } catch (error) {
+        logger.error('RAG search failed', {
+          traceId,
+          error: error.message,
+          processingTime: Date.now() - startTime
+        });
+
+        const errorResponse = {
+          success: false,
+          error: {
+            message: error.message || 'Internal server error',
+            type: error.name || 'UnknownError',
+            trace_id: traceId,
+            timestamp: new Date().toISOString()
+          }
+        };
+
+        res.status(500).json(errorResponse);
+      }
+    }));
 
   /**
    * GET /api/v1/rag/health
