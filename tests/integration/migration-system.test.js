@@ -53,7 +53,7 @@ describe('Migration System Integration Tests', () => {
     // Clean up migration table and all test tables
     try {
       await db.query('DROP TABLE IF EXISTS posts CASCADE');
-      await db.query('DROP TABLE IF EXISTS users CASCADE');
+      await db.query('DROP TABLE IF EXISTS migration_test_users CASCADE');
       await db.query('DROP TABLE IF EXISTS integrity_test CASCADE');
       await db.query('DROP TABLE IF EXISTS status_test_1 CASCADE');
       await db.query('DROP TABLE IF EXISTS status_test_2 CASCADE');
@@ -71,20 +71,21 @@ describe('Migration System Integration Tests', () => {
       return;
     }
         
-    // Clean up any existing migration data and test tables
+    // Clean up only migration-specific test tables, not system tables
     // Drop in correct order to handle foreign key constraints
     try {
-      console.log('Cleaning up test tables...');
+      console.log('Cleaning up migration test tables...');
+      // Only clean up tables that are specifically created by migration tests
       await db.query('DROP TABLE IF EXISTS posts CASCADE');
-      await db.query('DROP TABLE IF EXISTS users CASCADE');
+      await db.query('DROP TABLE IF EXISTS migration_test_users CASCADE');
       await db.query('DROP TABLE IF EXISTS integrity_test CASCADE');
       await db.query('DROP TABLE IF EXISTS status_test_1 CASCADE');
       await db.query('DROP TABLE IF EXISTS status_test_2 CASCADE');
       await db.query('DROP TABLE IF EXISTS schema_migrations CASCADE');
       await db.query('DROP TABLE IF EXISTS test_migration_table CASCADE');
-      console.log('Table cleanup completed');
+      console.log('Migration test table cleanup completed');
     } catch (error) {
-      console.log('Table cleanup error (ignored):', error.message);
+      console.log('Migration test table cleanup error (ignored):', error.message);
     }
 
     // Clean up any existing test migration files
@@ -183,9 +184,9 @@ DROP TABLE IF EXISTS test_migration_table;`;
       // Create multiple migration files
       const migrations = [
         {
-          filename: '0001_create_users.sql',
+          filename: '0001_create_migration_test_users_table.sql',
           content: `-- Create Users Table
-CREATE TABLE users (
+CREATE TABLE migration_test_users (
     id SERIAL PRIMARY KEY,
     username VARCHAR(255) UNIQUE NOT NULL,
     email VARCHAR(255) UNIQUE NOT NULL,
@@ -193,14 +194,14 @@ CREATE TABLE users (
 );
 
 -- ROLLBACK
-DROP TABLE IF EXISTS users;`
+DROP TABLE IF EXISTS migration_test_users;`
         },
         {
           filename: '0002_create_posts.sql',
           content: `-- Create Posts Table
 CREATE TABLE posts (
     id SERIAL PRIMARY KEY,
-    user_id INTEGER REFERENCES users(id),
+    user_id INTEGER REFERENCES migration_test_users(id),
     title VARCHAR(255) NOT NULL,
     content TEXT,
     created_at TIMESTAMP DEFAULT NOW()
@@ -212,14 +213,14 @@ DROP TABLE IF EXISTS posts;`
         {
           filename: '0003_add_indexes.sql',
           content: `-- Add Performance Indexes
-CREATE INDEX idx_users_username ON users(username);
-CREATE INDEX idx_users_email ON users(email);
+CREATE INDEX idx_migration_test_users_username ON migration_test_users(username);
+CREATE INDEX idx_migration_test_users_email ON migration_test_users(email);
 CREATE INDEX idx_posts_user_id ON posts(user_id);
 CREATE INDEX idx_posts_created_at ON posts(created_at);
 
 -- ROLLBACK
-DROP INDEX IF EXISTS idx_users_username;
-DROP INDEX IF EXISTS idx_users_email;
+DROP INDEX IF EXISTS idx_migration_test_users_username;
+DROP INDEX IF EXISTS idx_migration_test_users_email;
 DROP INDEX IF EXISTS idx_posts_user_id;
 DROP INDEX IF EXISTS idx_posts_created_at;`
         }
@@ -249,7 +250,7 @@ DROP INDEX IF EXISTS idx_posts_created_at;`
       const columns = await db.query(`
                 SELECT column_name, data_type 
                 FROM information_schema.columns 
-                WHERE table_name = 'users' 
+                WHERE table_name = 'migration_test_users' 
                 ORDER BY ordinal_position
             `);
       expect(columns.rows).toHaveLength(4); // id, username, email, created_at
@@ -267,7 +268,7 @@ DROP INDEX IF EXISTS idx_posts_created_at;`
       const indexes = await db.query(`
                 SELECT indexname 
                 FROM pg_indexes 
-                WHERE tablename IN ('users', 'posts')
+                WHERE tablename IN ('migration_test_users', 'posts')
                 AND indexname LIKE 'idx_%'
             `);
       expect(indexes.rows).toHaveLength(4);
