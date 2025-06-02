@@ -331,8 +331,8 @@ DROP TABLE IF EXISTS invalid_table;`;
         console.log('Skipping test - database not available');
         return;
       }
-            
-      // Create two migration files
+
+      // Create test migrations
       const migration1 = `-- Migration 1
 CREATE TABLE status_test_1 (id SERIAL PRIMARY KEY);
 -- ROLLBACK
@@ -348,10 +348,20 @@ DROP TABLE IF EXISTS status_test_2;`;
 
       // Apply first migration only
       const availableMigrations = await migrationManager.getAvailableMigrations();
+      
+      // Debug: Log what migrations we found
+      console.log('Test migrations path:', testMigrationsPath);
+      console.log('Available migrations:', availableMigrations);
+      console.log('Migration manager path:', migrationManager.migrationsPath);
+      
       await migrationManager.applyMigration(availableMigrations[0]);
 
       // Check status
       const status = await migrationManager.getStatus();
+      
+      // Debug: Log the actual status
+      console.log('Migration status:', status);
+      
       expect(status.available).toBe(2);
       expect(status.applied).toBe(1);
       expect(status.pending).toBe(1);
