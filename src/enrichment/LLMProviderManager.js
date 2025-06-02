@@ -5,7 +5,7 @@
  * provider selection logic, and health monitoring.
  */
 
-const { BaseProvider, OpenAIProvider, AnthropicProvider } = require('./providers');
+const { OpenAIProvider, AnthropicProvider } = require('./providers');
 const FailoverManager = require('./FailoverManager');
 const PromptVersionManager = require('./PromptVersionManager');
 const logger = require('../utils/logger');
@@ -107,7 +107,7 @@ class LLMProviderManager {
 
     // Initialize provider health tracking for backward compatibility
     this.providerHealth = {};
-    for (const [name, provider] of this.providers) {
+    for (const [name, _provider] of this.providers) {
       this.providerHealth[name] = {
         consecutiveFailures: 0,
         lastFailure: null,
@@ -458,7 +458,7 @@ class LLMProviderManager {
     try {
       const {
         promptVersion = 'latest',
-        provider = null,
+        provider: _provider = null,
         taskType = 'enrichment',
         ...executeOptions
       } = options;

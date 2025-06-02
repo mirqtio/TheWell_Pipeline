@@ -4,7 +4,7 @@
  */
 
 const path = require('path');
-const { ConfigManager, ConfigIntegration } = require('./index');
+const { ConfigIntegration } = require('./index');
 const logger = require('../utils/logger');
 
 /**

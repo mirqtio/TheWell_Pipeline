@@ -1,4 +1,3 @@
-const CacheManager = require('./CacheManager');
 const QueryCache = require('./QueryCache');
 const EmbeddingCache = require('./EmbeddingCache');
 const ResponseCache = require('./ResponseCache');

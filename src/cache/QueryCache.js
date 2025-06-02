@@ -185,7 +185,7 @@ class QueryCache extends CacheManager {
    */
   determineTTL(query, results, metadata = {}) {
     // Handle test scenarios where second parameter is options object
-    if (results && typeof results === 'object' && !Array.isArray(results) && !metadata.hasOwnProperty('suggestedTTL')) {
+    if (results && typeof results === 'object' && !Array.isArray(results) && !Object.prototype.hasOwnProperty.call(metadata, 'suggestedTTL')) {
       metadata = results;
       results = undefined;
     }

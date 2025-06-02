@@ -407,7 +407,7 @@ class VisibilityManager extends EventEmitter {
     return true;
   }
 
-  _evaluateRuleConditions(rule, documentMetadata) {
+  _evaluateRuleConditions(_rule, _documentMetadata) {
     // Additional condition evaluation logic
     // For now, if the rule matches the document, conditions are met
     return true;

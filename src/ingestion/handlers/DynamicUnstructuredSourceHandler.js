@@ -548,7 +548,7 @@ class DynamicUnstructuredSourceHandler extends BaseSourceHandler {
   /**
    * Create document from page
    */
-  async _createDocumentFromPage(page, url, target) {
+  async _createDocumentFromPage(page, url, _target) {
     const title = await page.title();
     const content = await page.content();
     

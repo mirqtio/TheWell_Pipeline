@@ -255,7 +255,7 @@ class EmbeddingCache extends CacheManager {
   /**
    * Get cached similarity results
    */
-  async getCachedSimilarityResults(queryEmbedding, documentIds, model) {
+  async getCachedSimilarityResults(queryEmbedding, documentIds, _model) {
     try {
       const queryKey = queryEmbedding.join(',');
       const docKey = documentIds.join(',');

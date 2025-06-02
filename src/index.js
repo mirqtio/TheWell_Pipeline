@@ -8,7 +8,6 @@
  * - Background job processing
  */
 
-const path = require('path');
 const logger = require('./utils/logger');
 
 async function startPipeline() {
