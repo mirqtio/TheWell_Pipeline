@@ -26,7 +26,9 @@ class RAGManager {
       databaseManager: this.databaseManager,
       visibilityDatabase: this.visibilityDatabase,
       maxResults: options.maxResults || 10,
-      similarityThreshold: options.similarityThreshold || 0.7
+      similarityThreshold: options.similarityThreshold || 0.7,
+      openaiApiKey: options.openaiApiKey,
+      embeddingModel: options.embeddingModel
     });
     
     this.responseGenerator = new ResponseGenerator({
