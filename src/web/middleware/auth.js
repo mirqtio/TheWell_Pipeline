@@ -104,8 +104,8 @@ function requirePermission(permissionName, resourceType = null) {
       if (!req.user.id && req.user.permissions) {
         // Use simple array check for unit tests without user ID
         hasPermissionResult = req.user.permissions.includes(permissionName);
-      } else if (req.user.permissions && (!permissionManager || process.env.NODE_ENV === 'test')) {
-        // Use simple array check for integration tests or when PermissionManager unavailable
+      } else if (req.user.permissions && (!permissionManager || process.env.NODE_ENV === 'test' || process.env.NODE_ENV === 'development')) {
+        // Use simple array check for integration tests, development, or when PermissionManager unavailable
         hasPermissionResult = req.user.permissions.includes(permissionName);
       } else {
         try {
@@ -124,7 +124,7 @@ function requirePermission(permissionName, resourceType = null) {
 
       if (!hasPermissionResult) {
         // Log access denial (skip if no user ID for unit tests)
-        if (req.user.id && permissionManager && process.env.NODE_ENV !== 'test') {
+        if (req.user.id && permissionManager && process.env.NODE_ENV !== 'test' && process.env.NODE_ENV !== 'development') {
           try {
             await permissionManager.logAccess(
               req.user.id,

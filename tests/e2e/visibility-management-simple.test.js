@@ -11,8 +11,12 @@ describe('Visibility Management E2E Workflow', () => {
   let serverProcess;
   let baseUrl;
   let startupTimeout;
+  let apiKey;
 
   beforeAll(async () => {
+    // Set API key for tests
+    apiKey = process.env.REVIEW_API_KEY || 'dev-review-key';
+    
     // Start the web server
     return new Promise((resolve, reject) => {
       const serverPath = path.join(__dirname, '../../src/web/start.js');
@@ -20,7 +24,8 @@ describe('Visibility Management E2E Workflow', () => {
         env: { 
           ...process.env, 
           WEB_PORT: '0', // Use random port with correct env var
-          NODE_ENV: 'development' // Bypass authentication
+          NODE_ENV: 'development', // Bypass authentication
+          REVIEW_API_KEY: apiKey // Ensure API key is available
         },
         stdio: ['pipe', 'pipe', 'pipe']
       });
@@ -81,10 +86,14 @@ describe('Visibility Management E2E Workflow', () => {
     }
   });
 
+  // Helper function for authenticated requests
+  const authenticatedRequest = (method, path) => {
+    return request(baseUrl)[method](path).set('x-api-key', apiKey);
+  };
+
   describe('Manual Review Interface', () => {
     it('should serve the main interface', async () => {
-      const response = await request(baseUrl)
-        .get('/')
+      const response = await authenticatedRequest('get', '/')
         .expect(200);
 
       expect(response.text).toContain('TheWell Pipeline');
@@ -93,20 +102,17 @@ describe('Visibility Management E2E Workflow', () => {
     });
 
     it('should serve static assets', async () => {
-      await request(baseUrl)
-        .get('/app.js')
+      await authenticatedRequest('get', '/app.js')
         .expect(200);
 
-      await request(baseUrl)
-        .get('/styles.css')
+      await authenticatedRequest('get', '/styles.css')
         .expect(200);
     });
   });
 
   describe('API Endpoints', () => {
     it('should return system status', async () => {
-      const response = await request(baseUrl)
-        .get('/api/status')
+      const response = await authenticatedRequest('get', '/api/status')
         .expect(200);
 
       expect(response.body).toHaveProperty('status');
@@ -115,8 +121,7 @@ describe('Visibility Management E2E Workflow', () => {
 
     it('should handle review API endpoints', async () => {
       // Test documents endpoint (should work even without auth for basic structure)
-      const response = await request(baseUrl)
-        .get('/api/review/pending')
+      const response = await authenticatedRequest('get', '/api/review/pending')
         .expect(200);
 
       expect(response.body).toHaveProperty('documents');
@@ -125,8 +130,7 @@ describe('Visibility Management E2E Workflow', () => {
 
     it('should handle jobs API endpoints', async () => {
       // Test jobs endpoint (should work even without auth for basic structure)
-      const response = await request(baseUrl)
-        .get('/api/jobs/stats/overview')
+      const response = await authenticatedRequest('get', '/api/jobs/stats/overview')
         .expect(200);
 
       expect(response.body).toHaveProperty('stats');
@@ -144,7 +148,7 @@ describe('Visibility Management E2E Workflow', () => {
       ];
 
       for (const endpoint of endpoints) {
-        const response = await request(baseUrl).get(endpoint);
+        const response = await authenticatedRequest('get', endpoint);
         // Should not return 404 (endpoint exists)
         expect(response.status).not.toBe(404);
         // Should return either 401 (auth required) or 503 (not enabled) or 200
@@ -153,8 +157,7 @@ describe('Visibility Management E2E Workflow', () => {
     });
 
     it('should handle visibility document updates', async () => {
-      const response = await request(baseUrl)
-        .put('/api/visibility/document/test-doc')
+      const response = await authenticatedRequest('put', '/api/visibility/document/test-doc')
         .send({ visibility: 'public', reason: 'Test' });
 
       // Should not return 404 (endpoint exists)
@@ -164,8 +167,7 @@ describe('Visibility Management E2E Workflow', () => {
     });
 
     it('should handle bulk visibility updates', async () => {
-      const response = await request(baseUrl)
-        .put('/api/visibility/bulk-update')
+      const response = await authenticatedRequest('put', '/api/visibility/bulk-update')
         .send({
           updates: [{ documentId: 'doc1', visibility: 'internal' }],
           reason: 'Test bulk update'
@@ -179,8 +181,7 @@ describe('Visibility Management E2E Workflow', () => {
 
   describe('Frontend Integration', () => {
     it('should include visibility management JavaScript', async () => {
-      const response = await request(baseUrl)
-        .get('/app.js')
+      const response = await authenticatedRequest('get', '/app.js')
         .expect(200);
 
       // Check for visibility management functions
@@ -193,8 +194,7 @@ describe('Visibility Management E2E Workflow', () => {
     });
 
     it('should include visibility management UI elements', async () => {
-      const response = await request(baseUrl)
-        .get('/')
+      const response = await authenticatedRequest('get', '/')
         .expect(200);
 
       // Check for visibility UI elements
@@ -211,8 +211,7 @@ describe('Visibility Management E2E Workflow', () => {
     });
 
     it('should include proper navigation for visibility tab', async () => {
-      const response = await request(baseUrl)
-        .get('/')
+      const response = await authenticatedRequest('get', '/')
         .expect(200);
 
       expect(response.text).toContain('data-view="visibility"');
@@ -222,14 +221,12 @@ describe('Visibility Management E2E Workflow', () => {
 
   describe('Error Handling', () => {
     it('should handle invalid routes gracefully', async () => {
-      await request(baseUrl)
-        .get('/api/invalid-endpoint')
+      await authenticatedRequest('get', '/api/invalid-endpoint')
         .expect(404);
     });
 
     it('should handle malformed API requests', async () => {
-      const response = await request(baseUrl)
-        .post('/api/visibility/rules')
+      const response = await authenticatedRequest('post', '/api/visibility/rules')
         .send({ invalid: 'data' });
 
       expect([400, 401, 503]).toContain(response.status);
@@ -239,7 +236,7 @@ describe('Visibility Management E2E Workflow', () => {
   describe('Performance and Reliability', () => {
     it('should respond to multiple concurrent requests', async () => {
       const requests = Array(5).fill().map(() => 
-        request(baseUrl).get('/api/status')
+        authenticatedRequest('get', '/api/status')
       );
 
       const responses = await Promise.all(requests);
@@ -251,8 +248,7 @@ describe('Visibility Management E2E Workflow', () => {
     it('should maintain consistent response times', async () => {
       const startTime = Date.now();
       
-      await request(baseUrl)
-        .get('/')
+      await authenticatedRequest('get', '/')
         .expect(200);
       
       const responseTime = Date.now() - startTime;
