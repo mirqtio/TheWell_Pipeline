@@ -21,7 +21,7 @@ class DatabaseManager {
       this.config = {
         host: config.host || process.env.DB_HOST || 'localhost',
         port: parseInt(config.port || process.env.DB_PORT || 5432),
-        database: config.database || process.env.DB_NAME || 'thewell_pipeline',
+        database: config.database || process.env.DB_NAME || (process.env.NODE_ENV === 'test' ? 'thewell_pipeline_test' : 'thewell_pipeline'),
         user: config.user || process.env.DB_USER || 'postgres',
         password: config.password || process.env.DB_PASSWORD || '',
         max: config.max || 20,

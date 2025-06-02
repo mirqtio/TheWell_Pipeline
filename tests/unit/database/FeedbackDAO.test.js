@@ -15,7 +15,8 @@ describe('FeedbackDAO', () => {
       query: jest.fn(),
       connect: jest.fn().mockResolvedValue(mockClient),
       pool: {
-        connect: jest.fn().mockResolvedValue(mockClient)
+        connect: jest.fn().mockResolvedValue(mockClient),
+        query: jest.fn()
       }
     };
 
@@ -48,14 +49,14 @@ describe('FeedbackDAO', () => {
         created_at: new Date()
       };
 
-      mockDb.query
+      mockDb.pool.query
         .mockResolvedValueOnce({ rows: [mockFeedback] }) // createFeedback
         .mockResolvedValueOnce({ rows: [{ total_feedback_count: 1, average_rating: 4 }] }) // calculate aggregates
         .mockResolvedValueOnce({ rows: [{ document_id: 'doc-123', total_feedback_count: 1, overall_score: 4 }] }); // upsert aggregates
 
       const result = await feedbackDAO.createFeedback(feedbackData);
 
-      expect(mockDb.query).toHaveBeenCalledWith(
+      expect(mockDb.pool.query).toHaveBeenCalledWith(
         expect.stringContaining('INSERT INTO feedback'),
         ['doc-123', 'test-app', 'rating', JSON.stringify({ rating: 4, comment: 'Good quality document' }), 'user-456', 'session-789']
       );
@@ -71,7 +72,7 @@ describe('FeedbackDAO', () => {
         userId: 'user-456'
       };
 
-      mockDb.query.mockRejectedValueOnce(new Error('Database error'));
+      mockDb.pool.query.mockRejectedValueOnce(new Error('Database error'));
 
       await expect(feedbackDAO.createFeedback(feedbackData)).rejects.toThrow('Database error');
     });
@@ -99,14 +100,14 @@ describe('FeedbackDAO', () => {
         created_at: new Date()
       };
 
-      mockDb.query
+      mockDb.pool.query
         .mockResolvedValueOnce({ rows: [mockFeedback] }) // createDocumentFeedback
         .mockResolvedValueOnce({ rows: [{ total_feedback_count: 1, average_rating: 4 }] }) // calculate aggregates
         .mockResolvedValueOnce({ rows: [{ document_id: 'doc-123', total_feedback_count: 1, overall_score: 4 }] }); // upsert aggregates
 
       const result = await feedbackDAO.createDocumentFeedback(feedbackData);
 
-      expect(mockDb.query).toHaveBeenCalledWith(
+      expect(mockDb.pool.query).toHaveBeenCalledWith(
         expect.stringContaining('INSERT INTO document_feedback'),
         ['doc-123', 'user-456', 'quality', 4, 'Good quality document', JSON.stringify({ source: 'manual' })]
       );
@@ -127,11 +128,11 @@ describe('FeedbackDAO', () => {
         session_id: 'session-456'
       };
 
-      mockDb.query.mockResolvedValue({ rows: [mockFeedback] });
+      mockDb.pool.query.mockResolvedValue({ rows: [mockFeedback] });
 
       const result = await feedbackDAO.getFeedbackById(feedbackId);
 
-      expect(mockDb.query).toHaveBeenCalledWith(
+      expect(mockDb.pool.query).toHaveBeenCalledWith(
         'SELECT * FROM feedback WHERE id = $1',
         [feedbackId]
       );
@@ -139,7 +140,7 @@ describe('FeedbackDAO', () => {
     });
 
     it('should return null when feedback not found', async () => {
-      mockDb.query.mockResolvedValue({ rows: [] });
+      mockDb.pool.query.mockResolvedValue({ rows: [] });
 
       const result = await feedbackDAO.getFeedbackById('nonexistent');
 
@@ -147,7 +148,7 @@ describe('FeedbackDAO', () => {
     });
 
     it('should handle get feedback by ID errors', async () => {
-      mockDb.query.mockRejectedValue(new Error('Database error'));
+      mockDb.pool.query.mockRejectedValue(new Error('Database error'));
 
       await expect(feedbackDAO.getFeedbackById('feedback-123')).rejects.toThrow('Database error');
     });
@@ -171,11 +172,11 @@ describe('FeedbackDAO', () => {
         }
       ];
 
-      mockDb.query.mockResolvedValue({ rows: mockFeedback });
+      mockDb.pool.query.mockResolvedValue({ rows: mockFeedback });
 
       const result = await feedbackDAO.getFeedbackByDocumentId(documentId);
 
-      expect(mockDb.query).toHaveBeenCalledWith(
+      expect(mockDb.pool.query).toHaveBeenCalledWith(
         'SELECT * FROM feedback WHERE document_id = $1 ORDER BY created_at DESC LIMIT $2 OFFSET $3',
         [documentId, 50, 0]
       );
@@ -196,11 +197,11 @@ describe('FeedbackDAO', () => {
         }
       ];
 
-      mockDb.query.mockResolvedValue({ rows: mockFeedback });
+      mockDb.pool.query.mockResolvedValue({ rows: mockFeedback });
 
       const result = await feedbackDAO.getFeedbackByDocumentId(documentId, { feedbackType });
 
-      expect(mockDb.query).toHaveBeenCalledWith(
+      expect(mockDb.pool.query).toHaveBeenCalledWith(
         'SELECT * FROM feedback WHERE document_id = $1 AND feedback_type = $2 ORDER BY created_at DESC LIMIT $3 OFFSET $4',
         [documentId, feedbackType, 50, 0]
       );
@@ -212,18 +213,18 @@ describe('FeedbackDAO', () => {
       const documentId = 'doc-123';
       const options = { limit: 10, offset: 20 };
 
-      mockDb.query.mockResolvedValue({ rows: [] });
+      mockDb.pool.query.mockResolvedValue({ rows: [] });
 
       await feedbackDAO.getFeedbackByDocumentId(documentId, options);
 
-      expect(mockDb.query).toHaveBeenCalledWith(
+      expect(mockDb.pool.query).toHaveBeenCalledWith(
         'SELECT * FROM feedback WHERE document_id = $1 ORDER BY created_at DESC LIMIT $2 OFFSET $3',
         [documentId, 10, 20]
       );
     });
 
     it('should handle get feedback by document ID errors', async () => {
-      mockDb.query.mockRejectedValue(new Error('Database error'));
+      mockDb.pool.query.mockRejectedValue(new Error('Database error'));
 
       await expect(feedbackDAO.getFeedbackByDocumentId('doc-123')).rejects.toThrow('Database error');
     });
@@ -247,11 +248,11 @@ describe('FeedbackDAO', () => {
         }
       ];
 
-      mockDb.query.mockResolvedValue({ rows: mockFeedback });
+      mockDb.pool.query.mockResolvedValue({ rows: mockFeedback });
 
       const result = await feedbackDAO.getFeedbackByUserId(userId);
 
-      expect(mockDb.query).toHaveBeenCalledWith(
+      expect(mockDb.pool.query).toHaveBeenCalledWith(
         'SELECT * FROM feedback WHERE user_id = $1 ORDER BY created_at DESC LIMIT $2 OFFSET $3',
         [userId, 50, 0]
       );
@@ -261,7 +262,7 @@ describe('FeedbackDAO', () => {
     });
 
     it('should handle get feedback by user ID errors', async () => {
-      mockDb.query.mockRejectedValue(new Error('Database error'));
+      mockDb.pool.query.mockRejectedValue(new Error('Database error'));
 
       await expect(feedbackDAO.getFeedbackByUserId('user-123')).rejects.toThrow('Database error');
     });
@@ -286,14 +287,14 @@ describe('FeedbackDAO', () => {
         updated_at: new Date()
       };
 
-      mockDb.query
+      mockDb.pool.query
         .mockResolvedValueOnce({ rows: [mockUpdatedFeedback] }) // updateFeedback
         .mockResolvedValueOnce({ rows: [{ total_feedback_count: 1, average_rating: 5 }] }) // calculate aggregates
         .mockResolvedValueOnce({ rows: [{ document_id: 'doc-456', total_feedback_count: 1, overall_score: 5 }] }); // upsert aggregates
 
       const result = await feedbackDAO.updateFeedback(feedbackId, updateData);
 
-      expect(mockDb.query).toHaveBeenCalledWith(
+      expect(mockDb.pool.query).toHaveBeenCalledWith(
         expect.stringContaining('UPDATE feedback'),
         [JSON.stringify({ rating: 5, comment: 'Updated comment' }), 'user-456', 'session-789', feedbackId]
       );
@@ -311,7 +312,7 @@ describe('FeedbackDAO', () => {
       const feedbackId = 'feedback-123';
       const updateData = { content: { rating: 5 } };
 
-      mockDb.query.mockResolvedValue({ rows: [] });
+      mockDb.pool.query.mockResolvedValue({ rows: [] });
 
       await expect(feedbackDAO.updateFeedback(feedbackId, updateData)).rejects.toThrow('Feedback not found');
     });
@@ -320,7 +321,7 @@ describe('FeedbackDAO', () => {
       const feedbackId = 'feedback-123';
       const updateData = { content: { rating: 5 } };
 
-      mockDb.query.mockRejectedValue(new Error('Database error'));
+      mockDb.pool.query.mockRejectedValue(new Error('Database error'));
 
       await expect(feedbackDAO.updateFeedback(feedbackId, updateData)).rejects.toThrow('Database error');
     });
@@ -334,7 +335,7 @@ describe('FeedbackDAO', () => {
         document_id: 'doc-456'
       };
 
-      mockDb.query
+      mockDb.pool.query
         .mockResolvedValueOnce({ rows: [{ document_id: 'doc-456' }] }) // get document_id
         .mockResolvedValueOnce({ rows: [mockFeedback] }) // delete feedback
         .mockResolvedValueOnce({ rows: [{ total_feedback_count: 0, average_rating: 0 }] }) // calculate aggregates
@@ -342,7 +343,7 @@ describe('FeedbackDAO', () => {
 
       const result = await feedbackDAO.deleteFeedback(feedbackId);
 
-      expect(mockDb.query).toHaveBeenCalledWith(
+      expect(mockDb.pool.query).toHaveBeenCalledWith(
         'DELETE FROM feedback WHERE id = $1 RETURNING *',
         [feedbackId]
       );
@@ -352,13 +353,13 @@ describe('FeedbackDAO', () => {
     it('should throw error when feedback not found for deletion', async () => {
       const feedbackId = 'feedback-123';
 
-      mockDb.query.mockResolvedValue({ rows: [] });
+      mockDb.pool.query.mockResolvedValue({ rows: [] });
 
       await expect(feedbackDAO.deleteFeedback(feedbackId)).rejects.toThrow('Feedback not found');
     });
 
     it('should handle delete feedback errors', async () => {
-      mockDb.query.mockRejectedValue(new Error('Database error'));
+      mockDb.pool.query.mockRejectedValue(new Error('Database error'));
 
       await expect(feedbackDAO.deleteFeedback('feedback-123')).rejects.toThrow('Database error');
     });
@@ -380,11 +381,11 @@ describe('FeedbackDAO', () => {
         last_updated: undefined
       };
 
-      mockDb.query.mockResolvedValue({ rows: [mockAggregates] });
+      mockDb.pool.query.mockResolvedValue({ rows: [mockAggregates] });
 
       const result = await feedbackDAO.getFeedbackAggregates(documentId);
 
-      expect(mockDb.query).toHaveBeenCalledWith(
+      expect(mockDb.pool.query).toHaveBeenCalledWith(
         'SELECT * FROM feedback_aggregates WHERE document_id = $1',
         [documentId]
       );
@@ -392,7 +393,7 @@ describe('FeedbackDAO', () => {
     });
 
     it('should return null when aggregates not found', async () => {
-      mockDb.query.mockResolvedValue({ rows: [] });
+      mockDb.pool.query.mockResolvedValue({ rows: [] });
 
       const result = await feedbackDAO.getFeedbackAggregates('doc-123');
 
@@ -400,7 +401,7 @@ describe('FeedbackDAO', () => {
     });
 
     it('should handle get feedback aggregates errors', async () => {
-      mockDb.query.mockRejectedValue(new Error('Database error'));
+      mockDb.pool.query.mockRejectedValue(new Error('Database error'));
 
       await expect(feedbackDAO.getFeedbackAggregates('doc-123')).rejects.toThrow('Database error');
     });
@@ -420,13 +421,13 @@ describe('FeedbackDAO', () => {
         overall_score: 4.2
       };
 
-      mockDb.query
+      mockDb.pool.query
         .mockResolvedValueOnce({ rows: [mockStats] }) // calculate aggregates
         .mockResolvedValueOnce({ rows: [mockUpdatedAggregates] }); // upsert aggregates
 
       const result = await feedbackDAO.updateFeedbackAggregates(documentId);
 
-      expect(mockDb.query).toHaveBeenCalledWith(
+      expect(mockDb.pool.query).toHaveBeenCalledWith(
         expect.stringContaining('INSERT INTO feedback_aggregates'),
         [documentId, 5, 4.2]
       );
@@ -440,20 +441,20 @@ describe('FeedbackDAO', () => {
         average_rating: null
       };
 
-      mockDb.query
+      mockDb.pool.query
         .mockResolvedValueOnce({ rows: [mockStats] })
         .mockResolvedValueOnce({ rows: [{}] });
 
       await feedbackDAO.updateFeedbackAggregates(documentId);
 
-      expect(mockDb.query).toHaveBeenCalledWith(
+      expect(mockDb.pool.query).toHaveBeenCalledWith(
         expect.stringContaining('INSERT INTO feedback_aggregates'),
         [documentId, 0, null]
       );
     });
 
     it('should handle update feedback aggregates errors', async () => {
-      mockDb.query.mockRejectedValue(new Error('Database error'));
+      mockDb.pool.query.mockRejectedValue(new Error('Database error'));
 
       await expect(feedbackDAO.updateFeedbackAggregates('doc-123')).rejects.toThrow('Database error');
     });
@@ -475,11 +476,11 @@ describe('FeedbackDAO', () => {
         }
       ];
 
-      mockDb.query.mockResolvedValue({ rows: mockStats });
+      mockDb.pool.query.mockResolvedValue({ rows: mockStats });
 
       const result = await feedbackDAO.getFeedbackStatistics();
 
-      expect(mockDb.query).toHaveBeenCalledWith(
+      expect(mockDb.pool.query).toHaveBeenCalledWith(
         expect.stringContaining('FROM feedback'),
         []
       );
@@ -506,11 +507,11 @@ describe('FeedbackDAO', () => {
         }
       ];
 
-      mockDb.query.mockResolvedValue({ rows: mockStats });
+      mockDb.pool.query.mockResolvedValue({ rows: mockStats });
 
       const result = await feedbackDAO.getFeedbackStatistics(documentIds);
 
-      expect(mockDb.query).toHaveBeenCalledWith(
+      expect(mockDb.pool.query).toHaveBeenCalledWith(
         expect.stringContaining('WHERE document_id = ANY($1)'),
         [documentIds]
       );
@@ -522,7 +523,7 @@ describe('FeedbackDAO', () => {
     });
 
     it('should handle get feedback statistics errors', async () => {
-      mockDb.query.mockRejectedValue(new Error('Database error'));
+      mockDb.pool.query.mockRejectedValue(new Error('Database error'));
 
       await expect(feedbackDAO.getFeedbackStatistics()).rejects.toThrow('Database error');
     });
@@ -535,11 +536,11 @@ describe('FeedbackDAO', () => {
         { period: '2024-01-02', feedback_count: '3', average_rating: '4.5' }
       ];
 
-      mockDb.query.mockResolvedValue({ rows: mockTrends });
+      mockDb.pool.query.mockResolvedValue({ rows: mockTrends });
 
       const result = await feedbackDAO.getFeedbackTrends();
 
-      expect(mockDb.query).toHaveBeenCalledWith(
+      expect(mockDb.pool.query).toHaveBeenCalledWith(
         expect.stringMatching(/TO_CHAR\(combined_feedback\.created_at, 'YYYY-MM-DD'\)/),
         []
       );
@@ -555,18 +556,18 @@ describe('FeedbackDAO', () => {
         groupBy: 'week'
       };
 
-      mockDb.query.mockResolvedValue({ rows: [] });
+      mockDb.pool.query.mockResolvedValue({ rows: [] });
 
       await feedbackDAO.getFeedbackTrends(options);
 
-      expect(mockDb.query).toHaveBeenCalledWith(
+      expect(mockDb.pool.query).toHaveBeenCalledWith(
         expect.stringMatching(/TO_CHAR\(combined_feedback\.created_at, 'YYYY-"W"WW'\)/),
         ['doc-123', 'quality', '2024-01-01', '2024-01-31']
       );
     });
 
     it('should handle get feedback trends errors', async () => {
-      mockDb.query.mockRejectedValue(new Error('Database error'));
+      mockDb.pool.query.mockRejectedValue(new Error('Database error'));
 
       await expect(feedbackDAO.getFeedbackTrends()).rejects.toThrow('Database error');
     });
