@@ -56,7 +56,7 @@ describe('TracingManager', () => {
 
   describe('constructor', () => {
     it('should initialize with default options', () => {
-      tracingManager = new TracingManager();
+      tracingManager = new TracingManager({ enabled: true });
       
       expect(tracingManager.serviceName).toBe('thewell-pipeline');
       expect(tracingManager.samplingRate).toBe(0.1);
@@ -78,7 +78,7 @@ describe('TracingManager', () => {
 
   describe('startSpan', () => {
     beforeEach(() => {
-      tracingManager = new TracingManager();
+      tracingManager = new TracingManager({ enabled: true });
     });
 
     it('should start a new span when enabled', () => {
@@ -103,7 +103,7 @@ describe('TracingManager', () => {
 
   describe('RAG-specific spans', () => {
     beforeEach(() => {
-      tracingManager = new TracingManager();
+      tracingManager = new TracingManager({ enabled: true });
     });
 
     it('should create query span with correct attributes', () => {
@@ -174,7 +174,7 @@ describe('TracingManager', () => {
 
   describe('generateTraceId', () => {
     beforeEach(() => {
-      tracingManager = new TracingManager();
+      tracingManager = new TracingManager({ enabled: true });
     });
 
     it('should generate a valid UUID', () => {

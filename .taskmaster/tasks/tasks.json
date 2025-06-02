@@ -309,7 +309,7 @@
             5
           ],
           "details": "Implement parallel processing for document retrieval and embedding generation. Optimize database queries and vector search operations. Add request throttling and queue management for high-load scenarios. Conduct load testing to identify and resolve bottlenecks in the pipeline. Testing requirements: 1) Write unit tests for optimization components, 2) Create integration tests for performance metrics, 3) Implement e2e tests with performance benchmarks, 4) Run all tests and resolve any issues, 5) Merge to master and verify CI passes via GitHub logs.",
-          "status": "pending"
+          "status": "in-progress"
         },
         {
           "id": 7,

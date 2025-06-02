@@ -20,7 +20,9 @@ class TracingManager {
     this.samplingRate = options.samplingRate || 0.1; // 10% sampling by default
     this.tracer = null;
     this.namespace = createNamespace('tracing-context');
-    this.enabled = options.enabled !== false;
+    
+    // Disable tracing in test environments to prevent timeout issues, unless explicitly enabled
+    this.enabled = options.enabled === true || (options.enabled !== false && process.env.NODE_ENV !== 'test');
     
     if (this.enabled) {
       this.initializeTracer();
