@@ -80,7 +80,7 @@ Implement a RAG API service with the following components:
 10. CI verification through GitHub logs via MCP or CLI
 
 # Subtasks:
-## 1. API Scaffolding and Core Architecture [in-progress]
+## 1. API Scaffolding and Core Architecture [done]
 ### Dependencies: None
 ### Description: Set up the foundational API structure with endpoints for query processing, document retrieval, and response generation
 ### Details:

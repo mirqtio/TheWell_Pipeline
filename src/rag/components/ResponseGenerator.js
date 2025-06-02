@@ -115,7 +115,7 @@ Summary: `
    */
   prepareDocumentContext(documents) {
     if (!documents || documents.length === 0) {
-      return "No relevant documents found.";
+      return 'No relevant documents found.';
     }
     
     const contextParts = documents.map((doc, index) => {
@@ -199,7 +199,7 @@ Content: ${content}
       
       // Return fallback response
       return {
-        content: "I apologize, but I'm unable to generate a response at this time due to a technical issue. Please try again later.",
+        content: 'I apologize, but I\'m unable to generate a response at this time due to a technical issue. Please try again later.',
         metadata: {
           error: true,
           fallback: true,

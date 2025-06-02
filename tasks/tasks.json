@@ -255,7 +255,7 @@
           "description": "Set up the foundational API structure with endpoints for query processing, document retrieval, and response generation",
           "dependencies": [],
           "details": "Create the basic API framework with proper routing, error handling, and logging. Implement the core RAG components: retriever, generator, input processor, and output formatter. Design the API contract with clear request/response schemas and authentication endpoints. Testing requirements: 1) Write unit tests for API endpoints and core components, 2) Create integration tests for API interactions, 3) Implement e2e tests for complete API workflows, 4) Run all tests and resolve any issues, 5) Merge to master and verify CI passes via GitHub logs.",
-          "status": "in-progress"
+          "status": "done"
         },
         {
           "id": 2,
