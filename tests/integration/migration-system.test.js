@@ -50,10 +50,15 @@ describe('Migration System Integration Tests', () => {
       // Ignore if directory doesn't exist
     }
         
-    // Clean up migration table
+    // Clean up migration table and all test tables
     try {
-      await db.query('DROP TABLE IF EXISTS schema_migrations');
-      await db.query('DROP TABLE IF EXISTS test_migration_table');
+      await db.query('DROP TABLE IF EXISTS posts CASCADE');
+      await db.query('DROP TABLE IF EXISTS users CASCADE');
+      await db.query('DROP TABLE IF EXISTS integrity_test CASCADE');
+      await db.query('DROP TABLE IF EXISTS status_test_1 CASCADE');
+      await db.query('DROP TABLE IF EXISTS status_test_2 CASCADE');
+      await db.query('DROP TABLE IF EXISTS schema_migrations CASCADE');
+      await db.query('DROP TABLE IF EXISTS test_migration_table CASCADE');
     } catch (error) {
       // Ignore if tables don't exist
     }
@@ -66,12 +71,20 @@ describe('Migration System Integration Tests', () => {
       return;
     }
         
-    // Clean up any existing migration data
+    // Clean up any existing migration data and test tables
+    // Drop in correct order to handle foreign key constraints
     try {
-      await db.query('DROP TABLE IF EXISTS schema_migrations');
-      await db.query('DROP TABLE IF EXISTS test_migration_table');
+      console.log('Cleaning up test tables...');
+      await db.query('DROP TABLE IF EXISTS posts CASCADE');
+      await db.query('DROP TABLE IF EXISTS users CASCADE');
+      await db.query('DROP TABLE IF EXISTS integrity_test CASCADE');
+      await db.query('DROP TABLE IF EXISTS status_test_1 CASCADE');
+      await db.query('DROP TABLE IF EXISTS status_test_2 CASCADE');
+      await db.query('DROP TABLE IF EXISTS schema_migrations CASCADE');
+      await db.query('DROP TABLE IF EXISTS test_migration_table CASCADE');
+      console.log('Table cleanup completed');
     } catch (error) {
-      // Ignore if tables don't exist
+      console.log('Table cleanup error (ignored):', error.message);
     }
 
     // Clean up any existing test migration files
