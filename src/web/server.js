@@ -14,6 +14,7 @@ const reviewRoutes = require('./routes/review');
 const jobRoutes = require('./routes/jobs');
 const apiRoutes = require('./routes/api');
 const visibilityRoutes = require('./routes/visibility');
+const feedbackRoutes = require('./routes/feedback');
 
 // Import middleware
 const authMiddleware = require('./middleware/auth');
@@ -25,6 +26,7 @@ class ManualReviewServer {
     this.host = options.host || process.env.WEB_HOST || 'localhost';
     this.queueManager = options.queueManager;
     this.ingestionEngine = options.ingestionEngine;
+    this.databaseManager = options.databaseManager;
     
     this.app = express();
     this.server = null;
@@ -65,6 +67,12 @@ class ManualReviewServer {
 
     // Authentication middleware for protected routes
     this.app.use('/api', authMiddleware);
+
+    // Set up application dependencies
+    if (this.databaseManager) {
+      const FeedbackDAO = require('../database/FeedbackDAO');
+      this.app.set('feedbackDAO', new FeedbackDAO(this.databaseManager));
+    }
   }
 
   /**
@@ -102,6 +110,8 @@ class ManualReviewServer {
     this.app.use('/api/visibility', visibilityRoutes({
       ingestionEngine: this.ingestionEngine
     }));
+
+    this.app.use('/api/feedback', feedbackRoutes);
 
     this.app.use('/api', apiRoutes({
       queueManager: this.queueManager,

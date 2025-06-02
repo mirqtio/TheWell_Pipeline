@@ -316,7 +316,23 @@ CREATE TABLE config_history (
 -- FEEDBACK AND QUALITY MANAGEMENT TABLES
 -- =====================================================
 
--- Document Feedback: User feedback on document quality and relevance
+-- Feedback: Comprehensive feedback from downstream applications
+CREATE TABLE feedback (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    document_id UUID REFERENCES documents(id) ON DELETE CASCADE,
+    app_id VARCHAR(100) NOT NULL, -- Application that submitted the feedback
+    feedback_type VARCHAR(50) NOT NULL, -- 'rating', 'annotation', 'chat_log', 'quality', 'relevance', 'accuracy', 'usefulness'
+    content JSONB NOT NULL, -- Flexible feedback content structure
+    
+    user_id VARCHAR(255), -- User identifier from downstream app
+    session_id VARCHAR(255), -- Session identifier for grouping related feedback
+    
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    processed_at TIMESTAMP WITH TIME ZONE, -- When feedback was processed/analyzed
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Document Feedback: User feedback on document quality and relevance (legacy table - kept for compatibility)
 CREATE TABLE document_feedback (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     document_id UUID REFERENCES documents(id) ON DELETE CASCADE,
@@ -422,6 +438,16 @@ CREATE INDEX idx_cost_reports_report_type ON cost_reports(report_type);
 CREATE INDEX idx_cost_reports_date_range ON cost_reports(date_range_start, date_range_end);
 
 -- Feedback indexes
+CREATE INDEX idx_feedback_document_id ON feedback(document_id);
+CREATE INDEX idx_feedback_app_id ON feedback(app_id);
+CREATE INDEX idx_feedback_feedback_type ON feedback(feedback_type);
+CREATE INDEX idx_feedback_user_id ON feedback(user_id);
+CREATE INDEX idx_feedback_session_id ON feedback(session_id);
+CREATE INDEX idx_feedback_created_at ON feedback(created_at);
+CREATE INDEX idx_feedback_processed_at ON feedback(processed_at);
+CREATE INDEX idx_feedback_app_created_at ON feedback(app_id, created_at);
+CREATE INDEX idx_feedback_document_feedback_type ON feedback(document_id, feedback_type);
+
 CREATE INDEX idx_document_feedback_document_id ON document_feedback(document_id);
 CREATE INDEX idx_document_feedback_user_id ON document_feedback(user_id);
 CREATE INDEX idx_document_feedback_created_at ON document_feedback(created_at);
@@ -525,6 +551,7 @@ CREATE TRIGGER update_feedback_aggregates_on_delete
     FOR EACH ROW EXECUTE FUNCTION update_feedback_aggregates();
 
 -- Add triggers for new feedback tables to update timestamps
+CREATE TRIGGER update_feedback_updated_at BEFORE UPDATE ON feedback FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 CREATE TRIGGER update_document_feedback_updated_at BEFORE UPDATE ON document_feedback FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
 -- =====================================================

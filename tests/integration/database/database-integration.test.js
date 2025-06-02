@@ -25,7 +25,7 @@ describe('Database Integration Tests', () => {
       host: process.env.TEST_DB_HOST || 'localhost',
       port: process.env.TEST_DB_PORT || 5432,
       database: process.env.TEST_DB_NAME || 'thewell_pipeline_test',
-      user: process.env.TEST_DB_USER || 'postgres',
+      user: process.env.TEST_DB_USER || 'charlieirwin',
       password: process.env.TEST_DB_PASSWORD || 'password'
     };
 

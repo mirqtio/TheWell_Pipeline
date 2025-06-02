@@ -13,7 +13,10 @@ describe('FeedbackDAO', () => {
 
     mockDb = {
       query: jest.fn(),
-      connect: jest.fn().mockResolvedValue(mockClient)
+      connect: jest.fn().mockResolvedValue(mockClient),
+      pool: {
+        connect: jest.fn().mockResolvedValue(mockClient)
+      }
     };
 
     feedbackDAO = new FeedbackDAO(mockDb);
@@ -27,6 +30,57 @@ describe('FeedbackDAO', () => {
     it('should create feedback successfully', async () => {
       const feedbackData = {
         documentId: 'doc-123',
+        appId: 'test-app',
+        feedbackType: 'rating',
+        content: { rating: 4, comment: 'Good quality document' },
+        userId: 'user-456',
+        sessionId: 'session-789'
+      };
+
+      const mockFeedback = {
+        id: 'feedback-789',
+        document_id: 'doc-123',
+        app_id: 'test-app',
+        feedback_type: 'rating',
+        content: JSON.stringify({ rating: 4, comment: 'Good quality document' }),
+        user_id: 'user-456',
+        session_id: 'session-789',
+        created_at: new Date()
+      };
+
+      mockDb.query
+        .mockResolvedValueOnce({ rows: [mockFeedback] }) // createFeedback
+        .mockResolvedValueOnce({ rows: [{ total_feedback_count: 1, average_rating: 4 }] }) // calculate aggregates
+        .mockResolvedValueOnce({ rows: [{ document_id: 'doc-123', total_feedback_count: 1, overall_score: 4 }] }); // upsert aggregates
+
+      const result = await feedbackDAO.createFeedback(feedbackData);
+
+      expect(mockDb.query).toHaveBeenCalledWith(
+        expect.stringContaining('INSERT INTO feedback'),
+        ['doc-123', 'test-app', 'rating', JSON.stringify({ rating: 4, comment: 'Good quality document' }), 'user-456', 'session-789']
+      );
+      expect(result).toEqual(mockFeedback);
+    });
+
+    it('should handle errors during feedback creation', async () => {
+      const feedbackData = {
+        documentId: 'doc-123',
+        appId: 'test-app',
+        feedbackType: 'rating',
+        content: { rating: 4 },
+        userId: 'user-456'
+      };
+
+      mockDb.query.mockRejectedValueOnce(new Error('Database error'));
+
+      await expect(feedbackDAO.createFeedback(feedbackData)).rejects.toThrow('Database error');
+    });
+  });
+
+  describe('createDocumentFeedback', () => {
+    it('should create legacy document feedback successfully', async () => {
+      const feedbackData = {
+        documentId: 'doc-123',
         userId: 'user-456',
         feedbackType: 'quality',
         rating: 4,
@@ -36,42 +90,27 @@ describe('FeedbackDAO', () => {
 
       const mockFeedback = {
         id: 'feedback-789',
-        ...feedbackData,
+        document_id: 'doc-123',
+        user_id: 'user-456',
+        feedback_type: 'quality',
+        rating: 4,
+        comment: 'Good quality document',
+        metadata: JSON.stringify({ source: 'manual' }),
         created_at: new Date()
       };
 
       mockDb.query
-        .mockResolvedValueOnce({ rows: [mockFeedback] }) // createFeedback
-        .mockResolvedValueOnce({ rows: [{ total_feedback_count: 1, overall_score: 4 }] }) // calculate aggregates
+        .mockResolvedValueOnce({ rows: [mockFeedback] }) // createDocumentFeedback
+        .mockResolvedValueOnce({ rows: [{ total_feedback_count: 1, average_rating: 4 }] }) // calculate aggregates
         .mockResolvedValueOnce({ rows: [{ document_id: 'doc-123', total_feedback_count: 1, overall_score: 4 }] }); // upsert aggregates
 
-      const result = await feedbackDAO.createFeedback(feedbackData);
+      const result = await feedbackDAO.createDocumentFeedback(feedbackData);
 
       expect(mockDb.query).toHaveBeenCalledWith(
-        expect.stringContaining('INSERT INTO feedback'),
-        [
-          feedbackData.documentId,
-          feedbackData.userId,
-          feedbackData.feedbackType,
-          feedbackData.rating,
-          feedbackData.comment,
-          JSON.stringify(feedbackData.metadata)
-        ]
+        expect.stringContaining('INSERT INTO document_feedback'),
+        ['doc-123', 'user-456', 'quality', 4, 'Good quality document', JSON.stringify({ source: 'manual' })]
       );
       expect(result).toEqual(mockFeedback);
-    });
-
-    it('should handle create feedback errors', async () => {
-      const feedbackData = {
-        documentId: 'doc-123',
-        userId: 'user-456',
-        feedbackType: 'quality',
-        rating: 4
-      };
-
-      mockDb.query.mockRejectedValue(new Error('Database error'));
-
-      await expect(feedbackDAO.createFeedback(feedbackData)).rejects.toThrow('Database error');
     });
   });
 
@@ -81,7 +120,11 @@ describe('FeedbackDAO', () => {
       const mockFeedback = {
         id: feedbackId,
         document_id: 'doc-456',
-        rating: 5
+        app_id: 'test-app',
+        feedback_type: 'rating',
+        content: JSON.stringify({ rating: 5, comment: 'Excellent' }),
+        user_id: 'user-123',
+        session_id: 'session-456'
       };
 
       mockDb.query.mockResolvedValue({ rows: [mockFeedback] });
@@ -92,7 +135,7 @@ describe('FeedbackDAO', () => {
         'SELECT * FROM feedback WHERE id = $1',
         [feedbackId]
       );
-      expect(result).toEqual(mockFeedback);
+      expect(result.content).toEqual({ rating: 5, comment: 'Excellent' });
     });
 
     it('should return null when feedback not found', async () => {
@@ -114,8 +157,18 @@ describe('FeedbackDAO', () => {
     it('should get feedback by document ID with default options', async () => {
       const documentId = 'doc-123';
       const mockFeedback = [
-        { id: 'feedback-1', document_id: documentId, rating: 4 },
-        { id: 'feedback-2', document_id: documentId, rating: 5 }
+        { 
+          id: 'feedback-1', 
+          document_id: documentId, 
+          content: JSON.stringify({ rating: 4, comment: 'Good' }),
+          feedback_type: 'rating'
+        },
+        { 
+          id: 'feedback-2', 
+          document_id: documentId, 
+          content: JSON.stringify({ rating: 5, comment: 'Excellent' }),
+          feedback_type: 'rating'
+        }
       ];
 
       mockDb.query.mockResolvedValue({ rows: mockFeedback });
@@ -123,17 +176,24 @@ describe('FeedbackDAO', () => {
       const result = await feedbackDAO.getFeedbackByDocumentId(documentId);
 
       expect(mockDb.query).toHaveBeenCalledWith(
-        expect.stringContaining('WHERE f.document_id = $1'),
+        'SELECT * FROM feedback WHERE document_id = $1 ORDER BY created_at DESC LIMIT $2 OFFSET $3',
         [documentId, 50, 0]
       );
-      expect(result).toEqual(mockFeedback);
+      expect(result).toHaveLength(2);
+      expect(result[0].content).toEqual({ rating: 4, comment: 'Good' });
+      expect(result[1].content).toEqual({ rating: 5, comment: 'Excellent' });
     });
 
     it('should get feedback by document ID with feedback type filter', async () => {
       const documentId = 'doc-123';
-      const feedbackType = 'quality';
+      const feedbackType = 'rating';
       const mockFeedback = [
-        { id: 'feedback-1', document_id: documentId, feedback_type: feedbackType, rating: 4 }
+        { 
+          id: 'feedback-1', 
+          document_id: documentId, 
+          feedback_type: feedbackType, 
+          content: JSON.stringify({ rating: 4, comment: 'Good' })
+        }
       ];
 
       mockDb.query.mockResolvedValue({ rows: mockFeedback });
@@ -141,10 +201,11 @@ describe('FeedbackDAO', () => {
       const result = await feedbackDAO.getFeedbackByDocumentId(documentId, { feedbackType });
 
       expect(mockDb.query).toHaveBeenCalledWith(
-        expect.stringContaining('AND f.feedback_type = $2'),
+        'SELECT * FROM feedback WHERE document_id = $1 AND feedback_type = $2 ORDER BY created_at DESC LIMIT $3 OFFSET $4',
         [documentId, feedbackType, 50, 0]
       );
-      expect(result).toEqual(mockFeedback);
+      expect(result).toHaveLength(1);
+      expect(result[0].content).toEqual({ rating: 4, comment: 'Good' });
     });
 
     it('should get feedback by document ID with custom pagination', async () => {
@@ -156,7 +217,7 @@ describe('FeedbackDAO', () => {
       await feedbackDAO.getFeedbackByDocumentId(documentId, options);
 
       expect(mockDb.query).toHaveBeenCalledWith(
-        expect.stringContaining('LIMIT $2 OFFSET $3'),
+        'SELECT * FROM feedback WHERE document_id = $1 ORDER BY created_at DESC LIMIT $2 OFFSET $3',
         [documentId, 10, 20]
       );
     });
@@ -172,8 +233,18 @@ describe('FeedbackDAO', () => {
     it('should get feedback by user ID successfully', async () => {
       const userId = 'user-123';
       const mockFeedback = [
-        { id: 'feedback-1', user_id: userId, rating: 4 },
-        { id: 'feedback-2', user_id: userId, rating: 5 }
+        { 
+          id: 'feedback-1', 
+          user_id: userId, 
+          content: JSON.stringify({ rating: 4, comment: 'Good' }),
+          feedback_type: 'rating'
+        },
+        { 
+          id: 'feedback-2', 
+          user_id: userId, 
+          content: JSON.stringify({ rating: 5, comment: 'Excellent' }),
+          feedback_type: 'rating'
+        }
       ];
 
       mockDb.query.mockResolvedValue({ rows: mockFeedback });
@@ -181,10 +252,12 @@ describe('FeedbackDAO', () => {
       const result = await feedbackDAO.getFeedbackByUserId(userId);
 
       expect(mockDb.query).toHaveBeenCalledWith(
-        expect.stringContaining('WHERE f.user_id = $1'),
+        'SELECT * FROM feedback WHERE user_id = $1 ORDER BY created_at DESC LIMIT $2 OFFSET $3',
         [userId, 50, 0]
       );
-      expect(result).toEqual(mockFeedback);
+      expect(result).toHaveLength(2);
+      expect(result[0].content).toEqual({ rating: 4, comment: 'Good' });
+      expect(result[1].content).toEqual({ rating: 5, comment: 'Excellent' });
     });
 
     it('should handle get feedback by user ID errors', async () => {
@@ -198,30 +271,33 @@ describe('FeedbackDAO', () => {
     it('should update feedback successfully', async () => {
       const feedbackId = 'feedback-123';
       const updateData = {
-        rating: 5,
-        comment: 'Updated comment',
-        metadata: { updated: true }
+        content: { rating: 5, comment: 'Updated comment' },
+        user_id: 'user-456',
+        session_id: 'session-789'
       };
 
       const mockUpdatedFeedback = {
         id: feedbackId,
         document_id: 'doc-456',
-        ...updateData,
+        feedback_type: 'rating',
+        content: JSON.stringify({ rating: 5, comment: 'Updated comment' }),
+        user_id: 'user-456',
+        session_id: 'session-789',
         updated_at: new Date()
       };
 
       mockDb.query
         .mockResolvedValueOnce({ rows: [mockUpdatedFeedback] }) // updateFeedback
-        .mockResolvedValueOnce({ rows: [{ total_feedback_count: 1, overall_score: 5 }] }) // calculate aggregates
+        .mockResolvedValueOnce({ rows: [{ total_feedback_count: 1, average_rating: 5 }] }) // calculate aggregates
         .mockResolvedValueOnce({ rows: [{ document_id: 'doc-456', total_feedback_count: 1, overall_score: 5 }] }); // upsert aggregates
 
       const result = await feedbackDAO.updateFeedback(feedbackId, updateData);
 
       expect(mockDb.query).toHaveBeenCalledWith(
         expect.stringContaining('UPDATE feedback'),
-        [updateData.rating, updateData.comment, JSON.stringify(updateData.metadata), feedbackId]
+        [JSON.stringify({ rating: 5, comment: 'Updated comment' }), 'user-456', 'session-789', feedbackId]
       );
-      expect(result).toEqual(mockUpdatedFeedback);
+      expect(result.content).toEqual({ rating: 5, comment: 'Updated comment' });
     });
 
     it('should throw error when no valid fields to update', async () => {
@@ -233,7 +309,7 @@ describe('FeedbackDAO', () => {
 
     it('should throw error when feedback not found', async () => {
       const feedbackId = 'feedback-123';
-      const updateData = { rating: 5 };
+      const updateData = { content: { rating: 5 } };
 
       mockDb.query.mockResolvedValue({ rows: [] });
 
@@ -242,7 +318,7 @@ describe('FeedbackDAO', () => {
 
     it('should handle update feedback errors', async () => {
       const feedbackId = 'feedback-123';
-      const updateData = { rating: 5 };
+      const updateData = { content: { rating: 5 } };
 
       mockDb.query.mockRejectedValue(new Error('Database error'));
 
@@ -261,7 +337,7 @@ describe('FeedbackDAO', () => {
       mockDb.query
         .mockResolvedValueOnce({ rows: [{ document_id: 'doc-456' }] }) // get document_id
         .mockResolvedValueOnce({ rows: [mockFeedback] }) // delete feedback
-        .mockResolvedValueOnce({ rows: [{ total_feedback_count: 0, overall_score: 0 }] }) // calculate aggregates
+        .mockResolvedValueOnce({ rows: [{ total_feedback_count: 0, average_rating: 0 }] }) // calculate aggregates
         .mockResolvedValueOnce({ rows: [{ document_id: 'doc-456', total_feedback_count: 0, overall_score: 0 }] }); // upsert aggregates
 
       const result = await feedbackDAO.deleteFeedback(feedbackId);
@@ -297,6 +373,13 @@ describe('FeedbackDAO', () => {
         overall_score: 4.5
       };
 
+      const expectedResult = {
+        document_id: documentId,
+        total_feedback: 10,
+        average_rating: 4.5,
+        last_updated: undefined
+      };
+
       mockDb.query.mockResolvedValue({ rows: [mockAggregates] });
 
       const result = await feedbackDAO.getFeedbackAggregates(documentId);
@@ -305,7 +388,7 @@ describe('FeedbackDAO', () => {
         'SELECT * FROM feedback_aggregates WHERE document_id = $1',
         [documentId]
       );
-      expect(result).toEqual(mockAggregates);
+      expect(result).toEqual(expectedResult);
     });
 
     it('should return null when aggregates not found', async () => {
@@ -328,17 +411,13 @@ describe('FeedbackDAO', () => {
       const documentId = 'doc-123';
       const mockStats = {
         total_feedback_count: '5',
-        average_quality_rating: '4.2',
-        average_relevance_rating: '4.5',
-        average_accuracy_rating: '4.0',
-        average_usefulness_rating: '4.3',
-        overall_score: '4.25'
+        average_rating: '4.2'
       };
 
       const mockUpdatedAggregates = {
         document_id: documentId,
         total_feedback_count: 5,
-        overall_score: 4.25
+        overall_score: 4.2
       };
 
       mockDb.query
@@ -349,7 +428,7 @@ describe('FeedbackDAO', () => {
 
       expect(mockDb.query).toHaveBeenCalledWith(
         expect.stringContaining('INSERT INTO feedback_aggregates'),
-        [documentId, 5, 4.2, 4.5, 4.0, 4.3, 4.25]
+        [documentId, 5, 4.2]
       );
       expect(result).toEqual(mockUpdatedAggregates);
     });
@@ -358,11 +437,7 @@ describe('FeedbackDAO', () => {
       const documentId = 'doc-123';
       const mockStats = {
         total_feedback_count: '0',
-        average_quality_rating: null,
-        average_relevance_rating: null,
-        average_accuracy_rating: null,
-        average_usefulness_rating: null,
-        overall_score: null
+        average_rating: null
       };
 
       mockDb.query
@@ -373,7 +448,7 @@ describe('FeedbackDAO', () => {
 
       expect(mockDb.query).toHaveBeenCalledWith(
         expect.stringContaining('INSERT INTO feedback_aggregates'),
-        [documentId, 0, null, null, null, null, null]
+        [documentId, 0, null]
       );
     });
 
@@ -387,8 +462,17 @@ describe('FeedbackDAO', () => {
   describe('getFeedbackStatistics', () => {
     it('should get feedback statistics for all documents', async () => {
       const mockStats = [
-        { document_id: 'doc-1', overall_score: 4.5, total_feedback_count: 10 },
-        { document_id: 'doc-2', overall_score: 4.2, total_feedback_count: 8 }
+        { 
+          total_feedback: '10', 
+          average_rating: '4.5', 
+          feedback_type: 'rating',
+          rating_count: '8',
+          comment_count: '2',
+          quality_count: '0',
+          relevance_count: '0',
+          accuracy_count: '0',
+          usefulness_count: '0'
+        }
       ];
 
       mockDb.query.mockResolvedValue({ rows: mockStats });
@@ -396,17 +480,30 @@ describe('FeedbackDAO', () => {
       const result = await feedbackDAO.getFeedbackStatistics();
 
       expect(mockDb.query).toHaveBeenCalledWith(
-        expect.stringContaining('FROM feedback_aggregates fa'),
+        expect.stringContaining('FROM feedback'),
         []
       );
-      expect(result).toEqual(mockStats);
+      expect(result).toEqual({
+        total_feedback: 10,
+        average_rating: 4.5,
+        feedback_by_type: { rating: 10 }
+      });
     });
 
     it('should get feedback statistics for specific documents', async () => {
       const documentIds = ['doc-1', 'doc-2'];
       const mockStats = [
-        { document_id: 'doc-1', overall_score: 4.5 },
-        { document_id: 'doc-2', overall_score: 4.2 }
+        { 
+          total_feedback: '5', 
+          average_rating: '4.2', 
+          feedback_type: 'rating',
+          rating_count: '5',
+          comment_count: '0',
+          quality_count: '0',
+          relevance_count: '0',
+          accuracy_count: '0',
+          usefulness_count: '0'
+        }
       ];
 
       mockDb.query.mockResolvedValue({ rows: mockStats });
@@ -414,10 +511,14 @@ describe('FeedbackDAO', () => {
       const result = await feedbackDAO.getFeedbackStatistics(documentIds);
 
       expect(mockDb.query).toHaveBeenCalledWith(
-        expect.stringContaining('WHERE fa.document_id = ANY($1)'),
+        expect.stringContaining('WHERE document_id = ANY($1)'),
         [documentIds]
       );
-      expect(result).toEqual(mockStats);
+      expect(result).toEqual({
+        total_feedback: 5,
+        average_rating: 4.2,
+        feedback_by_type: { rating: 5 }
+      });
     });
 
     it('should handle get feedback statistics errors', async () => {
@@ -430,8 +531,8 @@ describe('FeedbackDAO', () => {
   describe('getFeedbackTrends', () => {
     it('should get feedback trends with default options', async () => {
       const mockTrends = [
-        { period: '2024-01-01', feedback_count: '5', average_rating: '4.2', feedback_type: 'quality' },
-        { period: '2024-01-02', feedback_count: '3', average_rating: '4.5', feedback_type: 'quality' }
+        { period: '2024-01-01', feedback_count: '5', average_rating: '4.2' },
+        { period: '2024-01-02', feedback_count: '3', average_rating: '4.5' }
       ];
 
       mockDb.query.mockResolvedValue({ rows: mockTrends });
@@ -439,7 +540,7 @@ describe('FeedbackDAO', () => {
       const result = await feedbackDAO.getFeedbackTrends();
 
       expect(mockDb.query).toHaveBeenCalledWith(
-        expect.stringContaining('TO_CHAR(created_at, \'YYYY-MM-DD\')'),
+        expect.stringMatching(/TO_CHAR\(combined_feedback\.created_at, 'YYYY-MM-DD'\)/),
         []
       );
       expect(result).toEqual(mockTrends);
@@ -459,7 +560,7 @@ describe('FeedbackDAO', () => {
       await feedbackDAO.getFeedbackTrends(options);
 
       expect(mockDb.query).toHaveBeenCalledWith(
-        expect.stringContaining('TO_CHAR(created_at, \'YYYY-"W"WW\')'),
+        expect.stringMatching(/TO_CHAR\(combined_feedback\.created_at, 'YYYY-"W"WW'\)/),
         ['doc-123', 'quality', '2024-01-01', '2024-01-31']
       );
     });
@@ -476,17 +577,19 @@ describe('FeedbackDAO', () => {
       const feedbackEntries = [
         {
           documentId: 'doc-1',
+          appId: 'test-app',
+          feedbackType: 'rating',
+          content: { rating: 4, comment: 'Good' },
           userId: 'user-1',
-          feedbackType: 'quality',
-          rating: 4,
-          comment: 'Good'
+          sessionId: 'session-1'
         },
         {
           documentId: 'doc-2',
-          userId: 'user-2',
+          appId: 'test-app',
           feedbackType: 'relevance',
-          rating: 5,
-          comment: 'Excellent'
+          content: { rating: 5, comment: 'Excellent' },
+          userId: 'user-2',
+          sessionId: 'session-2'
         }
       ];
 
@@ -499,17 +602,12 @@ describe('FeedbackDAO', () => {
         .mockResolvedValueOnce(undefined) // BEGIN
         .mockResolvedValueOnce({ rows: [mockResults[0]] }) // first insert
         .mockResolvedValueOnce({ rows: [mockResults[1]] }) // second insert
-        .mockResolvedValueOnce(undefined) // COMMIT
-
-      // Mock updateFeedbackAggregates calls
-      jest.spyOn(feedbackDAO, 'updateFeedbackAggregates').mockResolvedValue({});
+        .mockResolvedValueOnce(undefined); // COMMIT
 
       const result = await feedbackDAO.bulkCreateFeedback(feedbackEntries);
 
       expect(mockClient.query).toHaveBeenCalledWith('BEGIN');
       expect(mockClient.query).toHaveBeenCalledWith('COMMIT');
-      expect(feedbackDAO.updateFeedbackAggregates).toHaveBeenCalledWith('doc-1');
-      expect(feedbackDAO.updateFeedbackAggregates).toHaveBeenCalledWith('doc-2');
       expect(result).toEqual(mockResults);
     });
 
@@ -522,9 +620,10 @@ describe('FeedbackDAO', () => {
       const feedbackEntries = [
         {
           documentId: 'doc-1',
-          userId: 'user-1',
-          feedbackType: 'quality',
-          rating: 4
+          appId: 'test-app',
+          feedbackType: 'rating',
+          content: { rating: 4 },
+          userId: 'user-1'
         }
       ];
 
