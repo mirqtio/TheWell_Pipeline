@@ -6,7 +6,7 @@
 const express = require('express');
 const Joi = require('joi');
 const { asyncHandler } = require('../middleware/errorHandler');
-const { requirePermission } = require('../middleware/auth');
+const { requirePermission, requireDocumentAccess } = require('../middleware/auth');
 const logger = require('../../utils/logger');
 
 module.exports = (dependencies = {}) => {
@@ -41,9 +41,12 @@ module.exports = (dependencies = {}) => {
 
   /**
    * POST /api/v1/rag/search
-   * Main RAG search endpoint
+   * Main RAG search endpoint with document-level permission filtering
    */
-  router.post('/search', requirePermission('read'), asyncHandler(async (req, res) => {
+  router.post('/search', 
+    requirePermission('document.read'), 
+    requireDocumentAccess('read'),
+    asyncHandler(async (req, res) => {
     const traceId = req.headers['x-trace-id'] || generateTraceId();
     const startTime = Date.now();
 

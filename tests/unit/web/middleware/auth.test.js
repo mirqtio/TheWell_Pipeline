@@ -150,19 +150,19 @@ describe('Authentication Middleware', () => {
 
   describe('utility functions', () => {
     describe('hasPermission', () => {
-      it('should return true for valid permission', () => {
+      it('should return true for valid permission', async () => {
         const user = { permissions: ['review:read', 'review:write'] };
-        expect(authMiddleware.hasPermission(user, 'review:read')).toBe(true);
+        expect(await authMiddleware.hasPermission(user, 'review:read')).toBe(true);
       });
 
-      it('should return false for invalid permission', () => {
+      it('should return false for invalid permission', async () => {
         const user = { permissions: ['review:read'] };
-        expect(authMiddleware.hasPermission(user, 'admin:write')).toBe(false);
+        expect(await authMiddleware.hasPermission(user, 'admin:write')).toBe(false);
       });
 
-      it('should return false when user has no permissions', () => {
+      it('should return false when user has no permissions', async () => {
         const user = {};
-        expect(authMiddleware.hasPermission(user, 'review:read')).toBe(false);
+        expect(await authMiddleware.hasPermission(user, 'review:read')).toBe(false);
       });
     });
 

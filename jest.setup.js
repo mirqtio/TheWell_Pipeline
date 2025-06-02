@@ -127,8 +127,8 @@ process.env.NODE_ENV = 'test';
 process.env.DB_HOST = 'localhost';
 process.env.DB_PORT = '5432';
 process.env.DB_NAME = 'thewell_pipeline_test';
-process.env.DB_USER = 'test_user';
-process.env.DB_PASSWORD = 'test_password';
+process.env.DB_USER = 'charlieirwin';
+process.env.DB_PASSWORD = '';
 process.env.REDIS_URL = 'redis://localhost:6379';
 
 // Increase test timeout for CI environment
