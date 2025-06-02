@@ -41,10 +41,35 @@ describe('DatabaseManager', () => {
 
   describe('constructor', () => {
     it('should initialize with default configuration', () => {
+      // Temporarily remove DATABASE_URL to test default config
+      const originalDatabaseUrl = process.env.DATABASE_URL;
+      delete process.env.DATABASE_URL;
+      
       const db = new DatabaseManager();
       expect(db.config.host).toBe('localhost');
       expect(db.config.port).toBe(5432);
       expect(db.config.database).toBe('thewell_pipeline_test');
+      
+      // Restore DATABASE_URL
+      if (originalDatabaseUrl) {
+        process.env.DATABASE_URL = originalDatabaseUrl;
+      }
+    });
+
+    it('should use DATABASE_URL when available', () => {
+      const originalDatabaseUrl = process.env.DATABASE_URL;
+      process.env.DATABASE_URL = 'postgresql://user:pass@host:5432/dbname';
+      
+      const db = new DatabaseManager();
+      expect(db.config.connectionString).toBe('postgresql://user:pass@host:5432/dbname');
+      expect(db.config.max).toBe(20);
+      
+      // Restore original DATABASE_URL
+      if (originalDatabaseUrl) {
+        process.env.DATABASE_URL = originalDatabaseUrl;
+      } else {
+        delete process.env.DATABASE_URL;
+      }
     });
 
     it('should use provided configuration', () => {
@@ -54,6 +79,10 @@ describe('DatabaseManager', () => {
     });
 
     it('should use environment variables when available', () => {
+      // Temporarily remove DATABASE_URL to test individual env vars
+      const originalDatabaseUrl = process.env.DATABASE_URL;
+      delete process.env.DATABASE_URL;
+      
       process.env.DB_HOST = 'env-host';
       process.env.DB_PORT = '3306';
       process.env.DB_NAME = 'env-db';
@@ -67,6 +96,11 @@ describe('DatabaseManager', () => {
       delete process.env.DB_HOST;
       delete process.env.DB_PORT;
       delete process.env.DB_NAME;
+      
+      // Restore DATABASE_URL
+      if (originalDatabaseUrl) {
+        process.env.DATABASE_URL = originalDatabaseUrl;
+      }
     });
   });
 
