@@ -76,10 +76,14 @@ jobs:
       run: npm run test:unit
     
     - name: Run integration tests
-      run: NODE_ENV=test jest tests/integration --setupFilesAfterEnv='<rootDir>/jest.integration.setup.js'
+      run: npm run test:integration
+      timeout-minutes: 10
+      env:
+        CI: true
+        JEST_TIMEOUT: 60000
     
     - name: Run E2E tests
-      run: NODE_ENV=test jest tests/e2e --setupFilesAfterEnv='<rootDir>/jest.integration.setup.js'
+      run: npm run test:e2e
       timeout-minutes: 15
       env:
         CI: true
