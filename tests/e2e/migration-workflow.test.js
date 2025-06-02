@@ -71,6 +71,34 @@ describe('End-to-End Migration Workflow Tests', () => {
     await db.close();
   });
 
+  beforeEach(async () => {
+    if (!db || !db.isConnected) {
+      return;
+    }
+    
+    // Clean up any existing test data before each test
+    try {
+      await db.query('DROP TABLE IF EXISTS schema_migrations');
+      await db.query('DROP TABLE IF EXISTS e2e_test_documents');
+      await db.query('DROP TABLE IF EXISTS e2e_test_sources');
+      await db.query('DROP TABLE IF EXISTS audit_log');
+    } catch (error) {
+      // Ignore if tables don't exist
+    }
+    
+    // Clean up migration files
+    try {
+      const files = await fs.readdir(testMigrationsPath);
+      for (const file of files) {
+        if (file.endsWith('.sql')) {
+          await fs.unlink(path.join(testMigrationsPath, file));
+        }
+      }
+    } catch (error) {
+      // Ignore if directory doesn't exist or is empty
+    }
+  });
+
   describe('Complete System Migration and Testing Workflow', () => {
     it('should execute full migration lifecycle with performance and security validation', async () => {
       if (!db || !db.isConnected) {
