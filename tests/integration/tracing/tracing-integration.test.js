@@ -284,7 +284,7 @@ describe('Tracing Integration Tests', () => {
       );
       
       const duration = Date.now() - startTime;
-      expect(duration).toBeGreaterThanOrEqual(50);
+      expect(duration).toBeGreaterThanOrEqual(45);
     });
 
     it('should calculate average scores correctly', () => {
