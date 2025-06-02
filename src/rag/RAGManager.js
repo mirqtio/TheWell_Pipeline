@@ -8,6 +8,7 @@ const DocumentRetriever = require('./components/DocumentRetriever');
 const ResponseGenerator = require('./components/ResponseGenerator');
 const InputProcessor = require('./components/InputProcessor');
 const OutputFormatter = require('./components/OutputFormatter');
+const { RAGTracing } = require('../tracing');
 
 class RAGManager {
   constructor(options = {}) {
@@ -15,6 +16,9 @@ class RAGManager {
     this.llmProviderManager = options.llmProviderManager;
     this.visibilityDatabase = options.visibilityDatabase;
     this.cacheManager = options.cacheManager;
+    
+    // Initialize tracing
+    this.ragTracing = new RAGTracing(options.tracingManager);
     
     // Initialize components
     this.inputProcessor = new InputProcessor({
@@ -79,61 +83,111 @@ class RAGManager {
       throw new Error('RAG Manager not initialized');
     }
 
-    const startTime = Date.now();
-    const traceId = queryData.traceId || this.generateTraceId();
-    
-    try {
-      logger.info('Processing RAG query', {
-        traceId,
-        userId: userAuth.userId,
-        queryLength: queryData.query?.length
-      });
+    return this.ragTracing.traceRAGQuery(
+      queryData.query,
+      {
+        queryType: queryData.queryType,
+        filters: queryData.filters,
+        limit: queryData.limit,
+        offset: queryData.offset,
+      },
+      async (querySpan) => {
+        const startTime = Date.now();
+        const traceId = queryData.traceId || this.generateTraceId();
+        
+        try {
+          logger.info('Processing RAG query', {
+            traceId,
+            userId: userAuth.userId,
+            queryLength: queryData.query?.length
+          });
 
-      // Step 1: Process and validate input
-      const processedInput = await this.inputProcessor.process(queryData, userAuth);
-      
-      // Step 2: Retrieve relevant documents
-      const retrievedDocs = await this.documentRetriever.retrieve(
-        processedInput.query,
-        processedInput.filters,
-        userAuth
-      );
-      
-      // Step 3: Generate response using LLM
-      const generatedResponse = await this.responseGenerator.generate(
-        processedInput.query,
-        retrievedDocs,
-        processedInput.context
-      );
-      
-      // Step 4: Format output
-      const formattedOutput = await this.outputFormatter.format(
-        generatedResponse,
-        retrievedDocs,
-        {
-          traceId,
-          processingTime: Date.now() - startTime,
-          metadata: processedInput.metadata
+          // Step 1: Process and validate input
+          const processedInput = await this.ragTracing.traceOperation(
+            'rag.input.processing',
+            { 'rag.step': 'input_processing' },
+            async () => {
+              return await this.inputProcessor.process(queryData, userAuth);
+            }
+          );
+          
+          // Step 2: Retrieve relevant documents
+          const retrievedDocs = await this.ragTracing.traceRetrieval(
+            'hybrid', // Default strategy, could be configurable
+            {
+              limit: processedInput.filters?.limit || 10,
+              filters: processedInput.filters,
+              threshold: processedInput.filters?.threshold || 0.7,
+            },
+            async () => {
+              return await this.documentRetriever.retrieve(
+                processedInput.query,
+                processedInput.filters,
+                userAuth
+              );
+            }
+          );
+          
+          // Step 3: Generate response using LLM
+          const generatedResponse = await this.ragTracing.traceGeneration(
+            this.llmProviderManager?.getCurrentProvider() || 'unknown',
+            {
+              model: this.responseGenerator.getModel(),
+              promptVersion: '1.0',
+              temperature: this.responseGenerator.getTemperature(),
+            },
+            async () => {
+              return await this.responseGenerator.generate(
+                processedInput.query,
+                retrievedDocs,
+                processedInput.context
+              );
+            }
+          );
+          
+          // Step 4: Format output
+          const formattedOutput = await this.ragTracing.traceOperation(
+            'rag.output.formatting',
+            { 'rag.step': 'output_formatting' },
+            async () => {
+              return await this.outputFormatter.format(
+                generatedResponse,
+                retrievedDocs,
+                {
+                  traceId,
+                  processingTime: Date.now() - startTime,
+                  metadata: processedInput.metadata
+                }
+              );
+            }
+          );
+          
+          logger.info('RAG query processed successfully', {
+            traceId,
+            processingTime: Date.now() - startTime,
+            documentsRetrieved: retrievedDocs.length,
+            responseLength: generatedResponse.content?.length
+          });
+          
+          return {
+            ...formattedOutput,
+            fromCache: false,
+            searchType: 'hybrid',
+            totalCount: retrievedDocs.length,
+            maxScore: Math.max(...retrievedDocs.map(doc => doc.score || 0)),
+            documents: retrievedDocs,
+          };
+          
+        } catch (error) {
+          logger.error('Failed to process RAG query', {
+            traceId,
+            error: error.message,
+            processingTime: Date.now() - startTime
+          });
+          throw error;
         }
-      );
-      
-      logger.info('RAG query processed successfully', {
-        traceId,
-        processingTime: Date.now() - startTime,
-        documentsRetrieved: retrievedDocs.length,
-        responseLength: generatedResponse.content?.length
-      });
-      
-      return formattedOutput;
-      
-    } catch (error) {
-      logger.error('Failed to process RAG query', {
-        traceId,
-        error: error.message,
-        processingTime: Date.now() - startTime
-      });
-      throw error;
-    }
+      }
+    );
   }
 
   /**

@@ -1,0 +1,122 @@
+# Task ID: 2
+# Title: LLM Enrichment Pipeline Implementation
+# Status: done
+# Dependencies: 1
+# Priority: high
+# Description: Build a resilient enrichment system using multiple LLM providers with failover capability, cost tracking, and prompt versioning.
+# Details:
+Implement an enrichment service with the following components:
+
+1. Multi-provider abstraction layer:
+   ```javascript
+   class LLMProviderManager {
+     constructor() {
+       this.providers = {
+         openai: new OpenAIProvider({
+           apiKey: process.env.OPENAI_KEY,
+           model: 'gpt-4-turbo',
+           maxRetries: 3,
+           timeout: 30000
+         }),
+         anthropic: new AnthropicProvider({
+           apiKey: process.env.ANTHROPIC_KEY,
+           model: 'claude-3-sonnet',
+           maxRetries: 3,
+           timeout: 30000
+         })
+       };
+       this.providerHealth = {};
+     }
+     
+     async getProvider(taskType, documentSize) {
+       // Provider selection logic with failover
+     }
+     
+     async executeWithProvider(provider, task, content) {
+       // Execution with error handling and cost tracking
+     }
+   }
+   ```
+
+2. Git-based prompt version control system:
+   - Store prompts in a Git repository
+   - Implement versioning with semantic versioning
+   - Link prompts to enrichment outputs for reproducibility
+
+3. Cost tracking middleware:
+   ```javascript
+   const trackCost = async (provider, model, usage, metadata) => {
+     const inputCost = calculateInputCost(provider, model, usage.inputTokens);
+     const outputCost = calculateOutputCost(provider, model, usage.outputTokens);
+     
+     await db.costRecords.create({
+       timestamp: new Date(),
+       provider,
+       model,
+       documentId: metadata.documentId,
+       sourceType: metadata.sourceType,
+       enrichmentType: metadata.enrichmentType,
+       inputTokens: usage.inputTokens,
+       outputTokens: usage.outputTokens,
+       inputCost,
+       outputCost,
+       totalCost: inputCost + outputCost
+     });
+   };
+   ```
+
+4. Hybrid processing architecture:
+   - Monolithic processing for simple documents
+   - Agent-based processing for complex documents using LangChain
+   - Chunking strategies for large documents
+
+5. Schema versioning for enrichment outputs
+
+# Test Strategy:
+1. Unit tests for provider abstraction layer with mocked API responses
+2. Integration tests for provider failover scenarios
+3. Prompt versioning tests with Git operations
+4. Cost tracking accuracy tests with known token counts
+5. End-to-end enrichment tests with different document types
+6. Performance tests for processing throughput
+7. Error handling tests for API rate limits and timeouts
+8. Schema validation tests for enrichment outputs
+9. CI verification through GitHub logs via MCP or CLI
+
+# Subtasks:
+## 1. Implement Provider Abstraction Layer [done]
+### Dependencies: None
+### Description: Design and build an abstraction layer to interface with multiple LLM providers, standardizing API calls, input/output formats, and error handling.
+### Details:
+This layer should allow seamless switching between providers (e.g., OpenAI, Anthropic) and expose a unified interface for downstream components. Consider using or extending frameworks like LangChain for standardized integration. Testing requirements: 1) Write unit tests for each provider adapter with mocked responses, 2) Create integration tests for provider switching logic, 3) Implement e2e tests for complete provider interactions, 4) Run all tests and resolve any issues, 5) Merge to master and verify CI passes via GitHub logs.
+
+## 2. Develop Failover Logic [completed]
+### Dependencies: 2.1
+### Description: Create robust failover mechanisms to automatically switch between LLM providers in case of errors, rate limits, or degraded performance.
+### Details:
+Implement health checks, retry strategies, and fallback provider selection logic to ensure high availability and reliability of the enrichment pipeline. Testing requirements: 1) Write unit tests for failover conditions and logic, 2) Create integration tests simulating provider failures, 3) Implement e2e tests for complete failover scenarios, 4) Run all tests and resolve any issues, 5) Merge to master and verify CI passes via GitHub logs.
+
+## 3. Integrate Prompt Versioning System [done]
+### Dependencies: 2.1
+### Description: Establish a system for managing and tracking different versions of prompts used in the pipeline.
+### Details:
+Enable prompt updates, rollback, and auditability. Store prompt metadata and history to ensure reproducibility and facilitate prompt experimentation. Testing requirements: 1) Write unit tests for prompt versioning operations, 2) Create integration tests for Git-based version control, 3) Implement e2e tests for prompt lifecycle management, 4) Run all tests and resolve any issues, 5) Merge to master and verify CI passes via GitHub logs.
+
+## 4. Implement Cost Tracking and Reporting [done]
+### Dependencies: 2.1
+### Description: Build mechanisms to monitor, log, and report costs associated with LLM usage across providers.
+### Details:
+Track API usage, compute costs per provider, and generate reports for budgeting and optimization. Integrate with provider billing APIs where possible. Testing requirements: 1) Write unit tests for cost calculation logic, 2) Create integration tests for cost tracking persistence, 3) Implement e2e tests for complete cost reporting workflows, 4) Run all tests and resolve any issues, 5) Merge to master and verify CI passes via GitHub logs.
+
+## 5. Design Hybrid Processing Architecture [done]
+### Dependencies: 2.1, 2.2, 2.3, 2.4
+### Description: Architect the pipeline to support hybrid processing, enabling dynamic selection between local and cloud-based LLMs based on workload, cost, or data sensitivity.
+### Details:
+Define routing logic, resource allocation, and data flow between on-premise and cloud components. Ensure compatibility with the abstraction and failover layers. Testing requirements: 1) Write unit tests for routing and selection logic, 2) Create integration tests for hybrid processing flows, 3) Implement e2e tests for complete processing scenarios, 4) Run all tests and resolve any issues, 5) Merge to master and verify CI passes via GitHub logs.
+
+## 6. Establish Schema Versioning and Comprehensive Testing [done]
+### Dependencies: 2.1, 2.2, 2.3, 2.4, 2.5
+### Description: Implement schema versioning for all data exchanged in the pipeline and develop a comprehensive testing suite covering all components and failure scenarios.
+### Details:
+Version input/output schemas to ensure backward compatibility. Create unit, integration, and end-to-end tests, including provider failover, prompt changes, and cost anomalies. Testing requirements: 1) Write unit tests for schema validation and versioning, 2) Create integration tests for schema compatibility, 3) Implement e2e tests for complete data flows with different schema versions, 4) Run all tests and resolve any issues, 5) Merge to master and verify CI passes via GitHub logs.
+

@@ -1,0 +1,754 @@
+{
+  "tasks": [
+    {
+      "id": 1,
+      "title": "Multi-Source Ingestion Engine Setup",
+      "description": "Implement the core ingestion system supporting four source types with configurable processing strategies and manual curation gates.",
+      "status": "completed",
+      "dependencies": [],
+      "priority": "high",
+      "details": "Create a Node.js-based ingestion service with the following components:\n\n1. Source type handlers for:\n   - Static sources (one-time bulk loads)\n   - Semi-static platform policies (weekly polling)\n   - Dynamic consistent sources (daily batch processing)\n   - Dynamic unstructured sources (weekly discovery runs)\n\n2. Bull/Redis job queue implementation:\n   ```javascript\n   // Example queue setup\n   const Queue = require('bull');\n   const staticSourceQueue = new Queue('static-source-processing');\n   const semiStaticQueue = new Queue('semi-static-processing');\n   const dynamicQueue = new Queue('dynamic-processing');\n   const discoveryQueue = new Queue('discovery-processing');\n   \n   // Process queue items\n   staticSourceQueue.process(async (job) => {\n     const { sourceConfig, files } = job.data;\n     return await processStaticSource(sourceConfig, files);\n   });\n   ```\n\n3. Hot-reloadable configuration system using file watchers:\n   ```javascript\n   const chokidar = require('chokidar');\n   const configWatcher = chokidar.watch('./config/sources/', {\n     persistent: true,\n     ignoreInitial: false\n   });\n   \n   configWatcher.on('change', async (path) => {\n     try {\n       const newConfig = await validateAndLoadConfig(path);\n       await applyConfigChanges(newConfig);\n     } catch (error) {\n       logger.error(`Config update failed: ${error.message}`);\n     }\n   });\n   ```\n\n4. Manual review interface for discovered sources with approval workflow\n\n5. Document visibility flag management (internal/external) with appropriate database schema support",
+      "testStrategy": "1. Unit tests for each source type handler with mock data\n2. Integration tests for the job queue system with Redis\n3. Configuration hot-reload tests with various change scenarios\n4. End-to-end tests for the complete ingestion workflow\n5. Load testing with simulated batch uploads\n6. Error handling tests for malformed sources and network failures\n7. Validation tests for document visibility flag enforcement\n8. Browser-based tests for manual review interface\n9. CI verification through GitHub logs via MCP or CLI",
+      "subtasks": [
+        {
+          "id": 1,
+          "title": "Implement Source Handlers for Each Source Type",
+          "description": "Develop and integrate source handler modules for each supported data source type, ensuring each can extract, transform, and forward data according to its unique requirements.",
+          "dependencies": [],
+          "details": "Each source handler must encapsulate logic specific to its data source, handle authentication, data extraction, and error scenarios, and provide a consistent interface for the ingestion engine. Testing requirements: 1) Write unit tests for each handler with mock data sources, 2) Create integration tests for handler interactions, 3) Implement e2e tests for complete data flow, 4) Run all tests and resolve any issues, 5) Merge to master and verify CI passes via GitHub logs.",
+          "status": "completed"
+        },
+        {
+          "id": 2,
+          "title": "Set Up Job Queue and Queue Management",
+          "description": "Design and implement a robust job queue system to manage ingestion tasks, support asynchronous processing, retries, prioritization, and monitoring.",
+          "dependencies": [
+            1
+          ],
+          "details": "The queue should support scaling, error handling, and integration with the source handlers. It must also provide visibility into job status and allow for manual intervention if needed. Testing requirements: 1) Write unit tests for queue operations and handlers, 2) Create integration tests with Redis for queue persistence, 3) Implement e2e tests for job lifecycle, 4) Run all tests and resolve any issues, 5) Merge to master and verify CI passes via GitHub logs.",
+          "status": "done"
+        },
+        {
+          "id": 3,
+          "title": "Implement Configuration Hot-Reload Mechanism",
+          "description": "Enable the ingestion engine to detect and apply configuration changes at runtime without requiring restarts.",
+          "dependencies": [
+            2
+          ],
+          "details": "This includes monitoring configuration files or endpoints, validating changes, and safely updating running components to reflect new settings. Testing requirements: 1) Write unit tests for configuration parsing and validation, 2) Create integration tests for hot-reload functionality, 3) Implement e2e tests for configuration changes, 4) Run all tests and resolve any issues, 5) Merge to master and verify CI passes via GitHub logs.",
+          "status": "done"
+        },
+        {
+          "id": 4,
+          "title": "Develop Manual Review UI for Ingestion Jobs",
+          "description": "Create a user interface for manual review, approval, or rejection of ingested documents and jobs, supporting workflow and audit requirements.",
+          "dependencies": [
+            3
+          ],
+          "details": "The UI should display job/document metadata, allow filtering and searching, and provide actions for reviewers to manage ingestion outcomes. Testing requirements: 1) Write unit tests for UI components and logic, 2) Create browser-based integration tests for UI interactions, 3) Implement e2e tests for complete review workflows, 4) Run all tests and resolve any issues, 5) Merge to master and verify CI passes via GitHub logs.",
+          "status": "done"
+        },
+        {
+          "id": 5,
+          "title": "Implement Document Visibility Management",
+          "description": "Design and build mechanisms to control document visibility throughout the ingestion pipeline, supporting access controls and workflow states.",
+          "dependencies": [
+            4
+          ],
+          "details": "This includes tagging documents with visibility states, enforcing access policies, and integrating with the manual review process. Testing requirements: 1) Write unit tests for visibility logic and access control, 2) Create integration tests for visibility enforcement, 3) Implement e2e tests for visibility workflows, 4) Run all tests and resolve any issues, 5) Merge to master and verify CI passes via GitHub logs.",
+          "status": "done"
+        },
+        {
+          "id": 6,
+          "title": "Apply Database Schema Changes and Integration Testing with Error Handling",
+          "description": "Update the database schema to support new ingestion features, and conduct comprehensive integration testing, including robust error handling scenarios.",
+          "dependencies": [
+            5
+          ],
+          "details": "Schema changes should support new metadata, job tracking, and visibility controls. Integration tests must cover end-to-end flows, error cases, and recovery mechanisms. Testing requirements: 1) Write unit tests for schema migrations and data access, 2) Create integration tests for database operations, 3) Implement e2e tests for complete data flows, 4) Run all tests and resolve any issues, 5) Merge to master and verify CI passes via GitHub logs.",
+          "status": "completed"
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "title": "LLM Enrichment Pipeline Implementation",
+      "description": "Build a resilient enrichment system using multiple LLM providers with failover capability, cost tracking, and prompt versioning.",
+      "status": "done",
+      "dependencies": [
+        1
+      ],
+      "priority": "high",
+      "details": "Implement an enrichment service with the following components:\n\n1. Multi-provider abstraction layer:\n   ```javascript\n   class LLMProviderManager {\n     constructor() {\n       this.providers = {\n         openai: new OpenAIProvider({\n           apiKey: process.env.OPENAI_KEY,\n           model: 'gpt-4-turbo',\n           maxRetries: 3,\n           timeout: 30000\n         }),\n         anthropic: new AnthropicProvider({\n           apiKey: process.env.ANTHROPIC_KEY,\n           model: 'claude-3-sonnet',\n           maxRetries: 3,\n           timeout: 30000\n         })\n       };\n       this.providerHealth = {};\n     }\n     \n     async getProvider(taskType, documentSize) {\n       // Provider selection logic with failover\n     }\n     \n     async executeWithProvider(provider, task, content) {\n       // Execution with error handling and cost tracking\n     }\n   }\n   ```\n\n2. Git-based prompt version control system:\n   - Store prompts in a Git repository\n   - Implement versioning with semantic versioning\n   - Link prompts to enrichment outputs for reproducibility\n\n3. Cost tracking middleware:\n   ```javascript\n   const trackCost = async (provider, model, usage, metadata) => {\n     const inputCost = calculateInputCost(provider, model, usage.inputTokens);\n     const outputCost = calculateOutputCost(provider, model, usage.outputTokens);\n     \n     await db.costRecords.create({\n       timestamp: new Date(),\n       provider,\n       model,\n       documentId: metadata.documentId,\n       sourceType: metadata.sourceType,\n       enrichmentType: metadata.enrichmentType,\n       inputTokens: usage.inputTokens,\n       outputTokens: usage.outputTokens,\n       inputCost,\n       outputCost,\n       totalCost: inputCost + outputCost\n     });\n   };\n   ```\n\n4. Hybrid processing architecture:\n   - Monolithic processing for simple documents\n   - Agent-based processing for complex documents using LangChain\n   - Chunking strategies for large documents\n\n5. Schema versioning for enrichment outputs",
+      "testStrategy": "1. Unit tests for provider abstraction layer with mocked API responses\n2. Integration tests for provider failover scenarios\n3. Prompt versioning tests with Git operations\n4. Cost tracking accuracy tests with known token counts\n5. End-to-end enrichment tests with different document types\n6. Performance tests for processing throughput\n7. Error handling tests for API rate limits and timeouts\n8. Schema validation tests for enrichment outputs\n9. CI verification through GitHub logs via MCP or CLI",
+      "subtasks": [
+        {
+          "id": 1,
+          "title": "Implement Provider Abstraction Layer",
+          "description": "Design and build an abstraction layer to interface with multiple LLM providers, standardizing API calls, input/output formats, and error handling.",
+          "dependencies": [],
+          "details": "This layer should allow seamless switching between providers (e.g., OpenAI, Anthropic) and expose a unified interface for downstream components. Consider using or extending frameworks like LangChain for standardized integration. Testing requirements: 1) Write unit tests for each provider adapter with mocked responses, 2) Create integration tests for provider switching logic, 3) Implement e2e tests for complete provider interactions, 4) Run all tests and resolve any issues, 5) Merge to master and verify CI passes via GitHub logs.",
+          "status": "done"
+        },
+        {
+          "id": 2,
+          "title": "Develop Failover Logic",
+          "description": "Create robust failover mechanisms to automatically switch between LLM providers in case of errors, rate limits, or degraded performance.",
+          "dependencies": [
+            1
+          ],
+          "details": "Implement health checks, retry strategies, and fallback provider selection logic to ensure high availability and reliability of the enrichment pipeline. Testing requirements: 1) Write unit tests for failover conditions and logic, 2) Create integration tests simulating provider failures, 3) Implement e2e tests for complete failover scenarios, 4) Run all tests and resolve any issues, 5) Merge to master and verify CI passes via GitHub logs.",
+          "status": "completed"
+        },
+        {
+          "id": 3,
+          "title": "Integrate Prompt Versioning System",
+          "description": "Establish a system for managing and tracking different versions of prompts used in the pipeline.",
+          "dependencies": [
+            1
+          ],
+          "details": "Enable prompt updates, rollback, and auditability. Store prompt metadata and history to ensure reproducibility and facilitate prompt experimentation. Testing requirements: 1) Write unit tests for prompt versioning operations, 2) Create integration tests for Git-based version control, 3) Implement e2e tests for prompt lifecycle management, 4) Run all tests and resolve any issues, 5) Merge to master and verify CI passes via GitHub logs.",
+          "status": "done"
+        },
+        {
+          "id": 4,
+          "title": "Implement Cost Tracking and Reporting",
+          "description": "Build mechanisms to monitor, log, and report costs associated with LLM usage across providers.",
+          "dependencies": [
+            1
+          ],
+          "details": "Track API usage, compute costs per provider, and generate reports for budgeting and optimization. Integrate with provider billing APIs where possible. Testing requirements: 1) Write unit tests for cost calculation logic, 2) Create integration tests for cost tracking persistence, 3) Implement e2e tests for complete cost reporting workflows, 4) Run all tests and resolve any issues, 5) Merge to master and verify CI passes via GitHub logs.",
+          "status": "done"
+        },
+        {
+          "id": 5,
+          "title": "Design Hybrid Processing Architecture",
+          "description": "Architect the pipeline to support hybrid processing, enabling dynamic selection between local and cloud-based LLMs based on workload, cost, or data sensitivity.",
+          "dependencies": [
+            1,
+            2,
+            3,
+            4
+          ],
+          "details": "Define routing logic, resource allocation, and data flow between on-premise and cloud components. Ensure compatibility with the abstraction and failover layers. Testing requirements: 1) Write unit tests for routing and selection logic, 2) Create integration tests for hybrid processing flows, 3) Implement e2e tests for complete processing scenarios, 4) Run all tests and resolve any issues, 5) Merge to master and verify CI passes via GitHub logs.",
+          "status": "done"
+        },
+        {
+          "id": 6,
+          "title": "Establish Schema Versioning and Comprehensive Testing",
+          "description": "Implement schema versioning for all data exchanged in the pipeline and develop a comprehensive testing suite covering all components and failure scenarios.",
+          "dependencies": [
+            1,
+            2,
+            3,
+            4,
+            5
+          ],
+          "details": "Version input/output schemas to ensure backward compatibility. Create unit, integration, and end-to-end tests, including provider failover, prompt changes, and cost anomalies. Testing requirements: 1) Write unit tests for schema validation and versioning, 2) Create integration tests for schema compatibility, 3) Implement e2e tests for complete data flows with different schema versions, 4) Run all tests and resolve any issues, 5) Merge to master and verify CI passes via GitHub logs.",
+          "status": "done"
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "title": "Knowledge Base Storage System",
+      "description": "Create a PostgreSQL-based storage system with vector search capabilities, aggressive deduplication, and source metadata preservation.",
+      "status": "done",
+      "dependencies": [
+        1,
+        2
+      ],
+      "priority": "high",
+      "details": "Implement a knowledge base storage system with the following components:\n\n1. PostgreSQL schema with pgvector extension:\n   ```sql\n   -- Enable pgvector extension\n   CREATE EXTENSION IF NOT EXISTS vector;\n   \n   -- Core document storage\n   CREATE TABLE documents (\n     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),\n     canonical_id UUID REFERENCES documents(id), -- For deduplication\n     content TEXT NOT NULL,\n     content_hash VARCHAR(64) NOT NULL, -- SHA-256 hash\n     embedding vector(1536), -- pgvector type for text-embedding-3-small\n     \n     source_id UUID REFERENCES sources(id),\n     source_type VARCHAR(50) NOT NULL,\n     visibility VARCHAR(20) DEFAULT 'internal', -- internal/external\n     believability_score DECIMAL(3,2) DEFAULT 0.5, -- 0-1 scale\n     \n     metadata JSONB NOT NULL DEFAULT '{}',\n     enrichments JSONB DEFAULT '{}',\n     \n     created_at TIMESTAMP DEFAULT NOW(),\n     updated_at TIMESTAMP DEFAULT NOW(),\n     ingested_at TIMESTAMP NOT NULL,\n     \n     -- Indexes\n     INDEX idx_embedding USING ivfflat (embedding vector_cosine_ops),\n     INDEX idx_content_hash (content_hash),\n     INDEX idx_source (source_id, source_type),\n     INDEX idx_visibility (visibility),\n     INDEX idx_metadata_gin USING gin (metadata),\n     INDEX idx_created_at (created_at)\n   ) PARTITION BY RANGE (ingested_at);\n   ```\n\n2. Deduplication engine with multiple strategies:\n   - Exact matching via content hashes\n   - Semantic similarity via embedding distance\n   - Fuzzy matching for near-duplicates\n   - Source metadata preservation when merging duplicates\n\n3. Feedback integration schema:\n   ```sql\n   CREATE TABLE feedback (\n     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),\n     document_id UUID REFERENCES documents(id),\n     app_id VARCHAR(100) NOT NULL,\n     feedback_type VARCHAR(50) NOT NULL, -- rating/annotation/chat_log\n     content JSONB NOT NULL,\n     \n     user_id VARCHAR(255), -- From downstream app\n     session_id VARCHAR(255),\n     \n     created_at TIMESTAMP DEFAULT NOW(),\n     processed_at TIMESTAMP,\n     \n     INDEX idx_document_feedback (document_id, feedback_type),\n     INDEX idx_app (app_id, created_at),\n     INDEX idx_processing (processed_at)\n   );\n   ```\n\n4. Document visibility controls with row-level security\n\n5. Prisma ORM integration with schema versioning\n\n6. Redis caching layer for popular queries",
+      "testStrategy": "1. Database schema validation tests\n2. Deduplication algorithm tests with various similarity scenarios\n3. Performance tests for vector similarity searches\n4. Integration tests for feedback processing\n5. Security tests for visibility controls\n6. Cache effectiveness tests\n7. Data integrity tests for concurrent operations\n8. Migration path tests for future Neo4j compatibility\n9. CI verification through GitHub logs via MCP or CLI",
+      "subtasks": [
+        {
+          "id": 1,
+          "title": "Schema Design for Storage System",
+          "description": "Design the core database schema, including tables, relationships, and indexing strategies. Incorporate advanced features such as pgvector for vector search and partitioning for scalability.",
+          "dependencies": [],
+          "details": "Define entities, relationships, and data types. Plan for scalability and performance by leveraging partitioning and vector search capabilities. Testing requirements: 1) Write unit tests for schema validation and constraints, 2) Create integration tests for database operations, 3) Implement e2e tests for complete data flows, 4) Run all tests and resolve any issues, 5) Merge to master and verify CI passes via GitHub logs.",
+          "status": "completed"
+        },
+        {
+          "id": 2,
+          "title": "Deduplication Engine Implementation",
+          "description": "Develop a deduplication engine to identify and eliminate duplicate records within the storage system, ensuring data integrity and efficient storage utilization.",
+          "dependencies": [
+            1
+          ],
+          "details": "Design algorithms and workflows for detecting duplicates, possibly using hashing or similarity search (e.g., leveraging pgvector). Integrate with the core schema. Testing requirements: 1) Write unit tests for deduplication algorithms, 2) Create integration tests with sample duplicate data, 3) Implement e2e tests for complete deduplication workflows, 4) Run all tests and resolve any issues, 5) Merge to master and verify CI passes via GitHub logs.",
+          "status": "completed"
+        },
+        {
+          "id": 3,
+          "title": "Feedback Schema Integration",
+          "description": "Extend the database schema to support user feedback, including ratings, comments, and metadata for tracking feedback history.",
+          "dependencies": [
+            1
+          ],
+          "details": "Design tables and relationships for storing feedback data, ensuring referential integrity and efficient querying. Testing requirements: 1) Write unit tests for feedback schema validation, 2) Create integration tests for feedback data operations, 3) Implement e2e tests for complete feedback workflows, 4) Run all tests and resolve any issues, 5) Merge to master and verify CI passes via GitHub logs.",
+          "status": "done"
+        },
+        {
+          "id": 4,
+          "title": "Visibility Controls Design",
+          "description": "Implement visibility and access control mechanisms within the schema to manage data privacy, user permissions, and sharing settings.",
+          "dependencies": [
+            1
+          ],
+          "details": "Define roles, permissions, and access control lists (ACLs) at the schema level. Ensure compliance with security requirements. Testing requirements: 1) Write unit tests for visibility logic and access control, 2) Create integration tests for permission enforcement, 3) Implement e2e tests for visibility workflows, 4) Run all tests and resolve any issues, 5) Merge to master and verify CI passes via GitHub logs.",
+          "status": "done"
+        },
+        {
+          "id": 5,
+          "title": "ORM Integration",
+          "description": "Integrate the schema with an Object-Relational Mapping (ORM) framework to facilitate application-level data access and manipulation.",
+          "dependencies": [
+            1
+          ],
+          "details": "Map database tables and relationships to ORM models. Ensure support for advanced features like partitioning and vector fields. Testing requirements: 1) Write unit tests for ORM models and operations, 2) Create integration tests for ORM-database interactions, 3) Implement e2e tests for complete data access flows, 4) Run all tests and resolve any issues, 5) Merge to master and verify CI passes via GitHub logs.",
+          "status": "done"
+        },
+        {
+          "id": 6,
+          "title": "Caching Layer Implementation",
+          "description": "Build an intelligent caching layer to store frequent queries and retrieved documents",
+          "dependencies": [
+            1
+          ],
+          "details": "Implement a multi-level caching strategy for query results, document embeddings, and generated responses. Create cache invalidation policies based on document updates. Add cache warming for common queries and implement TTL (Time-To-Live) configurations for different data types. Testing requirements: 1) Write unit tests for caching logic and invalidation, 2) Create integration tests for cache hit/miss scenarios, 3) Implement e2e tests for complete caching workflows, 4) Run all tests and resolve any issues, 5) Merge to master and verify CI passes via GitHub logs.",
+          "status": "done"
+        },
+        {
+          "id": 7,
+          "title": "Migration Planning and Performance/Security Testing",
+          "description": "Plan for data migration from existing systems and conduct thorough performance and security testing of the storage system.",
+          "dependencies": [
+            1,
+            2,
+            3,
+            4,
+            5,
+            6
+          ],
+          "details": "Develop migration scripts and rollback strategies. Perform load testing, query benchmarking, and security audits to ensure robustness. Testing requirements: 1) Write unit tests for migration scripts, 2) Create integration tests for migration processes, 3) Implement e2e tests for complete migration workflows, 4) Run all tests and resolve any issues, 5) Merge to master and verify CI passes via GitHub logs.",
+          "status": "done"
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "title": "RAG API Development",
+      "description": "Build a high-performance RAG API with sub-2-second response time, hybrid search capabilities, and intelligent caching.",
+      "status": "in-progress",
+      "dependencies": [
+        3
+      ],
+      "priority": "high",
+      "details": "Implement a RAG API service with the following components:\n\n1. Express.js API with OpenAPI/Swagger documentation:\n   ```javascript\n   const express = require('express');\n   const swaggerUi = require('swagger-ui-express');\n   const swaggerDocument = require('./swagger.json');\n   \n   const app = express();\n   app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));\n   \n   // Search endpoint with tracing\n   app.post('/api/v1/rag/search', async (req, res) => {\n     const traceId = req.headers['x-trace-id'] || generateTraceId();\n     const span = tracer.startSpan('rag_search', { traceId });\n     \n     try {\n       // Cache check\n       const cacheKey = generateCacheKey(req.body, req.auth);\n       const cachedResult = await redis.get(cacheKey);\n       \n       if (cachedResult) {\n         span.addEvent('cache_hit');\n         return res.json(JSON.parse(cachedResult));\n       }\n       \n       // Execute search\n       const result = await executeHybridSearch(req.body, req.auth);\n       \n       // Cache result\n       if (shouldCache(req.body, result)) {\n         const ttl = calculateCacheTTL(req.body, result);\n         await redis.setex(cacheKey, ttl, JSON.stringify(result));\n       }\n       \n       return res.json(result);\n     } catch (error) {\n       span.setStatus({ code: SpanStatusCode.ERROR });\n       span.recordException(error);\n       return res.status(500).json({ error: error.message });\n     } finally {\n       span.end();\n     }\n   });\n   ```\n\n2. Hybrid search implementation:\n   - Vector similarity search with pgvector\n   - Keyword search with PostgreSQL full-text search\n   - Result fusion with reciprocal rank fusion\n\n3. Redis caching strategy:\n   - Cache key generation based on query and permissions\n   - TTL calculation based on query popularity and content volatility\n   - Intelligent invalidation on document updates\n\n4. Request tracing with unique IDs:\n   - Distributed tracing across components\n   - Performance monitoring for each processing step\n\n5. Visibility-aware querying with permission enforcement",
+      "testStrategy": "1. Performance tests to verify sub-2-second response time\n2. Load tests with concurrent requests\n3. Cache effectiveness tests\n4. Security tests for visibility enforcement\n5. Integration tests for hybrid search accuracy\n6. Tracing verification across system components\n7. Error handling tests for various failure scenarios\n8. API contract tests with OpenAPI validation\n9. Browser-based e2e tests for API interactions\n10. CI verification through GitHub logs via MCP or CLI",
+      "subtasks": [
+        {
+          "id": 1,
+          "title": "API Scaffolding and Core Architecture",
+          "description": "Set up the foundational API structure with endpoints for query processing, document retrieval, and response generation",
+          "dependencies": [],
+          "details": "Create the basic API framework with proper routing, error handling, and logging. Implement the core RAG components: retriever, generator, input processor, and output formatter. Design the API contract with clear request/response schemas and authentication endpoints. Testing requirements: 1) Write unit tests for API endpoints and core components, 2) Create integration tests for API interactions, 3) Implement e2e tests for complete API workflows, 4) Run all tests and resolve any issues, 5) Merge to master and verify CI passes via GitHub logs.",
+          "status": "done"
+        },
+        {
+          "id": 2,
+          "title": "Hybrid Search Implementation",
+          "description": "Develop a hybrid search system combining vector search and keyword-based retrieval for optimal document fetching",
+          "dependencies": [
+            1
+          ],
+          "details": "Implement vector embedding generation for documents and queries. Create keyword-based search functionality with BM25 or similar algorithms. Develop a ranking system to combine results from both approaches. Include relevance scoring and filtering capabilities to improve search precision. Testing requirements: 1) Write unit tests for search algorithms and ranking logic, 2) Create integration tests for search result quality, 3) Implement e2e tests for complete search workflows, 4) Run all tests and resolve any issues, 5) Merge to master and verify CI passes via GitHub logs.",
+          "status": "done"
+        },
+        {
+          "id": 3,
+          "title": "Caching System Implementation",
+          "description": "Build an intelligent caching layer to store frequent queries and retrieved documents",
+          "dependencies": [
+            1,
+            2
+          ],
+          "details": "Implement a multi-level caching strategy for query results, document embeddings, and generated responses. Create cache invalidation policies based on document updates. Add cache warming for common queries and implement TTL (Time-To-Live) configurations for different data types. Testing requirements: 1) Write unit tests for caching logic and invalidation, 2) Create integration tests for cache hit/miss scenarios, 3) Implement e2e tests for complete caching workflows, 4) Run all tests and resolve any issues, 5) Merge to master and verify CI passes via GitHub logs.",
+          "status": "done"
+        },
+        {
+          "id": 4,
+          "title": "Distributed Tracing Integration",
+          "description": "Add comprehensive tracing to monitor and debug the RAG pipeline",
+          "dependencies": [
+            1
+          ],
+          "details": "Implement trace context propagation across all RAG components. Add span creation for key operations (query processing, document retrieval, response generation). Integrate with a tracing backend (Jaeger, Zipkin, etc.). Create custom attributes to capture RAG-specific metrics like retrieval quality and generation time. Testing requirements: 1) Write unit tests for tracing instrumentation, 2) Create integration tests for trace propagation, 3) Implement e2e tests for complete tracing workflows, 4) Run all tests and resolve any issues, 5) Merge to master and verify CI passes via GitHub logs.",
+          "status": "done"
+        },
+        {
+          "id": 5,
+          "title": "Permission Enforcement System",
+          "description": "Develop a robust permission model to control access to documents and knowledge sources",
+          "dependencies": [
+            1,
+            2
+          ],
+          "details": "Create a document-level access control system. Implement user/role-based permission filtering during retrieval. Add permission validation middleware for API endpoints. Design a secure token-based system for authenticating and authorizing requests across the RAG pipeline. Testing requirements: 1) Write unit tests for permission logic and validation, 2) Create integration tests for access control enforcement, 3) Implement e2e tests for permission-based workflows, 4) Run all tests and resolve any issues, 5) Merge to master and verify CI passes via GitHub logs.",
+          "status": "pending"
+        },
+        {
+          "id": 6,
+          "title": "Performance Optimization",
+          "description": "Optimize the RAG pipeline to achieve sub-2-second response times",
+          "dependencies": [
+            2,
+            3,
+            5
+          ],
+          "details": "Implement parallel processing for document retrieval and embedding generation. Optimize database queries and vector search operations. Add request throttling and queue management for high-load scenarios. Conduct load testing to identify and resolve bottlenecks in the pipeline. Testing requirements: 1) Write unit tests for optimization components, 2) Create integration tests for performance metrics, 3) Implement e2e tests with performance benchmarks, 4) Run all tests and resolve any issues, 5) Merge to master and verify CI passes via GitHub logs.",
+          "status": "pending"
+        },
+        {
+          "id": 7,
+          "title": "Contract Testing Implementation",
+          "description": "Develop comprehensive testing framework to ensure API reliability and correctness",
+          "dependencies": [
+            1,
+            2,
+            3,
+            5,
+            6
+          ],
+          "details": "Create contract tests for all API endpoints. Implement integration tests for the complete RAG pipeline. Add performance tests to verify response time requirements. Develop specialized tests for edge cases like empty results, permission boundaries, and cache behaviors. Testing requirements: 1) Write unit tests for contract validation, 2) Create integration tests for API contracts, 3) Implement browser-based e2e tests for API interactions, 4) Run all tests and resolve any issues, 5) Merge to master and verify CI passes via GitHub logs.",
+          "status": "pending"
+        }
+      ]
+    },
+    {
+      "id": 5,
+      "title": "Monitoring and Cost Tracking System",
+      "description": "Implement comprehensive monitoring for costs, quality metrics, and system health with dashboards and alerting.",
+      "status": "pending",
+      "dependencies": [
+        2,
+        4
+      ],
+      "priority": "medium",
+      "details": "Create a monitoring service with the following components:\n\n1. Cost tracking infrastructure:\n   ```javascript\n   class CostTracker {\n     constructor(influxClient, alertManager) {\n       this.influxClient = influxClient;\n       this.alertManager = alertManager;\n       this.costRates = {\n         openai: {\n           'gpt-4-turbo': { input: 0.01, output: 0.03 },\n           'gpt-3.5-turbo': { input: 0.0005, output: 0.0015 }\n         },\n         anthropic: {\n           'claude-3-sonnet': { input: 0.003, output: 0.015 },\n           'claude-3-haiku': { input: 0.00025, output: 0.00125 }\n         }\n       };\n     }\n     \n     async trackCostEvent(event) {\n       // Calculate costs\n       const inputCost = (event.inputTokens / 1000) * this.getCostRate(event.provider, event.model, 'input');\n       const outputCost = (event.outputTokens / 1000) * this.getCostRate(event.provider, event.model, 'output');\n       const totalCost = inputCost + outputCost;\n       \n       // Write to time-series database\n       await this.influxClient.writePoint({\n         measurement: 'pipeline_costs',\n         tags: {\n           source_type: event.sourceType,\n           operation: event.operation,\n           provider: event.provider\n         },\n         fields: {\n           input_cost: inputCost,\n           output_cost: outputCost,\n           total_cost: totalCost,\n           input_tokens: event.inputTokens,\n           output_tokens: event.outputTokens\n         },\n         timestamp: event.timestamp\n       });\n       \n       // Check budget limits\n       await this.checkBudgetLimits(event, totalCost);\n     }\n     \n     // Additional methods...\n   }\n   ```\n\n2. Quality monitoring system:\n   - Automated quality checks for enriched documents\n   - Statistical baselines with anomaly detection\n   - Manual QA sampling interface\n\n3. Grafana + Prometheus monitoring stack:\n   - System health dashboards\n   - Cost tracking dashboards\n   - Quality metrics visualization\n\n4. Jaeger distributed tracing:\n   - Request-level tracing\n   - Performance bottleneck identification\n\n5. Alerting system:\n   - Cost threshold alerts\n   - Quality degradation alerts\n   - System health alerts",
+      "testStrategy": "1. Unit tests for cost calculation accuracy\n2. Integration tests for metrics collection\n3. Dashboard functionality tests\n4. Alert triggering tests with simulated threshold breaches\n5. Performance impact tests to ensure minimal overhead\n6. Tracing completeness tests\n7. Quality metric calculation tests\n8. Budget control tests with simulated cost events\n9. Browser-based tests for dashboard interactions\n10. CI verification through GitHub logs via MCP or CLI",
+      "subtasks": [
+        {
+          "id": 1,
+          "title": "Implement Cost Tracking Mechanisms",
+          "description": "Set up systems to monitor and track infrastructure and operational costs across the distributed environment, integrating with cloud billing APIs and resource usage metrics.",
+          "dependencies": [],
+          "details": "Configure cost tracking tools to collect data from cloud providers and internal resources. Ensure data granularity supports service-level cost attribution. Automate regular cost reporting. Testing requirements: 1) Write unit tests for cost calculation logic, 2) Create integration tests for cost tracking persistence, 3) Implement e2e tests for complete cost reporting workflows, 4) Run all tests and resolve any issues, 5) Merge to master and verify CI passes via GitHub logs.",
+          "status": "pending"
+        },
+        {
+          "id": 2,
+          "title": "Establish Quality Monitoring Metrics",
+          "description": "Define and collect quality metrics such as error rates, latency, uptime, and service-level objectives (SLOs) to assess system health and user experience.",
+          "dependencies": [
+            1
+          ],
+          "details": "Instrument services to emit relevant quality metrics. Set up aggregation and filtering to focus on actionable signals and reduce monitoring noise. Testing requirements: 1) Write unit tests for metric calculation and aggregation, 2) Create integration tests for metric collection, 3) Implement e2e tests for quality monitoring workflows, 4) Run all tests and resolve any issues, 5) Merge to master and verify CI passes via GitHub logs.",
+          "status": "pending"
+        },
+        {
+          "id": 3,
+          "title": "Set Up Monitoring Dashboards",
+          "description": "Develop dashboards to visualize cost, quality, and operational metrics in real time for stakeholders and engineering teams.",
+          "dependencies": [
+            2
+          ],
+          "details": "Select dashboard tools compatible with the monitoring stack. Design dashboards to highlight key metrics, trends, and anomalies. Ensure dashboards are accessible and customizable. Testing requirements: 1) Write unit tests for dashboard components, 2) Create browser-based integration tests for dashboard interactions, 3) Implement e2e tests for complete dashboard workflows, 4) Run all tests and resolve any issues, 5) Merge to master and verify CI passes via GitHub logs.",
+          "status": "pending"
+        },
+        {
+          "id": 4,
+          "title": "Integrate Distributed Tracing",
+          "description": "Implement distributed tracing across all services to enable correlation of requests and root cause analysis in complex architectures.",
+          "dependencies": [
+            2
+          ],
+          "details": "Deploy tracing libraries and agents in all services. Use correlation IDs and dependency maps to track requests end-to-end. Integrate tracing data with dashboards and alerting systems. Testing requirements: 1) Write unit tests for tracing instrumentation, 2) Create integration tests for trace propagation, 3) Implement e2e tests for complete tracing workflows, 4) Run all tests and resolve any issues, 5) Merge to master and verify CI passes via GitHub logs.",
+          "status": "pending"
+        },
+        {
+          "id": 5,
+          "title": "Configure Alerting and Anomaly Detection",
+          "description": "Set up alerting rules and anomaly detection for cost overruns, quality degradations, and system failures, ensuring actionable and context-aware notifications.",
+          "dependencies": [
+            3,
+            4
+          ],
+          "details": "Define alert thresholds based on SLOs and cost budgets. Implement intelligent filtering and aggregation to minimize alert fatigue. Route alerts to appropriate teams and channels. Testing requirements: 1) Write unit tests for alert rule evaluation, 2) Create integration tests for alert triggering, 3) Implement e2e tests for complete alerting workflows, 4) Run all tests and resolve any issues, 5) Merge to master and verify CI passes via GitHub logs.",
+          "status": "pending"
+        },
+        {
+          "id": 6,
+          "title": "Validate Performance and Security Monitoring",
+          "description": "Test and validate that the monitoring system accurately captures performance and security events, including stress testing and simulated attacks.",
+          "dependencies": [
+            5
+          ],
+          "details": "Conduct performance benchmarks and security incident simulations. Verify monitoring coverage for ephemeral resources and network partitions. Document gaps and remediation steps. Testing requirements: 1) Write unit tests for monitoring components, 2) Create integration tests for security event detection, 3) Implement e2e tests for complete monitoring workflows, 4) Run all tests and resolve any issues, 5) Merge to master and verify CI passes via GitHub logs.",
+          "status": "pending"
+        }
+      ]
+    },
+    {
+      "id": 6,
+      "title": "Manual Curation Interface",
+      "description": "Develop a user interface for manual review and curation of ingested content with approval workflows and audit trails.",
+      "status": "pending",
+      "dependencies": [
+        1
+      ],
+      "priority": "medium",
+      "details": "Create a curation interface with the following components:\n\n1. React-based dashboard for source review:\n   - Kanban-style board with Pending Review, In Review, and Processed columns\n   - Drag-and-drop functionality for moving items between columns\n   - Preview cards with source information and content samples\n\n2. Review workflow implementation:\n   ```javascript\n   // Backend API for curation actions\n   app.post('/api/v1/curation/decision', async (req, res) => {\n     const { itemId, decision, curatorId, notes } = req.body;\n     \n     // Validate curator has active lock\n     const validLock = await validateLock(itemId, curatorId);\n     if (!validLock) {\n       return res.status(403).json({ error: 'Invalid or expired lock' });\n     }\n     \n     if (decision === 'APPROVE') {\n       // Process approval\n       const approvedDocument = {\n         content: req.body.editedContent || item.content,\n         metadata: mergeMetadata(item.metadata, req.body.metadataUpdates),\n         visibility: req.body.visibilityFlag,\n         tags: req.body.tags,\n         curatorNotes: notes\n       };\n       \n       await moveToEnrichmentPipeline(approvedDocument);\n     } else if (decision === 'REJECT') {\n       // Process rejection\n       await storeRejection({\n         itemId,\n         reason: req.body.rejectionReason,\n         curatorId,\n         timestamp: new Date()\n       });\n       \n       await updateSourceReliabilityScore(item.sourceId, { negative: true });\n     }\n     \n     await releaseLock(itemId);\n     return res.json({ success: true });\n   });\n   ```\n\n3. Audit trail system:\n   - Logging of all curation decisions\n   - Timestamps and curator identification\n   - Reason tracking for rejections\n\n4. Bulk operations support:\n   - Multi-select functionality\n   - Batch approve/reject with common reasons\n\n5. Source reliability scoring:\n   - Track approval/rejection rates by source\n   - Adjust source priority based on historical quality",
+      "testStrategy": "1. UI component tests with React Testing Library\n2. Workflow integration tests for approval/rejection flows\n3. Audit trail verification tests\n4. Concurrent curation tests to verify locking mechanism\n5. Performance tests with large queues\n6. Usability tests with real curators\n7. Mobile responsiveness tests\n8. Accessibility compliance tests\n9. Browser-based e2e tests for complete curation workflows\n10. CI verification through GitHub logs via MCP or CLI",
+      "subtasks": [
+        {
+          "id": 1,
+          "title": "Design and Implement Dashboard UI",
+          "description": "Create a user-facing dashboard interface for curators to view, manage, and interact with curated data, including visualizations, filters, and actionable controls.",
+          "dependencies": [],
+          "details": "This subtask involves wireframing, UI/UX design, and frontend development to ensure the dashboard is intuitive and supports the curation workflow. It should provide access to bulk operations, audit trails, and reliability scores. Testing requirements: 1) Write unit tests for UI components with React Testing Library, 2) Create browser-based integration tests for UI interactions, 3) Implement e2e tests for complete dashboard workflows, 4) Run all tests and resolve any issues, 5) Merge to master and verify CI passes via GitHub logs.",
+          "status": "pending"
+        },
+        {
+          "id": 2,
+          "title": "Develop Workflow Backend Logic",
+          "description": "Build backend services to handle curation workflows, including task assignment, state transitions, and integration with the dashboard UI.",
+          "dependencies": [
+            1
+          ],
+          "details": "This includes implementing APIs and business logic for managing curation tasks, tracking progress, and supporting collaboration among curators. Testing requirements: 1) Write unit tests for workflow logic and APIs, 2) Create integration tests for workflow state transitions, 3) Implement e2e tests for complete curation workflows, 4) Run all tests and resolve any issues, 5) Merge to master and verify CI passes via GitHub logs.",
+          "status": "pending"
+        },
+        {
+          "id": 3,
+          "title": "Implement Audit Trail System",
+          "description": "Create an audit trail mechanism to log all curation actions, changes, and user activities for compliance and traceability.",
+          "dependencies": [
+            2
+          ],
+          "details": "This subtask covers designing a schema for audit logs, integrating logging into workflow actions, and exposing audit data in the dashboard for review. Testing requirements: 1) Write unit tests for audit logging functions, 2) Create integration tests for audit trail persistence, 3) Implement e2e tests for audit trail workflows, 4) Run all tests and resolve any issues, 5) Merge to master and verify CI passes via GitHub logs.",
+          "status": "pending"
+        },
+        {
+          "id": 4,
+          "title": "Enable Bulk Operations Functionality",
+          "description": "Add support for bulk actions (e.g., tagging, approval, deletion) on curated data items through both the UI and backend.",
+          "dependencies": [
+            2
+          ],
+          "details": "This involves designing efficient batch processing endpoints, updating the UI for multi-select and bulk action controls, and ensuring audit logging for bulk changes. Testing requirements: 1) Write unit tests for bulk operation logic, 2) Create browser-based integration tests for bulk UI interactions, 3) Implement e2e tests for complete bulk operation workflows, 4) Run all tests and resolve any issues, 5) Merge to master and verify CI passes via GitHub logs.",
+          "status": "pending"
+        },
+        {
+          "id": 5,
+          "title": "Integrate Source Reliability Scoring",
+          "description": "Develop and integrate a system for scoring and displaying the reliability of data sources within the curation interface.",
+          "dependencies": [
+            2
+          ],
+          "details": "This includes defining reliability metrics, implementing scoring algorithms, storing scores, and presenting them in the dashboard to inform curator decisions. Testing requirements: 1) Write unit tests for scoring algorithms, 2) Create integration tests for score calculation and updates, 3) Implement e2e tests for reliability score workflows, 4) Run all tests and resolve any issues, 5) Merge to master and verify CI passes via GitHub logs.",
+          "status": "pending"
+        }
+      ]
+    },
+    {
+      "id": 7,
+      "title": "Feedback Loop Integration",
+      "description": "Implement a bidirectional feedback system that captures insights from downstream applications and updates the knowledge base accordingly.",
+      "status": "pending",
+      "dependencies": [
+        3,
+        4
+      ],
+      "priority": "medium",
+      "details": "Create a feedback integration system with the following components:\n\n1. Feedback API endpoints:\n   ```javascript\n   // Submit feedback from downstream apps\n   app.post('/api/v1/feedback/submit', async (req, res) => {\n     const { documentId, appId, feedbackType, content, userId, sessionId } = req.body;\n     \n     // Validate request\n     if (!documentId || !appId || !feedbackType || !content) {\n       return res.status(400).json({ error: 'Missing required fields' });\n     }\n     \n     // Store feedback\n     const feedback = await db.feedback.create({\n       documentId,\n       appId,\n       feedbackType,\n       content,\n       userId,\n       sessionId,\n       createdAt: new Date()\n     });\n     \n     // Trigger immediate processing for high-priority feedback\n     if (isHighPriority(feedbackType, content)) {\n       await processFeedbackItem(feedback.id);\n     }\n     \n     return res.json({ success: true, feedbackId: feedback.id });\n   });\n   ```\n\n2. Feedback processor implementation:\n   - Periodic batch processing of feedback\n   - Aggregation of signals by document\n   - Believability score updates based on feedback\n\n3. Feedback types handling:\n   - Quality ratings processing\n   - Annotation integration\n   - Chat log analysis for engagement metrics\n\n4. Improvement suggestion system:\n   - Extract corrections from annotations\n   - Identify missing information\n   - Create enrichment improvement tasks\n\n5. Trending topic detection:\n   - Analyze feedback patterns across documents\n   - Identify emerging topics of interest\n   - Boost relevance for trending content",
+      "testStrategy": "1. API endpoint tests with various feedback types\n2. Feedback processing logic tests\n3. Integration tests for believability score updates\n4. Performance tests for batch processing\n5. Trend detection algorithm tests\n6. Security tests for feedback submission\n7. End-to-end tests tracing feedback to knowledge base updates\n8. Regression tests to ensure feedback doesn't corrupt existing data\n9. Browser-based e2e tests for feedback submission and processing\n10. CI verification through GitHub logs via MCP or CLI",
+      "subtasks": [
+        {
+          "id": 1,
+          "title": "Design and Implement Feedback API Endpoints",
+          "description": "Develop RESTful API endpoints to receive, validate, and store feedback from users, supporting multiple feedback types (e.g., bug reports, suggestions, ratings).",
+          "dependencies": [],
+          "details": "Endpoints should handle authentication, input validation, and error handling. Ensure extensibility for future feedback types. Testing requirements: 1) Write unit tests for API endpoints and validation logic, 2) Create integration tests for API interactions, 3) Implement e2e tests for complete feedback submission workflows, 4) Run all tests and resolve any issues, 5) Merge to master and verify CI passes via GitHub logs.",
+          "status": "pending"
+        },
+        {
+          "id": 2,
+          "title": "Develop Feedback Processor",
+          "description": "Create a processing module to handle incoming feedback, supporting both real-time and batch processing modes.",
+          "dependencies": [
+            1
+          ],
+          "details": "Processor should normalize, categorize, and route feedback to appropriate downstream systems or storage. Include logging and monitoring. Testing requirements: 1) Write unit tests for processor logic and routing, 2) Create integration tests for processing workflows, 3) Implement e2e tests for complete feedback processing, 4) Run all tests and resolve any issues, 5) Merge to master and verify CI passes via GitHub logs.",
+          "status": "pending"
+        },
+        {
+          "id": 3,
+          "title": "Implement Feedback Type Handling Logic",
+          "description": "Build logic to distinguish and process different feedback types, enabling tailored workflows and prioritization.",
+          "dependencies": [
+            2
+          ],
+          "details": "Support extensible feedback type schemas and ensure each type triggers the correct processing and storage logic. Testing requirements: 1) Write unit tests for type-specific handling logic, 2) Create integration tests for different feedback types, 3) Implement e2e tests for type-specific workflows, 4) Run all tests and resolve any issues, 5) Merge to master and verify CI passes via GitHub logs.",
+          "status": "pending"
+        },
+        {
+          "id": 4,
+          "title": "Develop Improvement Suggestion System",
+          "description": "Design a system to analyze processed feedback and generate actionable improvement suggestions for the product or knowledge base.",
+          "dependencies": [
+            3
+          ],
+          "details": "Leverage analytics and possibly machine learning to identify patterns and recommend enhancements based on feedback trends. Testing requirements: 1) Write unit tests for suggestion generation algorithms, 2) Create integration tests for suggestion workflows, 3) Implement e2e tests for complete suggestion lifecycles, 4) Run all tests and resolve any issues, 5) Merge to master and verify CI passes via GitHub logs.",
+          "status": "pending"
+        },
+        {
+          "id": 5,
+          "title": "Implement Trending Topic Detection",
+          "description": "Create a module to detect trending topics or recurring issues from aggregated feedback data.",
+          "dependencies": [
+            3
+          ],
+          "details": "Use statistical analysis or NLP techniques to surface high-frequency topics and emerging concerns in near real-time. Testing requirements: 1) Write unit tests for trend detection algorithms, 2) Create integration tests with sample feedback data, 3) Implement e2e tests for trend detection workflows, 4) Run all tests and resolve any issues, 5) Merge to master and verify CI passes via GitHub logs.",
+          "status": "pending"
+        },
+        {
+          "id": 6,
+          "title": "Conduct Integration Testing",
+          "description": "Perform comprehensive integration testing to ensure all feedback components (API, processor, type handling, suggestion system, trend detection) work seamlessly together.",
+          "dependencies": [
+            4,
+            5
+          ],
+          "details": "Test end-to-end feedback flow, error handling, data consistency, and system performance under various scenarios. Testing requirements: 1) Write unit tests for integration points, 2) Create integration tests for component interactions, 3) Implement browser-based e2e tests for complete feedback system, 4) Run all tests and resolve any issues, 5) Merge to master and verify CI passes via GitHub logs.",
+          "status": "pending"
+        }
+      ]
+    },
+    {
+      "id": 8,
+      "title": "Design System Implementation",
+      "description": "Implement the comprehensive design system with color tokens, spacing, elevation, and animation primitives across all interface components.",
+      "status": "pending",
+      "dependencies": [
+        6
+      ],
+      "priority": "medium",
+      "details": "Create a design system implementation with the following components:\n\n1. CSS token system:\n   ```css\n   :root {\n     /* Primary Palette - Our emotional foundation */\n     --color-primary-100: #E3F2FD;  /* Lightest blue for subtle backgrounds */\n     --color-primary-300: #90CAF9;  /* Interactive hover states */\n     --color-primary-500: #4A90E2;  /* Primary actions and focus states */\n     --color-primary-700: #1976D2;  /* Active/pressed states */\n     --color-primary-900: #0D47A1;  /* High emphasis text */\n     \n     /* Semantic Colors - Meaning through color */\n     --color-success-light: #E8F5E9;\n     --color-success-main: #7ED321;\n     --color-warning-light: #FFF3E0;\n     --color-warning-main: #FF9800;\n     --color-error-light: #FFEBEE;\n     --color-error-main: #F44336;\n     \n     /* Neutral Spectrum - The calming foundation */\n     --color-neutral-50: #FAFAFA;   /* Page backgrounds */\n     --color-neutral-100: #F5F5F5;  /* Card backgrounds */\n     --color-neutral-300: #E0E0E0;  /* Borders and dividers */\n     --color-neutral-600: #757575;  /* Secondary text */\n     --color-neutral-900: #212121;  /* Primary text */\n     \n     /* Dark Mode Foundation */\n     --color-background-dark: #0A0A0A;        /* Near black, not pure black */\n     --color-surface-dark: #1A1A1A;           /* Card backgrounds */\n     --color-surface-raised-dark: #2A2A2A;    /* Elevated elements */\n     \n     /* Spacing System */\n     --spacing-xs: 4px;   /* Tight groupings */\n     --spacing-sm: 8px;   /* Related elements */\n     --spacing-md: 16px;  /* Standard gaps */\n     --spacing-lg: 24px;  /* Section breaks */\n     --spacing-xl: 32px;  /* Major divisions */\n     --spacing-xxl: 48px; /* Page sections */\n     \n     /* Elevation System */\n     --elevation-0: none;\n     --elevation-1: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.06);\n     --elevation-2: 0 3px 6px rgba(0,0,0,0.12), 0 2px 4px rgba(0,0,0,0.08);\n     --elevation-3: 0 10px 20px rgba(0,0,0,0.12), 0 3px 6px rgba(0,0,0,0.08);\n     --elevation-4: 0 15px 25px rgba(0,0,0,0.12), 0 5px 10px rgba(0,0,0,0.08);\n     \n     /* Animation System */\n     --animation-fade-in: fadeIn 200ms ease-out;\n     --animation-fade-out: fadeIn 150ms ease-in reverse;\n     --animation-slide-up: slideUp 250ms cubic-bezier(0.4, 0, 0.2, 1);\n     --animation-slide-down: slideUp 200ms cubic-bezier(0.4, 0, 0.2, 1) reverse;\n     --animation-scale-in: scaleGrow 200ms cubic-bezier(0.34, 1.56, 0.64, 1);\n     --animation-scale-out: scaleGrow 150ms ease-in reverse;\n   }\n   ```\n\n2. Component library implementation:\n   - Button component with all states and variants\n   - Card component with elevation and hover states\n   - Form fields with validation states\n   - Modal and dialog components\n   - Navigation components\n\n3. Animation system implementation:\n   - Core animation primitives (fade, slide, scale, pulse, number roll)\n   - Physics-based transitions\n   - Loading state animations\n   - Error state animations\n\n4. Responsive layout system:\n   - Grid system based on 8-point spacing\n   - Breakpoint system for different device sizes\n   - Mobile-first approach with progressive enhancement\n\n5. Dark mode implementation:\n   - Theme switching mechanism\n   - Dark mode specific tokens\n   - Smooth transition between themes",
+      "testStrategy": "1. Visual regression tests for all components\n2. Accessibility tests for color contrast and keyboard navigation\n3. Responsive design tests across breakpoints\n4. Animation performance tests\n5. Theme switching tests\n6. Cross-browser compatibility tests\n7. Component prop validation tests\n8. Storybook documentation for all components\n9. Browser-based e2e tests for component interactions\n10. CI verification through GitHub logs via MCP or CLI",
+      "subtasks": [
+        {
+          "id": 1,
+          "title": "Token System Setup",
+          "description": "Define and implement a scalable token system for colors, typography, spacing, and other design primitives to ensure consistency and theme support across the design system.",
+          "dependencies": [],
+          "details": "Establish a centralized set of design tokens (variables) for core visual properties. Ensure tokens are accessible to both designers and developers, and support multiple themes (e.g., light/dark). Testing requirements: 1) Write unit tests for token definitions and usage, 2) Create integration tests for token application, 3) Implement e2e tests for token-based styling, 4) Run all tests and resolve any issues, 5) Merge to master and verify CI passes via GitHub logs.",
+          "status": "pending"
+        },
+        {
+          "id": 2,
+          "title": "Component Library Development",
+          "description": "Build a reusable component library using the established token system, ensuring accessibility, consistency, and theme adaptability.",
+          "dependencies": [
+            1
+          ],
+          "details": "Develop core UI components (buttons, inputs, cards, etc.) that consume design tokens. Document usage guidelines and ensure components are accessible and responsive. Testing requirements: 1) Write unit tests for component functionality, 2) Create browser-based integration tests for component interactions, 3) Implement e2e tests for component usage in applications, 4) Run all tests and resolve any issues, 5) Merge to master and verify CI passes via GitHub logs.",
+          "status": "pending"
+        },
+        {
+          "id": 3,
+          "title": "Animation Primitives Integration",
+          "description": "Create and integrate animation primitives for transitions, feedback, and micro-interactions within the component library.",
+          "dependencies": [
+            2
+          ],
+          "details": "Define standard animation tokens (easing, duration) and implement reusable animation utilities. Apply these primitives to components for consistent motion design. Testing requirements: 1) Write unit tests for animation utilities, 2) Create browser-based integration tests for animation behaviors, 3) Implement e2e tests for animation interactions, 4) Run all tests and resolve any issues, 5) Merge to master and verify CI passes via GitHub logs.",
+          "status": "pending"
+        },
+        {
+          "id": 4,
+          "title": "Responsive Layout System",
+          "description": "Establish a responsive layout system that leverages design tokens and supports adaptive UI across devices and breakpoints.",
+          "dependencies": [
+            2
+          ],
+          "details": "Define grid, spacing, and breakpoint tokens. Implement layout utilities and ensure all components adapt fluidly to different screen sizes. Testing requirements: 1) Write unit tests for layout utilities, 2) Create browser-based integration tests for responsive behaviors, 3) Implement e2e tests for layout adaptability across devices, 4) Run all tests and resolve any issues, 5) Merge to master and verify CI passes via GitHub logs.",
+          "status": "pending"
+        },
+        {
+          "id": 5,
+          "title": "Dark Mode Implementation",
+          "description": "Implement dark mode support across the design system, ensuring seamless theme switching and accessibility compliance.",
+          "dependencies": [
+            1,
+            2
+          ],
+          "details": "Extend the token system to include dark mode values. Update components to respond to theme changes and test for color contrast and usability. Testing requirements: 1) Write unit tests for theme switching logic, 2) Create browser-based integration tests for theme application, 3) Implement e2e tests for theme switching interactions, 4) Run all tests and resolve any issues, 5) Merge to master and verify CI passes via GitHub logs.",
+          "status": "pending"
+        }
+      ]
+    },
+    {
+      "id": 9,
+      "title": "Admin Dashboard Development",
+      "description": "Build a comprehensive admin dashboard for system monitoring, configuration management, and operational control.",
+      "status": "pending",
+      "dependencies": [
+        5,
+        8
+      ],
+      "priority": "medium",
+      "details": "Create an admin dashboard with the following components:\n\n1. Dashboard layout implementation:\n   - Sidebar navigation with collapsible sections\n   - Header with user info and global actions\n   - Main content area with responsive grid\n\n2. Ingestion monitoring view:\n   - Source type cards with real-time status\n   - Activity feed with recent ingestion events\n   - Configuration editor with syntax highlighting\n\n3. Enrichment pipeline view:\n   - Provider status cards (OpenAI, Anthropic)\n   - Flow diagram visualization of the enrichment pipeline\n   - Prompt version control interface\n   - Cost ticker with real-time spending\n\n4. Knowledge explorer view:\n   - Interactive graph visualization of entities and relationships\n   - Search interface with filters\n   - Document preview with enrichment details\n\n5. Monitoring dashboards:\n   - Cost analysis with breakdown by dimension\n   - Quality metrics visualization\n   - System health monitoring\n   - Performance metrics tracking\n\n6. User management:\n   - Role-based access control\n   - User creation and permission management\n   - Audit logs for admin actions",
+      "testStrategy": "1. Component integration tests\n2. Dashboard navigation tests\n3. Data visualization accuracy tests\n4. Real-time update tests\n5. Configuration editor functionality tests\n6. User permission enforcement tests\n7. Performance tests with large datasets\n8. Usability tests with admin users\n9. Browser-based e2e tests for dashboard interactions\n10. CI verification through GitHub logs via MCP or CLI",
+      "subtasks": [
+        {
+          "id": 1,
+          "title": "Design Dashboard Layout",
+          "description": "Create the overall structure and layout of the admin dashboard with appropriate navigation and component placement",
+          "dependencies": [],
+          "details": "Design a hierarchical layout that accommodates all required views (monitoring, pipeline, knowledge explorer, user management). Use decomposition tree visualization to effectively organize complex data relationships. Implement color-coding for different sections and ensure responsive design. Testing requirements: 1) Write unit tests for layout components, 2) Create browser-based integration tests for layout responsiveness, 3) Implement e2e tests for navigation and layout interactions, 4) Run all tests and resolve any issues, 5) Merge to master and verify CI passes via GitHub logs.",
+          "status": "pending"
+        },
+        {
+          "id": 2,
+          "title": "Develop Ingestion Monitoring Component",
+          "description": "Create a real-time monitoring view for data ingestion processes",
+          "dependencies": [
+            1
+          ],
+          "details": "Implement metrics visualization for ingestion rates, errors, and processing times. Include expandable/collapsible nodes to drill down into specific ingestion pipelines. Add progress indicators and status alerts for ongoing processes. Testing requirements: 1) Write unit tests for monitoring components, 2) Create browser-based integration tests for data visualization, 3) Implement e2e tests for monitoring interactions, 4) Run all tests and resolve any issues, 5) Merge to master and verify CI passes via GitHub logs.",
+          "status": "pending"
+        },
+        {
+          "id": 3,
+          "title": "Build Enrichment Pipeline Visualization",
+          "description": "Develop an interactive view of the enrichment pipeline showing data flow and processing stages",
+          "dependencies": [
+            1
+          ],
+          "details": "Create a flowchart-like structure showing data transformation stages. Implement color-coded nodes to indicate pipeline health. Design interactive elements to expand pipeline components for detailed metrics and configuration options. Testing requirements: 1) Write unit tests for visualization components, 2) Create browser-based integration tests for interactive elements, 3) Implement e2e tests for pipeline visualization workflows, 4) Run all tests and resolve any issues, 5) Merge to master and verify CI passes via GitHub logs.",
+          "status": "pending"
+        },
+        {
+          "id": 4,
+          "title": "Implement Knowledge Explorer Interface",
+          "description": "Build a hierarchical data exploration tool for knowledge base content",
+          "dependencies": [
+            1
+          ],
+          "details": "Develop a decomposition tree visualization that breaks down knowledge content by categories and subcategories. Include search functionality, filtering options, and interactive node expansion. Add percentage indicators and progress bars to show content distribution. Testing requirements: 1) Write unit tests for explorer components, 2) Create browser-based integration tests for search and filtering, 3) Implement e2e tests for knowledge exploration workflows, 4) Run all tests and resolve any issues, 5) Merge to master and verify CI passes via GitHub logs.",
+          "status": "pending"
+        },
+        {
+          "id": 5,
+          "title": "Create Monitoring Dashboards",
+          "description": "Develop comprehensive system monitoring views with key performance indicators",
+          "dependencies": [
+            1,
+            2,
+            3
+          ],
+          "details": "Design charts and visualizations for system health, performance metrics, and usage statistics. Implement real-time data updates and historical trend analysis. Add alerting mechanisms for critical thresholds and anomaly detection. Testing requirements: 1) Write unit tests for dashboard components, 2) Create browser-based integration tests for data visualization, 3) Implement e2e tests for monitoring workflows, 4) Run all tests and resolve any issues, 5) Merge to master and verify CI passes via GitHub logs.",
+          "status": "pending"
+        },
+        {
+          "id": 6,
+          "title": "Develop User Management Interface",
+          "description": "Create tools for managing user accounts, permissions, and activity",
+          "dependencies": [
+            1
+          ],
+          "details": "Build user listing with filtering and search capabilities. Implement role and permission management interfaces. Create user activity logs and audit trails with decomposition visualization to analyze user behavior patterns. Testing requirements: 1) Write unit tests for user management components, 2) Create browser-based integration tests for permission controls, 3) Implement e2e tests for user management workflows, 4) Run all tests and resolve any issues, 5) Merge to master and verify CI passes via GitHub logs.",
+          "status": "pending"
+        }
+      ]
+    },
+    {
+      "id": 10,
+      "title": "System Integration and Deployment",
+      "description": "Integrate all components into a cohesive system and implement the deployment pipeline with monitoring and rollback capabilities.",
+      "status": "pending",
+      "dependencies": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9
+      ],
+      "priority": "high",
+      "details": "Implement system integration and deployment with the following components:\n\n1. Docker Compose setup for local development:\n   ```yaml\n   version: '3.8'\n   \n   services:\n     ingestion-service:\n       build: ./backend/ingestion-service\n       environment:\n         - NODE_ENV=development\n         - REDIS_URL=redis://redis:6379\n         - DB_URL=postgresql://postgres:postgres@postgres:5432/knowledge_base\n       volumes:\n         - ./backend/ingestion-service:/app\n         - /app/node_modules\n       depends_on:\n         - redis\n         - postgres\n   \n     enrichment-service:\n       build: ./backend/enrichment-service\n       environment:\n         - NODE_ENV=development\n         - REDIS_URL=redis://redis:6379\n         - DB_URL=postgresql://postgres:postgres@postgres:5432/knowledge_base\n         - OPENAI_KEY=${OPENAI_KEY}\n         - ANTHROPIC_KEY=${ANTHROPIC_KEY}\n       volumes:\n         - ./backend/enrichment-service:/app\n         - /app/node_modules\n       depends_on:\n         - redis\n         - postgres\n   \n     api-service:\n       build: ./backend/api-service\n       ports:\n         - \"3000:3000\"\n       environment:\n         - NODE_ENV=development\n         - REDIS_URL=redis://redis:6379\n         - DB_URL=postgresql://postgres:postgres@postgres:5432/knowledge_base\n       volumes:\n         - ./backend/api-service:/app\n         - /app/node_modules\n       depends_on:\n         - redis\n         - postgres\n   \n     admin-dashboard:\n       build: ./frontend/admin-dashboard\n       ports:\n         - \"8080:80\"\n       volumes:\n         - ./frontend/admin-dashboard:/app\n         - /app/node_modules\n   \n     postgres:\n       image: timescale/timescaledb-ha:pg14-latest\n       ports:\n         - \"5432:5432\"\n       environment:\n         - POSTGRES_USER=postgres\n         - POSTGRES_PASSWORD=postgres\n         - POSTGRES_DB=knowledge_base\n       volumes:\n         - postgres-data:/var/lib/postgresql/data\n   \n     redis:\n       image: redis:6-alpine\n       ports:\n         - \"6379:6379\"\n       volumes:\n         - redis-data:/data\n   \n     prometheus:\n       image: prom/prometheus\n       ports:\n         - \"9090:9090\"\n       volumes:\n         - ./infrastructure/prometheus:/etc/prometheus\n         - prometheus-data:/prometheus\n   \n     grafana:\n       image: grafana/grafana\n       ports:\n         - \"3001:3000\"\n       environment:\n         - GF_SECURITY_ADMIN_PASSWORD=admin\n       volumes:\n         - ./infrastructure/grafana/provisioning:/etc/grafana/provisioning\n         - grafana-data:/var/lib/grafana\n   \n     jaeger:\n       image: jaegertracing/all-in-one\n       ports:\n         - \"16686:16686\"\n         - \"14268:14268\"\n   \n   volumes:\n     postgres-data:\n     redis-data:\n     prometheus-data:\n     grafana-data:\n   ```\n\n2. CI/CD pipeline implementation:\n   - GitHub Actions workflow for testing and building\n   - Blue-green deployment strategy\n   - Automated testing at each stage\n\n3. Monitoring and alerting setup:\n   - Prometheus metrics collection\n   - Grafana dashboard provisioning\n   - Alert configuration for critical metrics\n\n4. Security implementation:\n   - JWT authentication\n   - Role-based access control\n   - Data encryption at rest and in transit\n\n5. Documentation:\n   - API documentation with OpenAPI/Swagger\n   - System architecture documentation\n   - Operational runbooks\n   - User guides for admin dashboard",
+      "testStrategy": "1. End-to-end system integration tests\n2. Deployment pipeline tests\n3. Blue-green deployment tests with rollback scenarios\n4. Load testing of the complete system\n5. Security penetration testing\n6. Disaster recovery tests\n7. Documentation accuracy verification\n8. Monitoring and alerting verification tests\n9. Browser-based e2e tests for complete system workflows\n10. CI verification through GitHub logs via MCP or CLI",
+      "subtasks": [
+        {
+          "id": 1,
+          "title": "Docker Compose Setup and Configuration",
+          "description": "Create and optimize Docker Compose files for multi-container application deployment",
+          "dependencies": [],
+          "details": "Implement environment variable substitution for sensitive information, organize configuration using YAML templates to avoid repetition, and follow best practices for container orchestration. Consider splitting configuration into multiple files for different environments if necessary. Testing requirements: 1) Write unit tests for configuration validation, 2) Create integration tests for container interactions, 3) Implement e2e tests for complete deployment, 4) Run all tests and resolve any issues, 5) Merge to master and verify CI passes via GitHub logs.",
+          "status": "pending"
+        },
+        {
+          "id": 2,
+          "title": "CI/CD Pipeline Implementation",
+          "description": "Establish automated build, test, and deployment workflows",
+          "dependencies": [
+            1
+          ],
+          "details": "Set up continuous integration and continuous deployment pipelines that automatically build Docker images, run tests, and deploy to staging/production environments. Include automated security scanning and quality checks in the pipeline. Testing requirements: 1) Write unit tests for CI/CD scripts, 2) Create integration tests for pipeline stages, 3) Implement e2e tests for complete deployment workflows, 4) Run all tests and resolve any issues, 5) Merge to master and verify CI passes via GitHub logs.",
+          "status": "pending"
+        },
+        {
+          "id": 3,
+          "title": "Monitoring, Alerting and Security Implementation",
+          "description": "Configure comprehensive monitoring, alerting systems and security measures",
+          "dependencies": [
+            1,
+            2
+          ],
+          "details": "Implement monitoring solutions for container health, resource usage, and application performance. Set up alerting for critical thresholds. Establish security best practices including secret management, container hardening, and regular vulnerability scanning. Testing requirements: 1) Write unit tests for monitoring components, 2) Create integration tests for alert triggering, 3) Implement e2e tests for security measures, 4) Run all tests and resolve any issues, 5) Merge to master and verify CI passes via GitHub logs.",
+          "status": "pending"
+        },
+        {
+          "id": 4,
+          "title": "Deployment Strategy and Testing",
+          "description": "Implement blue-green deployment, integration testing and rollback mechanisms",
+          "dependencies": [
+            2,
+            3
+          ],
+          "details": "Design and implement blue-green deployment strategy to minimize downtime. Create comprehensive integration tests to verify system functionality. Develop and test rollback procedures for handling failed deployments. Testing requirements: 1) Write unit tests for deployment scripts, 2) Create integration tests for deployment processes, 3) Implement e2e tests for rollback scenarios, 4) Run all tests and resolve any issues, 5) Merge to master and verify CI passes via GitHub logs.",
+          "status": "pending"
+        },
+        {
+          "id": 5,
+          "title": "Documentation and Operational Runbooks",
+          "description": "Create comprehensive documentation and operational procedures",
+          "dependencies": [
+            1,
+            2,
+            3,
+            4
+          ],
+          "details": "Document the entire system architecture, deployment processes, and configuration details. Create operational runbooks for common maintenance tasks, troubleshooting guides, and emergency procedures. Testing requirements: 1) Write unit tests for documentation examples, 2) Create integration tests for runbook procedures, 3) Implement e2e tests for operational scenarios, 4) Run all tests and resolve any issues, 5) Merge to master and verify CI passes via GitHub logs.",
+          "status": "pending"
+        }
+      ]
+    }
+  ]
+}

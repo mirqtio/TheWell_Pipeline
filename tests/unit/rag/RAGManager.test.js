@@ -9,6 +9,22 @@ jest.mock('../../../src/rag/components/InputProcessor');
 jest.mock('../../../src/rag/components/DocumentRetriever');
 jest.mock('../../../src/rag/components/ResponseGenerator');
 jest.mock('../../../src/rag/components/OutputFormatter');
+jest.mock('../../../src/tracing', () => ({
+  RAGTracing: jest.fn().mockImplementation(() => ({
+    traceRAGQuery: jest.fn().mockImplementation((query, metadata, operation) => {
+      return operation();
+    }),
+    traceOperation: jest.fn().mockImplementation((operationName, tags, handler) => {
+      return handler();
+    }),
+    traceRetrieval: jest.fn().mockImplementation((strategy, params, operation) => {
+      return operation();
+    }),
+    traceGeneration: jest.fn().mockImplementation((provider, params, operation) => {
+      return operation();
+    })
+  }))
+}));
 
 // Mock logger to prevent console output during tests
 jest.mock('../../../src/utils/logger', () => ({
@@ -29,6 +45,7 @@ describe('RAGManager', () => {
   let mockLLMProviderManager;
   let mockVisibilityDatabase;
   let mockCacheManager;
+  let mockTracingManager;
 
   beforeEach(() => {
     // Reset all mocks
@@ -42,6 +59,7 @@ describe('RAGManager', () => {
 
     mockLLMProviderManager = {
       executeWithFailover: jest.fn(),
+      getCurrentProvider: jest.fn().mockReturnValue('openai'),
       isInitialized: true
     };
 
@@ -54,6 +72,23 @@ describe('RAGManager', () => {
       get: jest.fn(),
       set: jest.fn(),
       isInitialized: true
+    };
+
+    // Create mock tracing manager
+    mockTracingManager = {
+      startSpan: jest.fn().mockReturnValue({
+        span: {
+          setTag: jest.fn(),
+          log: jest.fn(),
+          finish: jest.fn()
+        },
+        setTag: jest.fn(),
+        log: jest.fn(),
+        setError: jest.fn(),
+        finish: jest.fn(),
+        run: jest.fn((fn) => fn())
+      }),
+      enabled: true
     };
 
     // Setup component mocks
@@ -85,6 +120,8 @@ describe('RAGManager', () => {
         confidence: 0.85,
         metadata: { model: 'gpt-3.5-turbo' }
       }),
+      getModel: jest.fn().mockReturnValue('gpt-3.5-turbo'),
+      getTemperature: jest.fn().mockReturnValue(0.7),
       getStatus: jest.fn().mockResolvedValue({ initialized: false }),
       shutdown: jest.fn().mockResolvedValue()
     }));
@@ -106,7 +143,8 @@ describe('RAGManager', () => {
       databaseManager: mockDatabaseManager,
       llmProviderManager: mockLLMProviderManager,
       visibilityDatabase: mockVisibilityDatabase,
-      cacheManager: mockCacheManager
+      cacheManager: mockCacheManager,
+      tracingManager: mockTracingManager
     });
   });
 
@@ -211,7 +249,16 @@ describe('RAGManager', () => {
         processedInput.context
       );
       expect(ragManager.outputFormatter.format).toHaveBeenCalledWith(generatedResponse, retrievedDocs, expect.any(Object));
-      expect(result).toEqual(formattedOutput);
+      
+      // Check that the result includes the formatted output plus additional metadata
+      expect(result).toEqual({
+        ...formattedOutput,
+        fromCache: false,
+        searchType: 'hybrid',
+        totalCount: retrievedDocs.length,
+        maxScore: 0.9,
+        documents: retrievedDocs
+      });
     });
 
     it('should handle input processing errors', async () => {
@@ -249,7 +296,8 @@ describe('RAGManager', () => {
         databaseManager: mockDatabaseManager,
         llmProviderManager: mockLLMProviderManager,
         visibilityDatabase: mockVisibilityDatabase,
-        cacheManager: mockCacheManager
+        cacheManager: mockCacheManager,
+        tracingManager: mockTracingManager
       });
 
       await expect(ragManager2.processQuery({}, {})).rejects.toThrow('RAG Manager not initialized');

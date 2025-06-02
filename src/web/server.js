@@ -20,6 +20,7 @@ const ragRoutes = require('./routes/rag');
 // Import middleware
 const authMiddleware = require('./middleware/auth');
 const errorHandler = require('./middleware/errorHandler');
+const { TracingMiddleware } = require('../tracing');
 
 class ManualReviewServer {
   constructor(options = {}) {
@@ -30,6 +31,14 @@ class ManualReviewServer {
     this.databaseManager = options.databaseManager;
     this.ragManager = options.ragManager;
     this.cacheManager = options.cacheManager;
+    
+    // Initialize tracing middleware
+    this.tracingMiddleware = new TracingMiddleware({
+      tracingManager: options.tracingManager,
+      excludePaths: ['/health', '/metrics', '/favicon.ico', '/static'],
+      includeRequestBody: false, // Don't log request bodies for privacy
+      includeResponseBody: false, // Don't log response bodies for privacy
+    });
     
     this.app = express();
     this.server = null;
@@ -67,6 +76,9 @@ class ManualReviewServer {
       });
       next();
     });
+
+    // Tracing middleware
+    this.app.use(this.tracingMiddleware.middleware());
 
     // Authentication middleware for protected routes
     this.app.use('/api', authMiddleware);
