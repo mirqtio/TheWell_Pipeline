@@ -36,8 +36,8 @@ class DatabaseManager {
   }
 
   /**
-     * Initialize database connection
-     */
+   * Initialize database connection
+   */
   async initialize() {
     try {
       this.pool = new Pool(this.config);
@@ -62,8 +62,8 @@ class DatabaseManager {
   }
 
   /**
-     * Execute a query with parameters
-     */
+   * Execute a query with parameters
+   */
   async query(text, params = []) {
     if (!this.isConnected) {
       throw new Error('Database not connected. Call initialize() first.');
@@ -93,8 +93,8 @@ class DatabaseManager {
   }
 
   /**
-     * Execute a transaction
-     */
+   * Execute a transaction
+   */
   async transaction(callback) {
     const client = await this.pool.connect();
         
@@ -112,8 +112,8 @@ class DatabaseManager {
   }
 
   /**
-     * Apply database schema
-     */
+   * Apply database schema
+   */
   async applySchema() {
     try {
       const schemaPath = path.join(__dirname, 'schema.sql');
@@ -136,8 +136,8 @@ class DatabaseManager {
   }
 
   /**
-     * Run database migrations
-     */
+   * Run database migrations
+   */
   async runMigrations() {
     try {
       // Create migrations table if it doesn't exist
@@ -198,8 +198,8 @@ class DatabaseManager {
   }
 
   /**
-     * Check database health
-     */
+   * Check database health
+   */
   async healthCheck() {
     try {
       const result = await this.query('SELECT NOW() as current_time, version() as version');
@@ -219,8 +219,8 @@ class DatabaseManager {
   }
 
   /**
-     * Get database statistics
-     */
+   * Get database statistics
+   */
   async getStats() {
     try {
       const tables = [
@@ -255,8 +255,8 @@ class DatabaseManager {
   }
 
   /**
-     * Clean up old data
-     */
+   * Clean up old data
+   */
   async cleanup(options = {}) {
     const {
       jobLogRetentionDays = 30,
@@ -302,8 +302,8 @@ class DatabaseManager {
   }
 
   /**
-     * Close database connection
-     */
+   * Close database connection
+   */
   async close() {
     if (this.pool) {
       await this.pool.end();
@@ -313,8 +313,8 @@ class DatabaseManager {
   }
 
   /**
-     * Get a client for manual transaction management
-     */
+   * Get a client for manual transaction management
+   */
   async getClient() {
     return await this.pool.connect();
   }
