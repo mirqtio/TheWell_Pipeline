@@ -1,6 +1,6 @@
 # Task ID: 4
 # Title: RAG API Development
-# Status: pending
+# Status: in-progress
 # Dependencies: 3
 # Priority: high
 # Description: Build a high-performance RAG API with sub-2-second response time, hybrid search capabilities, and intelligent caching.
@@ -80,7 +80,7 @@ Implement a RAG API service with the following components:
 10. CI verification through GitHub logs via MCP or CLI
 
 # Subtasks:
-## 1. API Scaffolding and Core Architecture [pending]
+## 1. API Scaffolding and Core Architecture [in-progress]
 ### Dependencies: None
 ### Description: Set up the foundational API structure with endpoints for query processing, document retrieval, and response generation
 ### Details:

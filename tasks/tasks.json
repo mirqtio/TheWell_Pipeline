@@ -153,7 +153,7 @@
       "id": 3,
       "title": "Knowledge Base Storage System",
       "description": "Create a PostgreSQL-based storage system with vector search capabilities, aggressive deduplication, and source metadata preservation.",
-      "status": "in-progress",
+      "status": "done",
       "dependencies": [
         1,
         2
@@ -233,7 +233,7 @@
             6
           ],
           "details": "Develop migration scripts and rollback strategies. Perform load testing, query benchmarking, and security audits to ensure robustness. Testing requirements: 1) Write unit tests for migration scripts, 2) Create integration tests for migration processes, 3) Implement e2e tests for complete migration workflows, 4) Run all tests and resolve any issues, 5) Merge to master and verify CI passes via GitHub logs.",
-          "status": "in-progress"
+          "status": "done"
         }
       ]
     },
@@ -241,7 +241,7 @@
       "id": 4,
       "title": "RAG API Development",
       "description": "Build a high-performance RAG API with sub-2-second response time, hybrid search capabilities, and intelligent caching.",
-      "status": "pending",
+      "status": "in-progress",
       "dependencies": [
         3
       ],
@@ -255,7 +255,7 @@
           "description": "Set up the foundational API structure with endpoints for query processing, document retrieval, and response generation",
           "dependencies": [],
           "details": "Create the basic API framework with proper routing, error handling, and logging. Implement the core RAG components: retriever, generator, input processor, and output formatter. Design the API contract with clear request/response schemas and authentication endpoints. Testing requirements: 1) Write unit tests for API endpoints and core components, 2) Create integration tests for API interactions, 3) Implement e2e tests for complete API workflows, 4) Run all tests and resolve any issues, 5) Merge to master and verify CI passes via GitHub logs.",
-          "status": "pending"
+          "status": "in-progress"
         },
         {
           "id": 2,

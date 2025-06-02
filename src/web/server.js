@@ -15,6 +15,7 @@ const jobRoutes = require('./routes/jobs');
 const apiRoutes = require('./routes/api');
 const visibilityRoutes = require('./routes/visibility');
 const feedbackRoutes = require('./routes/feedback');
+const ragRoutes = require('./routes/rag');
 
 // Import middleware
 const authMiddleware = require('./middleware/auth');
@@ -27,6 +28,8 @@ class ManualReviewServer {
     this.queueManager = options.queueManager;
     this.ingestionEngine = options.ingestionEngine;
     this.databaseManager = options.databaseManager;
+    this.ragManager = options.ragManager;
+    this.cacheManager = options.cacheManager;
     
     this.app = express();
     this.server = null;
@@ -112,6 +115,14 @@ class ManualReviewServer {
     }));
 
     this.app.use('/api/feedback', feedbackRoutes);
+
+    // RAG API routes
+    if (this.ragManager) {
+      this.app.use('/api/v1/rag', ragRoutes({
+        ragManager: this.ragManager,
+        cacheManager: this.cacheManager
+      }));
+    }
 
     this.app.use('/api', apiRoutes({
       queueManager: this.queueManager,
