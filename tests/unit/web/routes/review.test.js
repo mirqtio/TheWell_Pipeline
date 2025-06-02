@@ -38,7 +38,6 @@ describe('Review Routes', () => {
     // Mock authentication middleware
     app.use((req, res, next) => {
       req.user = { 
-        id: 'user-1', 
         role: 'reviewer', 
         permissions: ['read', 'write', 'approve', 'reject', 'flag'] 
       };

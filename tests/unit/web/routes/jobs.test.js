@@ -43,7 +43,10 @@ describe('Jobs Routes', () => {
     
     // Mock authentication middleware
     app.use((req, res, next) => {
-      req.user = { id: 'user-1', role: 'admin', permissions: ['read', 'write'] };
+      req.user = { 
+        role: 'admin', 
+        permissions: ['read', 'write', 'jobs:read', 'jobs:write', 'jobs:retry', 'jobs:delete'] 
+      };
       next();
     });
 
