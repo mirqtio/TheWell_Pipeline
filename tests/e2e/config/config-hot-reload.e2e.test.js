@@ -484,7 +484,7 @@ describe('Configuration Hot-Reload E2E', () => {
             name: 'Valid Source',
             enabled: true,
             config: {
-              basePath: '/Users/charlieirwin/Documents/GitHub/TheWell_Pipeline/tests/fixtures/static-content',
+              basePath: path.join(__dirname, '../../fixtures/static-content'),
               fileTypes: ['txt', 'md']
             }
           }
