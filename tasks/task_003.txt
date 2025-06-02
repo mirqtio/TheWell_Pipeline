@@ -111,13 +111,13 @@ Design tables and relationships for storing feedback data, ensuring referential 
 ### Details:
 Define roles, permissions, and access control lists (ACLs) at the schema level. Ensure compliance with security requirements. Testing requirements: 1) Write unit tests for visibility logic and access control, 2) Create integration tests for permission enforcement, 3) Implement e2e tests for visibility workflows, 4) Run all tests and resolve any issues, 5) Merge to master and verify CI passes via GitHub logs.
 
-## 5. ORM Integration [in-progress]
+## 5. ORM Integration [done]
 ### Dependencies: 3.1
 ### Description: Integrate the schema with an Object-Relational Mapping (ORM) framework to facilitate application-level data access and manipulation.
 ### Details:
 Map database tables and relationships to ORM models. Ensure support for advanced features like partitioning and vector fields. Testing requirements: 1) Write unit tests for ORM models and operations, 2) Create integration tests for ORM-database interactions, 3) Implement e2e tests for complete data access flows, 4) Run all tests and resolve any issues, 5) Merge to master and verify CI passes via GitHub logs.
 
-## 6. Caching Layer Implementation [pending]
+## 6. Caching Layer Implementation [in-progress]
 ### Dependencies: 3.1
 ### Description: Build an intelligent caching layer to store frequent queries and retrieved documents
 ### Details:
