@@ -37,7 +37,7 @@ module.exports = (sequelize, DataTypes) => {
     ratingDistribution: {
       type: DataTypes.JSONB,
       field: 'rating_distribution',
-      defaultValue: { "1": 0, "2": 0, "3": 0, "4": 0, "5": 0 },
+      defaultValue: { '1': 0, '2': 0, '3': 0, '4': 0, '5': 0 },
       validate: {
         isValidDistribution(value) {
           if (typeof value !== 'object' || value === null) {
@@ -124,7 +124,7 @@ module.exports = (sequelize, DataTypes) => {
     this.negativeCount = 0;
     this.neutralCount = 0;
     
-    const ratingDistribution = { "1": 0, "2": 0, "3": 0, "4": 0, "5": 0 };
+    const ratingDistribution = { '1': 0, '2': 0, '3': 0, '4': 0, '5': 0 };
     const feedbackByType = {};
     
     let totalRating = 0;

@@ -198,7 +198,7 @@
             1
           ],
           "details": "Define roles, permissions, and access control lists (ACLs) at the schema level. Ensure compliance with security requirements. Testing requirements: 1) Write unit tests for visibility logic and access control, 2) Create integration tests for permission enforcement, 3) Implement e2e tests for visibility workflows, 4) Run all tests and resolve any issues, 5) Merge to master and verify CI passes via GitHub logs.",
-          "status": "pending"
+          "status": "done"
         },
         {
           "id": 5,
@@ -208,7 +208,7 @@
             1
           ],
           "details": "Map database tables and relationships to ORM models. Ensure support for advanced features like partitioning and vector fields. Testing requirements: 1) Write unit tests for ORM models and operations, 2) Create integration tests for ORM-database interactions, 3) Implement e2e tests for complete data access flows, 4) Run all tests and resolve any issues, 5) Merge to master and verify CI passes via GitHub logs.",
-          "status": "pending"
+          "status": "in-progress"
         },
         {
           "id": 6,

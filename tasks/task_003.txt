@@ -105,13 +105,13 @@ Design algorithms and workflows for detecting duplicates, possibly using hashing
 ### Details:
 Design tables and relationships for storing feedback data, ensuring referential integrity and efficient querying. Testing requirements: 1) Write unit tests for feedback schema validation, 2) Create integration tests for feedback data operations, 3) Implement e2e tests for complete feedback workflows, 4) Run all tests and resolve any issues, 5) Merge to master and verify CI passes via GitHub logs.
 
-## 4. Visibility Controls Design [pending]
+## 4. Visibility Controls Design [done]
 ### Dependencies: 3.1
 ### Description: Implement visibility and access control mechanisms within the schema to manage data privacy, user permissions, and sharing settings.
 ### Details:
 Define roles, permissions, and access control lists (ACLs) at the schema level. Ensure compliance with security requirements. Testing requirements: 1) Write unit tests for visibility logic and access control, 2) Create integration tests for permission enforcement, 3) Implement e2e tests for visibility workflows, 4) Run all tests and resolve any issues, 5) Merge to master and verify CI passes via GitHub logs.
 
-## 5. ORM Integration [pending]
+## 5. ORM Integration [in-progress]
 ### Dependencies: 3.1
 ### Description: Integrate the schema with an Object-Relational Mapping (ORM) framework to facilitate application-level data access and manipulation.
 ### Details:
