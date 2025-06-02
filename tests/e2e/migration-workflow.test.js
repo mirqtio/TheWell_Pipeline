@@ -1,4 +1,4 @@
-const { MigrationManager } = require('../../src/database/MigrationManager');
+const MigrationManager = require('../../src/database/MigrationManager');
 const DatabaseManager = require('../../src/database/DatabaseManager');
 const { PerformanceTestRunner } = require('../performance/PerformanceTestRunner');
 const { SecurityAuditor } = require('../security/SecurityAuditor');
