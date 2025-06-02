@@ -309,7 +309,7 @@
             5
           ],
           "details": "Implement parallel processing for document retrieval and embedding generation. Optimize database queries and vector search operations. Add request throttling and queue management for high-load scenarios. Conduct load testing to identify and resolve bottlenecks in the pipeline. Testing requirements: 1) Write unit tests for optimization components, 2) Create integration tests for performance metrics, 3) Implement e2e tests with performance benchmarks, 4) Run all tests and resolve any issues, 5) Merge to master and verify CI passes via GitHub logs.",
-          "status": "in-progress"
+          "status": "done"
         },
         {
           "id": 7,
@@ -323,7 +323,62 @@
             6
           ],
           "details": "Create contract tests for all API endpoints. Implement integration tests for the complete RAG pipeline. Add performance tests to verify response time requirements. Develop specialized tests for edge cases like empty results, permission boundaries, and cache behaviors. Testing requirements: 1) Write unit tests for contract validation, 2) Create integration tests for API contracts, 3) Implement browser-based e2e tests for API interactions, 4) Run all tests and resolve any issues, 5) Merge to master and verify CI passes via GitHub logs.",
-          "status": "pending"
+          "status": "in-progress"
+        },
+        {
+          "id": 8,
+          "title": "Implement Express.js API with OpenAPI Documentation",
+          "description": "Set up the Express.js server with proper routing, middleware, and OpenAPI/Swagger documentation for the RAG API.",
+          "dependencies": [],
+          "details": "Create the Express.js application with proper error handling, middleware setup (CORS, body parsing, authentication), and route definitions. Implement the basic API structure with placeholder endpoints. Create a comprehensive swagger.json file that documents all endpoints, request/response schemas, and authentication requirements. Set up the Swagger UI for interactive API documentation.",
+          "status": "done",
+          "testStrategy": "Use Jest with supertest to create API integration tests. Verify that the server starts correctly, routes are properly defined, and Swagger documentation is accessible."
+        },
+        {
+          "id": 9,
+          "title": "Develop Hybrid Search Implementation",
+          "description": "Build the core search functionality combining vector similarity search and keyword-based search with result fusion.",
+          "dependencies": [
+            8
+          ],
+          "details": "Implement pgvector integration for vector similarity search. Create PostgreSQL full-text search queries with proper indexing and language support. Develop the reciprocal rank fusion algorithm to combine results from both search methods. Ensure the search implementation handles different query types and optimizes for performance. Create a modular design that allows for easy configuration of search parameters.",
+          "status": "done",
+          "testStrategy": "Create unit tests for each search component separately. Develop integration tests with test datasets to verify fusion algorithm accuracy. Benchmark search performance to ensure sub-2-second response time."
+        },
+        {
+          "id": 10,
+          "title": "Implement Redis Caching Strategy",
+          "description": "Create an intelligent caching system using Redis to improve response times and reduce database load.",
+          "dependencies": [
+            9
+          ],
+          "details": "Develop cache key generation functions that account for query parameters and user permissions. Implement TTL calculation logic based on query popularity metrics and content update frequency. Create cache invalidation mechanisms that trigger on document updates. Add cache hit/miss tracking for performance monitoring. Implement cache size management to prevent memory issues.",
+          "status": "done",
+          "testStrategy": "Test cache hit/miss scenarios with mock queries. Verify cache invalidation works correctly when documents are updated. Measure performance improvements with and without caching enabled."
+        },
+        {
+          "id": 11,
+          "title": "Add Request Tracing and Performance Monitoring",
+          "description": "Implement distributed tracing across all components with unique trace IDs and detailed performance metrics.",
+          "dependencies": [
+            8,
+            9,
+            10
+          ],
+          "details": "Set up a tracing library (like OpenTelemetry) to create and propagate trace contexts. Add span creation for each major processing step in the request lifecycle. Implement trace ID generation and propagation through headers. Create performance monitoring for each component (search, cache, database). Set up logging that includes trace IDs for correlation.",
+          "status": "done",
+          "testStrategy": "Verify trace propagation works across components. Test that performance metrics are accurately captured. Create test scenarios that generate traces for different error conditions."
+        },
+        {
+          "id": 12,
+          "title": "Implement Permission-Based Query Filtering",
+          "description": "Add visibility and permission enforcement to ensure users only access authorized content.",
+          "dependencies": [
+            9
+          ],
+          "details": "Create a permission model that defines access levels for different content types. Implement query filters that automatically apply permission constraints based on the authenticated user. Modify the search implementation to include visibility filters in both vector and keyword searches. Ensure the caching strategy respects permissions in cache keys. Add permission validation middleware for all API endpoints.",
+          "status": "done",
+          "testStrategy": "Test queries with different user permission levels to verify correct content filtering. Ensure unauthorized content is never returned in search results. Verify that cache keys properly incorporate permission context to prevent unauthorized access."
         }
       ]
     },

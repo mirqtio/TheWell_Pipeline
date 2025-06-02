@@ -53,43 +53,57 @@ describe('RAGManager', () => {
 
     // Create mock dependencies
     mockDatabaseManager = {
-      query: jest.fn(),
-      isInitialized: true
+      initialize: jest.fn().mockResolvedValue(),
+      shutdown: jest.fn().mockResolvedValue(),
+      isConnected: jest.fn().mockReturnValue(true),
+      query: jest.fn().mockResolvedValue({ rows: [] }),
+      getStatus: jest.fn().mockResolvedValue({ connected: true })
     };
 
     mockLLMProviderManager = {
-      executeWithFailover: jest.fn(),
-      getCurrentProvider: jest.fn().mockReturnValue('openai'),
-      isInitialized: true
+      initialize: jest.fn().mockResolvedValue(),
+      shutdown: jest.fn().mockResolvedValue(),
+      generateResponse: jest.fn().mockResolvedValue('Generated response'),
+      getStatus: jest.fn().mockResolvedValue({ initialized: true }),
+      getCurrentProvider: jest.fn().mockReturnValue('openai')
     };
 
     mockVisibilityDatabase = {
-      filterByVisibility: jest.fn(),
-      isInitialized: true
+      initialize: jest.fn().mockResolvedValue(),
+      shutdown: jest.fn().mockResolvedValue(),
+      getStatus: jest.fn().mockResolvedValue({ initialized: true })
     };
 
     mockCacheManager = {
-      get: jest.fn(),
-      set: jest.fn(),
-      isInitialized: true
+      initialize: jest.fn().mockResolvedValue(),
+      shutdown: jest.fn().mockResolvedValue(),
+      get: jest.fn().mockResolvedValue(null),
+      set: jest.fn().mockResolvedValue(),
+      getStatus: jest.fn().mockResolvedValue({ initialized: true })
     };
 
-    // Create mock tracing manager
     mockTracingManager = {
+      initialize: jest.fn().mockResolvedValue(),
+      shutdown: jest.fn().mockResolvedValue(),
       startSpan: jest.fn().mockReturnValue({
-        span: {
-          setTag: jest.fn(),
-          log: jest.fn(),
-          finish: jest.fn()
-        },
         setTag: jest.fn(),
-        log: jest.fn(),
         setError: jest.fn(),
-        finish: jest.fn(),
-        run: jest.fn((fn) => fn())
+        finish: jest.fn()
       }),
-      enabled: true
+      getStatus: jest.fn().mockResolvedValue({ initialized: true })
     };
+
+    // Create RAGManager instance with performance features disabled for basic tests
+    ragManager = new RAGManager({
+      databaseManager: mockDatabaseManager,
+      llmProviderManager: mockLLMProviderManager,
+      visibilityDatabase: mockVisibilityDatabase,
+      cacheManager: mockCacheManager,
+      tracingManager: mockTracingManager,
+      enableParallelSearch: false,
+      enableDatabaseOptimization: false,
+      enablePerformanceBenchmarking: false
+    });
 
     // Setup component mocks
     InputProcessor.mockImplementation(() => ({
@@ -137,20 +151,15 @@ describe('RAGManager', () => {
       getStatus: jest.fn().mockResolvedValue({ initialized: false }),
       shutdown: jest.fn().mockResolvedValue()
     }));
-
-    // Create RAGManager instance
-    ragManager = new RAGManager({
-      databaseManager: mockDatabaseManager,
-      llmProviderManager: mockLLMProviderManager,
-      visibilityDatabase: mockVisibilityDatabase,
-      cacheManager: mockCacheManager,
-      tracingManager: mockTracingManager
-    });
   });
 
   afterEach(async () => {
-    if (ragManager) {
-      await ragManager.shutdown();
+    if (ragManager && ragManager.isInitialized) {
+      try {
+        await ragManager.shutdown();
+      } catch (error) {
+        // Ignore shutdown errors in tests
+      }
     }
   });
 
@@ -364,6 +373,119 @@ describe('RAGManager', () => {
       // Should not throw error when shutting down uninitialized manager
       await expect(ragManager.shutdown()).resolves.toBeUndefined();
       expect(ragManager.isInitialized).toBe(false);
+    });
+  });
+});
+
+describe('RAGManager with Performance Features', () => {
+  let ragManager;
+  let mockDatabaseManager;
+  let mockLLMProviderManager;
+  let mockVisibilityDatabase;
+  let mockCacheManager;
+  let mockTracingManager;
+
+  beforeEach(() => {
+    // Create mock dependencies
+    mockDatabaseManager = {
+      initialize: jest.fn().mockResolvedValue(),
+      shutdown: jest.fn().mockResolvedValue(),
+      isConnected: jest.fn().mockReturnValue(true),
+      query: jest.fn().mockResolvedValue({ rows: [] }),
+      getStatus: jest.fn().mockResolvedValue({ connected: true })
+    };
+
+    mockLLMProviderManager = {
+      initialize: jest.fn().mockResolvedValue(),
+      shutdown: jest.fn().mockResolvedValue(),
+      generateResponse: jest.fn().mockResolvedValue('Generated response'),
+      getStatus: jest.fn().mockResolvedValue({ initialized: true }),
+      getCurrentProvider: jest.fn().mockReturnValue('openai')
+    };
+
+    mockVisibilityDatabase = {
+      initialize: jest.fn().mockResolvedValue(),
+      shutdown: jest.fn().mockResolvedValue(),
+      getStatus: jest.fn().mockResolvedValue({ initialized: true })
+    };
+
+    mockCacheManager = {
+      initialize: jest.fn().mockResolvedValue(),
+      shutdown: jest.fn().mockResolvedValue(),
+      get: jest.fn().mockResolvedValue(null),
+      set: jest.fn().mockResolvedValue(),
+      getStatus: jest.fn().mockResolvedValue({ initialized: true })
+    };
+
+    mockTracingManager = {
+      initialize: jest.fn().mockResolvedValue(),
+      shutdown: jest.fn().mockResolvedValue(),
+      startSpan: jest.fn().mockReturnValue({
+        setTag: jest.fn(),
+        setError: jest.fn(),
+        finish: jest.fn()
+      }),
+      getStatus: jest.fn().mockResolvedValue({ initialized: true })
+    };
+
+    // Create RAGManager instance with performance features enabled
+    ragManager = new RAGManager({
+      databaseManager: mockDatabaseManager,
+      llmProviderManager: mockLLMProviderManager,
+      visibilityDatabase: mockVisibilityDatabase,
+      cacheManager: mockCacheManager,
+      tracingManager: mockTracingManager,
+      enableParallelSearch: true,
+      enableDatabaseOptimization: true,
+      enablePerformanceBenchmarking: true
+    });
+  });
+
+  afterEach(async () => {
+    if (ragManager && ragManager.isInitialized) {
+      try {
+        await ragManager.shutdown();
+      } catch (error) {
+        // Ignore shutdown errors in tests
+      }
+    }
+  });
+
+  describe('initialization with performance features', () => {
+    it('should initialize with performance components', async () => {
+      await ragManager.initialize();
+      
+      expect(ragManager.isInitialized).toBe(true);
+      expect(ragManager.enableParallelSearch).toBe(true);
+      expect(ragManager.enableDatabaseOptimization).toBe(true);
+      expect(ragManager.enablePerformanceBenchmarking).toBe(true);
+      expect(ragManager.parallelSearchManager).toBeDefined();
+      expect(ragManager.databaseOptimizer).toBeDefined();
+      expect(ragManager.performanceBenchmark).toBeDefined();
+    });
+
+    it('should include performance components in health status', async () => {
+      await ragManager.initialize();
+      const status = await ragManager.getHealthStatus();
+      
+      expect(status.components.parallelSearchManager).toBeDefined();
+      expect(status.components.databaseOptimizer).toBeDefined();
+      expect(status.components.performanceBenchmark).toBeDefined();
+    });
+
+    it('should shutdown performance components', async () => {
+      await ragManager.initialize();
+      
+      // Mock shutdown methods for performance components
+      ragManager.parallelSearchManager.shutdown = jest.fn().mockResolvedValue();
+      ragManager.databaseOptimizer.shutdown = jest.fn().mockResolvedValue();
+      ragManager.performanceBenchmark.shutdown = jest.fn().mockResolvedValue();
+      
+      await ragManager.shutdown();
+      
+      expect(ragManager.parallelSearchManager.shutdown).toHaveBeenCalled();
+      expect(ragManager.databaseOptimizer.shutdown).toHaveBeenCalled();
+      expect(ragManager.performanceBenchmark.shutdown).toHaveBeenCalled();
     });
   });
 });

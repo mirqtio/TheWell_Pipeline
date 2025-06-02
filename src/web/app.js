@@ -9,6 +9,12 @@ const cors = require('cors');
 const bodyParser = require('body-parser');
 const logger = require('../utils/logger');
 
+// Import Swagger configuration
+const { serve, setup } = require('./swagger');
+
+// Import performance optimization
+const { RequestThrottler } = require('../rag/performance');
+
 // Import routes
 const reviewRoutes = require('./routes/review');
 const jobRoutes = require('./routes/jobs');
@@ -24,6 +30,22 @@ const errorHandler = require('./middleware/errorHandler');
 // Create Express app
 const app = express();
 
+// Initialize request throttler for production
+let requestThrottler = null;
+if (process.env.NODE_ENV === 'production') {
+  requestThrottler = new RequestThrottler({
+    maxConcurrentRequests: parseInt(process.env.MAX_CONCURRENT_REQUESTS) || 10,
+    maxQueueSize: parseInt(process.env.MAX_QUEUE_SIZE) || 50,
+    requestTimeoutMs: parseInt(process.env.REQUEST_TIMEOUT_MS) || 30000,
+    rateLimitPerMinute: parseInt(process.env.RATE_LIMIT_PER_MINUTE) || 60
+  });
+  
+  // Initialize throttler
+  requestThrottler.initialize().catch(error => {
+    logger.error('Failed to initialize request throttler:', error);
+  });
+}
+
 // Setup middleware
 app.use(cors({
   origin: process.env.CORS_ORIGIN || '*',
@@ -36,6 +58,31 @@ app.use(bodyParser.urlencoded({ extended: true, limit: '10mb' }));
 // Static files
 app.use('/static', express.static(path.join(__dirname, 'public')));
 
+/**
+ * @swagger
+ * /health:
+ *   get:
+ *     summary: Health check endpoint
+ *     description: Returns the health status of the service
+ *     tags: [System]
+ *     responses:
+ *       200:
+ *         description: Service is healthy
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 status:
+ *                   type: string
+ *                   example: healthy
+ *                 timestamp:
+ *                   type: string
+ *                   format: date-time
+ *                 service:
+ *                   type: string
+ *                   example: manual-review-server
+ */
 // Health check endpoint (no auth required)
 app.get('/health', (req, res) => {
   res.json({
@@ -45,8 +92,21 @@ app.get('/health', (req, res) => {
   });
 });
 
-// Apply authentication middleware to all routes except health
-app.use(authMiddleware);
+// Swagger documentation (no auth required)
+app.use('/api-docs', serve, setup);
+
+// Apply authentication middleware to all routes except health and api-docs
+app.use((req, res, next) => {
+  if (req.path === '/health' || req.path.startsWith('/api-docs')) {
+    return next();
+  }
+  return authMiddleware(req, res, next);
+});
+
+// Apply request throttling to API routes (except health and docs)
+if (requestThrottler) {
+  app.use('/api', requestThrottler.middleware());
+}
 
 // Setup routes
 app.use('/api/v1/review', reviewRoutes);

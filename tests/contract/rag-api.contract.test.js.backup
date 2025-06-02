@@ -1,0 +1,362 @@
+/**
+ * Contract Tests for RAG API
+ * 
+ * These tests verify that the RAG API endpoints conform to their contracts:
+ * - Request/response schemas
+ * - HTTP status codes
+ * - Error handling
+ * - Authentication/authorization
+ * - Performance requirements
+ */
+
+const request = require('supertest');
+const Joi = require('joi');
+const app = require('../../src/web/app');
+
+// Set up global mocks for RAG and cache managers
+global.testRagManager = {
+  search: jest.fn().mockResolvedValue({
+    query: 'test query',
+    results: [
+      {
+        id: 'doc1',
+        content: 'Test document content',
+        score: 0.95,
+        metadata: { source: 'test' },
+        source: { name: 'Test Source' }
+      }
+    ],
+    metadata: {
+      totalResults: 1,
+      processingTime: 150,
+      searchType: 'hybrid',
+      cacheHit: false,
+      trace_id: 'test-trace-123'
+    }
+  })
+};
+
+global.testCacheManager = {
+  get: jest.fn().mockResolvedValue(null),
+  set: jest.fn().mockResolvedValue(true),
+  invalidate: jest.fn().mockResolvedValue(true)
+};
+
+describe('RAG API Contract Tests', () => {
+  let authApiKey;
+
+  beforeAll(async () => {
+    // Use the correct API key format expected by auth middleware
+    authApiKey = 'dev-review-key'; // Default value from auth middleware
+  });
+
+  describe('POST /api/v1/rag/search', () => {
+    const validSearchRequest = {
+      query: 'What is machine learning?',
+      context: {
+        conversationId: 'test-conversation-123',
+        previousQueries: ['What is AI?'],
+        userPreferences: { language: 'en' }
+      },
+      filters: {
+        sources: ['documentation'],
+        dateRange: {
+          start: '2023-01-01T00:00:00Z',
+          end: '2024-01-01T00:00:00Z'
+        },
+        contentTypes: ['text'],
+        tags: ['technical']
+      },
+      options: {
+        maxResults: 10,
+        includeMetadata: true,
+        includeSources: true,
+        responseFormat: 'json'
+      }
+    };
+
+    const responseSchema = Joi.object({
+      success: Joi.boolean().required(),
+      data: Joi.object({
+        query: Joi.string().required(),
+        results: Joi.array().items(
+          Joi.object({
+            id: Joi.string().required(),
+            content: Joi.string().required(),
+            score: Joi.number().min(0).max(1).required(),
+            metadata: Joi.object().optional(),
+            source: Joi.object().optional()
+          })
+        ).required(),
+        metadata: Joi.object({
+          totalResults: Joi.number().integer().min(0).required(),
+          processingTime: Joi.number().positive().required(),
+          searchType: Joi.string().valid('hybrid', 'vector', 'keyword').required(),
+          cacheHit: Joi.boolean().required(),
+          trace_id: Joi.string().optional()
+        }).required()
+      }).required(),
+      error: Joi.any().optional()
+    });
+
+    it('should accept valid search request and return conforming response', async () => {
+      const response = await request(app)
+        .post('/api/v1/rag/search')
+        .set('x-api-key', authApiKey)
+        .send(validSearchRequest)
+        .expect('Content-Type', /json/);
+
+      // Should return 200 for successful search
+      expect([200, 404]).toContain(response.status);
+
+      // Response should conform to schema
+      const { error } = responseSchema.validate(response.body);
+      expect(error).toBeUndefined();
+
+      if (response.status === 200) {
+        expect(response.body.success).toBe(true);
+        expect(response.body.data.query).toBe(validSearchRequest.query);
+        expect(Array.isArray(response.body.data.results)).toBe(true);
+        expect(typeof response.body.data.metadata.processingTime).toBe('number');
+      }
+    });
+
+    it('should reject request without authentication', async () => {
+      const response = await request(app)
+        .post('/api/v1/rag/search')
+        .send(validSearchRequest)
+        .expect(401);
+
+      expect(response.body.success).toBe(false);
+      expect(response.body.error).toBeDefined();
+    });
+
+    it('should validate required query field', async () => {
+      const invalidRequest = { ...validSearchRequest };
+      delete invalidRequest.query;
+
+      const response = await request(app)
+        .post('/api/v1/rag/search')
+        .set('x-api-key', authApiKey)
+        .send(invalidRequest)
+        .expect(400);
+
+      expect(response.body.success).toBe(false);
+      expect(response.body.error).toContain('query');
+    });
+
+    it('should validate query length constraints', async () => {
+      const invalidRequest = {
+        ...validSearchRequest,
+        query: 'a'.repeat(1001) // Exceeds max length
+      };
+
+      const response = await request(app)
+        .post('/api/v1/rag/search')
+        .set('x-api-key', authApiKey)
+        .send(invalidRequest)
+        .expect(400);
+
+      expect(response.body.success).toBe(false);
+      expect(response.body.error).toContain('query');
+    });
+
+    it('should validate maxResults range', async () => {
+      const invalidRequest = {
+        ...validSearchRequest,
+        options: { maxResults: 100 } // Exceeds max of 50
+      };
+
+      const response = await request(app)
+        .post('/api/v1/rag/search')
+        .set('x-api-key', authApiKey)
+        .send(invalidRequest)
+        .expect(400);
+
+      expect(response.body.success).toBe(false);
+      expect(response.body.error).toContain('maxResults');
+    });
+
+    it('should validate responseFormat enum', async () => {
+      const invalidRequest = {
+        ...validSearchRequest,
+        options: { responseFormat: 'invalid' }
+      };
+
+      const response = await request(app)
+        .post('/api/v1/rag/search')
+        .set('x-api-key', authApiKey)
+        .send(invalidRequest)
+        .expect(400);
+
+      expect(response.body.success).toBe(false);
+      expect(response.body.error).toContain('responseFormat');
+    });
+
+    it('should handle empty query gracefully', async () => {
+      const invalidRequest = {
+        ...validSearchRequest,
+        query: ''
+      };
+
+      const response = await request(app)
+        .post('/api/v1/rag/search')
+        .set('x-api-key', authApiKey)
+        .send(invalidRequest)
+        .expect(400);
+
+      expect(response.body.success).toBe(false);
+      expect(response.body.error).toContain('query');
+    });
+
+    it('should respond within performance requirements', async () => {
+      const startTime = Date.now();
+      
+      const response = await request(app)
+        .post('/api/v1/rag/search')
+        .set('x-api-key', authApiKey)
+        .send(validSearchRequest);
+
+      const responseTime = Date.now() - startTime;
+      
+      // Should respond within 5 seconds for contract compliance
+      expect(responseTime).toBeLessThan(5000);
+      
+      if (response.status === 200) {
+        expect(response.body.data.metadata.processingTime).toBeLessThan(5000);
+      }
+    });
+
+    it('should include trace ID for debugging', async () => {
+      const response = await request(app)
+        .post('/api/v1/rag/search')
+        .set('x-api-key', authApiKey)
+        .send(validSearchRequest);
+
+      if (response.status === 200) {
+        expect(response.body.data.metadata.trace_id).toBeDefined();
+        expect(typeof response.body.data.metadata.trace_id).toBe('string');
+      }
+    });
+
+    it('should handle malformed JSON gracefully', async () => {
+      const response = await request(app)
+        .post('/api/v1/rag/search')
+        .set('x-api-key', authApiKey)
+        .set('Content-Type', 'application/json')
+        .send('{ invalid json }')
+        .expect(400);
+
+      expect(response.body.success).toBe(false);
+      expect(response.body.error).toBeDefined();
+    });
+  });
+
+  describe('GET /api/v1/status', () => {
+    const statusResponseSchema = Joi.object({
+      timestamp: Joi.string().isoDate().required(),
+      uptime: Joi.number().positive().required(),
+      memory: Joi.object({
+        rss: Joi.number().positive().required(),
+        heapTotal: Joi.number().positive().required(),
+        heapUsed: Joi.number().positive().required(),
+        external: Joi.number().min(0).required(),
+        arrayBuffers: Joi.number().min(0).required()
+      }).required(),
+      services: Joi.object().required()
+    });
+
+    it('should return system status with valid schema', async () => {
+      const response = await request(app)
+        .get('/api/v1/status')
+        .set('x-api-key', authApiKey)
+        .expect(200)
+        .expect('Content-Type', /json/);
+
+      const { error } = statusResponseSchema.validate(response.body);
+      expect(error).toBeUndefined();
+
+      expect(new Date(response.body.timestamp)).toBeInstanceOf(Date);
+      expect(response.body.uptime).toBeGreaterThan(0);
+      expect(response.body.memory.heapUsed).toBeGreaterThan(0);
+    });
+
+    it('should require authentication', async () => {
+      const response = await request(app)
+        .get('/api/v1/status')
+        .expect(401);
+
+      expect(response.body.success).toBe(false);
+      expect(response.body.error).toBeDefined();
+    });
+
+    it('should respond quickly for health checks', async () => {
+      const startTime = Date.now();
+      
+      await request(app)
+        .get('/api/v1/status')
+        .set('x-api-key', authApiKey)
+        .expect(200);
+
+      const responseTime = Date.now() - startTime;
+      expect(responseTime).toBeLessThan(1000); // Should respond within 1 second
+    });
+  });
+
+  describe('Error Handling Contracts', () => {
+    it('should return consistent error format for 404', async () => {
+      const response = await request(app)
+        .get('/api/v1/nonexistent')
+        .set('x-api-key', authApiKey)
+        .expect(404);
+
+      expect(response.body).toHaveProperty('success', false);
+      expect(response.body).toHaveProperty('error');
+      expect(typeof response.body.error).toBe('string');
+    });
+
+    it('should handle CORS preflight requests', async () => {
+      const response = await request(app)
+        .options('/api/v1/rag/search')
+        .expect(200);
+
+      expect(response.headers['access-control-allow-origin']).toBeDefined();
+      expect(response.headers['access-control-allow-methods']).toBeDefined();
+      expect(response.headers['access-control-allow-headers']).toBeDefined();
+    });
+  });
+
+  describe('Rate Limiting Contracts', () => {
+    it('should include rate limit headers', async () => {
+      const response = await request(app)
+        .get('/api/v1/status')
+        .set('x-api-key', authApiKey);
+
+      // Rate limiting headers should be present
+      expect(response.headers['x-ratelimit-limit'] || response.headers['x-rate-limit-limit']).toBeDefined();
+    });
+  });
+
+  describe('Security Headers Contracts', () => {
+    it('should include security headers', async () => {
+      const response = await request(app)
+        .get('/api/v1/status')
+        .set('x-api-key', authApiKey);
+
+      // Security headers should be present
+      expect(response.headers['x-content-type-options']).toBe('nosniff');
+      expect(response.headers['x-frame-options']).toBeDefined();
+      expect(response.headers['x-xss-protection']).toBeDefined();
+    });
+
+    it('should not expose sensitive server information', async () => {
+      const response = await request(app)
+        .get('/api/v1/status')
+        .set('x-api-key', authApiKey);
+
+      // Should not expose server version or other sensitive info
+      expect(response.headers['server']).toBeUndefined();
+      expect(response.headers['x-powered-by']).toBeUndefined();
+    });
+  });
+});

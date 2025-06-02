@@ -40,8 +40,71 @@ module.exports = (dependencies = {}) => {
   });
 
   /**
-   * POST /api/v1/rag/search
-   * Main RAG search endpoint with document-level permission filtering
+   * @swagger
+   * /api/v1/rag/search:
+   *   post:
+   *     summary: Perform RAG search
+   *     description: Execute a retrieval-augmented generation search query against the knowledge base
+   *     tags: [RAG]
+   *     security:
+   *       - ApiKeyAuth: []
+   *       - BearerAuth: []
+   *     requestBody:
+   *       required: true
+   *       content:
+   *         application/json:
+   *           schema:
+   *             $ref: '#/components/schemas/RAGSearchRequest'
+   *           examples:
+   *             simple:
+   *               summary: Simple search query
+   *               value:
+   *                 query: "What is machine learning?"
+   *             advanced:
+   *               summary: Advanced search with filters
+   *               value:
+   *                 query: "Explain neural networks"
+   *                 context:
+   *                   conversationId: "conv-123"
+   *                   previousQueries: ["What is AI?"]
+   *                 filters:
+   *                   sources: ["research-papers", "documentation"]
+   *                   contentTypes: ["pdf", "markdown"]
+   *                 options:
+   *                   maxResults: 5
+   *                   includeMetadata: true
+   *                   responseFormat: "json"
+   *     responses:
+   *       200:
+   *         description: Successful search response
+   *         content:
+   *           application/json:
+   *             schema:
+   *               $ref: '#/components/schemas/RAGSearchResponse'
+   *       400:
+   *         description: Invalid request parameters
+   *         content:
+   *           application/json:
+   *             schema:
+   *               $ref: '#/components/schemas/Error'
+   *       401:
+   *         description: Authentication required
+   *         content:
+   *           application/json:
+   *             schema:
+   *               $ref: '#/components/schemas/Error'
+   *       403:
+   *         description: Insufficient permissions
+   *         content:
+   *           application/json:
+   *             schema:
+   *               $ref: '#/components/schemas/Error'
+   *       500:
+   *         description: Internal server error
+   *         content:
+   *           application/json:
+   *             schema:
+   *               $ref: '#/components/schemas/Error'
    */
   router.post('/search', 
     requirePermission('document.read'), 
@@ -140,8 +203,25 @@ module.exports = (dependencies = {}) => {
     }));
 
   /**
-   * GET /api/v1/rag/health
-   * Health check endpoint
+   * @swagger
+   * /api/v1/rag/health:
+   *   get:
+   *     summary: Get RAG system health status
+   *     description: Retrieve the current health status of the RAG system
+   *     tags: [RAG]
+   *     responses:
+   *       200:
+   *         description: Successful health check response
+   *         content:
+   *           application/json:
+   *             schema:
+   *               $ref: '#/components/schemas/HealthStatus'
+   *       503:
+   *         description: Service unavailable
+   *         content:
+   *           application/json:
+   *             schema:
+   *               $ref: '#/components/schemas/Error'
    */
   router.get('/health', asyncHandler(async (req, res) => {
     try {
@@ -169,8 +249,40 @@ module.exports = (dependencies = {}) => {
   }));
 
   /**
-   * GET /api/v1/rag/capabilities
-   * Get RAG system capabilities and configuration
+   * @swagger
+   * /api/v1/rag/capabilities:
+   *   get:
+   *     summary: Get RAG system capabilities
+   *     description: Retrieve the capabilities and configuration of the RAG system
+   *     tags: [RAG]
+   *     security:
+   *       - ApiKeyAuth: []
+   *       - BearerAuth: []
+   *     responses:
+   *       200:
+   *         description: Successful capabilities response
+   *         content:
+   *           application/json:
+   *             schema:
+   *               $ref: '#/components/schemas/RAGCapabilities'
+   *       401:
+   *         description: Authentication required
+   *         content:
+   *           application/json:
+   *             schema:
+   *               $ref: '#/components/schemas/Error'
+   *       403:
+   *         description: Insufficient permissions
+   *         content:
+   *           application/json:
+   *             schema:
+   *               $ref: '#/components/schemas/Error'
+   *       500:
+   *         description: Internal server error
+   *         content:
+   *           application/json:
+   *             schema:
+   *               $ref: '#/components/schemas/Error'
    */
   router.get('/capabilities', requirePermission('read'), asyncHandler(async (req, res) => {
     try {
@@ -217,8 +329,67 @@ module.exports = (dependencies = {}) => {
   }));
 
   /**
-   * POST /api/v1/rag/feedback
-   * Submit feedback on RAG responses
+   * @swagger
+   * /api/v1/rag/feedback:
+   *   post:
+   *     summary: Submit feedback on RAG responses
+   *     description: Provide feedback on the relevance and accuracy of RAG search results
+   *     tags: [RAG]
+   *     security:
+   *       - ApiKeyAuth: []
+   *       - BearerAuth: []
+   *     requestBody:
+   *       required: true
+   *       content:
+   *         application/json:
+   *           schema:
+   *             $ref: '#/components/schemas/RAGFeedback'
+   *           examples:
+   *             helpful:
+   *               summary: Helpful feedback
+   *               value:
+   *                 trace_id: "trace-123"
+   *                 rating: 5
+   *                 feedback_type: "helpful"
+   *                 comment: "This response was very helpful!"
+   *             not-helpful:
+   *               summary: Not helpful feedback
+   *               value:
+   *                 trace_id: "trace-456"
+   *                 rating: 1
+   *                 feedback_type: "not_helpful"
+   *                 comment: "This response was not helpful at all."
+   *     responses:
+   *       200:
+   *         description: Successful feedback submission
+   *         content:
+   *           application/json:
+   *             schema:
+   *               $ref: '#/components/schemas/FeedbackResponse'
+   *       400:
+   *         description: Invalid feedback parameters
+   *         content:
+   *           application/json:
+   *             schema:
+   *               $ref: '#/components/schemas/Error'
+   *       401:
+   *         description: Authentication required
+   *         content:
+   *           application/json:
+   *             schema:
+   *               $ref: '#/components/schemas/Error'
+   *       403:
+   *         description: Insufficient permissions
+   *         content:
+   *           application/json:
+   *             schema:
+   *               $ref: '#/components/schemas/Error'
+   *       500:
+   *         description: Internal server error
+   *         content:
+   *           application/json:
+   *             schema:
+   *               $ref: '#/components/schemas/Error'
    */
   router.post('/feedback', requirePermission('write'), asyncHandler(async (req, res) => {
     const feedbackSchema = Joi.object({

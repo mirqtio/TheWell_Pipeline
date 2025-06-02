@@ -110,15 +110,45 @@ Implement trace context propagation across all RAG components. Add span creation
 ### Details:
 Create a document-level access control system. Implement user/role-based permission filtering during retrieval. Add permission validation middleware for API endpoints. Design a secure token-based system for authenticating and authorizing requests across the RAG pipeline. Testing requirements: 1) Write unit tests for permission logic and validation, 2) Create integration tests for access control enforcement, 3) Implement e2e tests for permission-based workflows, 4) Run all tests and resolve any issues, 5) Merge to master and verify CI passes via GitHub logs.
 
-## 6. Performance Optimization [in-progress]
+## 6. Performance Optimization [done]
 ### Dependencies: 4.2, 4.3, 4.5
 ### Description: Optimize the RAG pipeline to achieve sub-2-second response times
 ### Details:
 Implement parallel processing for document retrieval and embedding generation. Optimize database queries and vector search operations. Add request throttling and queue management for high-load scenarios. Conduct load testing to identify and resolve bottlenecks in the pipeline. Testing requirements: 1) Write unit tests for optimization components, 2) Create integration tests for performance metrics, 3) Implement e2e tests with performance benchmarks, 4) Run all tests and resolve any issues, 5) Merge to master and verify CI passes via GitHub logs.
 
-## 7. Contract Testing Implementation [pending]
+## 7. Contract Testing Implementation [in-progress]
 ### Dependencies: 4.1, 4.2, 4.3, 4.5, 4.6
 ### Description: Develop comprehensive testing framework to ensure API reliability and correctness
 ### Details:
 Create contract tests for all API endpoints. Implement integration tests for the complete RAG pipeline. Add performance tests to verify response time requirements. Develop specialized tests for edge cases like empty results, permission boundaries, and cache behaviors. Testing requirements: 1) Write unit tests for contract validation, 2) Create integration tests for API contracts, 3) Implement browser-based e2e tests for API interactions, 4) Run all tests and resolve any issues, 5) Merge to master and verify CI passes via GitHub logs.
+
+## 8. Implement Express.js API with OpenAPI Documentation [done]
+### Dependencies: None
+### Description: Set up the Express.js server with proper routing, middleware, and OpenAPI/Swagger documentation for the RAG API.
+### Details:
+Create the Express.js application with proper error handling, middleware setup (CORS, body parsing, authentication), and route definitions. Implement the basic API structure with placeholder endpoints. Create a comprehensive swagger.json file that documents all endpoints, request/response schemas, and authentication requirements. Set up the Swagger UI for interactive API documentation.
+
+## 9. Develop Hybrid Search Implementation [done]
+### Dependencies: 4.8
+### Description: Build the core search functionality combining vector similarity search and keyword-based search with result fusion.
+### Details:
+Implement pgvector integration for vector similarity search. Create PostgreSQL full-text search queries with proper indexing and language support. Develop the reciprocal rank fusion algorithm to combine results from both search methods. Ensure the search implementation handles different query types and optimizes for performance. Create a modular design that allows for easy configuration of search parameters.
+
+## 10. Implement Redis Caching Strategy [done]
+### Dependencies: 4.9
+### Description: Create an intelligent caching system using Redis to improve response times and reduce database load.
+### Details:
+Develop cache key generation functions that account for query parameters and user permissions. Implement TTL calculation logic based on query popularity metrics and content update frequency. Create cache invalidation mechanisms that trigger on document updates. Add cache hit/miss tracking for performance monitoring. Implement cache size management to prevent memory issues.
+
+## 11. Add Request Tracing and Performance Monitoring [done]
+### Dependencies: 4.8, 4.9, 4.10
+### Description: Implement distributed tracing across all components with unique trace IDs and detailed performance metrics.
+### Details:
+Set up a tracing library (like OpenTelemetry) to create and propagate trace contexts. Add span creation for each major processing step in the request lifecycle. Implement trace ID generation and propagation through headers. Create performance monitoring for each component (search, cache, database). Set up logging that includes trace IDs for correlation.
+
+## 12. Implement Permission-Based Query Filtering [done]
+### Dependencies: 4.9
+### Description: Add visibility and permission enforcement to ensure users only access authorized content.
+### Details:
+Create a permission model that defines access levels for different content types. Implement query filters that automatically apply permission constraints based on the authenticated user. Modify the search implementation to include visibility filters in both vector and keyword searches. Ensure the caching strategy respects permissions in cache keys. Add permission validation middleware for all API endpoints.
 

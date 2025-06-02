@@ -1,6 +1,6 @@
 /**
  * RAG Manager
- * Orchestrates the Retrieval-Augmented Generation pipeline
+ * Orchestrates the Retrieval-Augmented Generation pipeline with performance optimizations
  */
 
 const logger = require('../utils/logger');
@@ -9,6 +9,7 @@ const ResponseGenerator = require('./components/ResponseGenerator');
 const InputProcessor = require('./components/InputProcessor');
 const OutputFormatter = require('./components/OutputFormatter');
 const { RAGTracing } = require('../tracing');
+const { ParallelSearchManager, PerformanceBenchmark, DatabaseOptimizer } = require('./performance');
 
 class RAGManager {
   constructor(options = {}) {
@@ -16,6 +17,11 @@ class RAGManager {
     this.llmProviderManager = options.llmProviderManager;
     this.visibilityDatabase = options.visibilityDatabase;
     this.cacheManager = options.cacheManager;
+    
+    // Performance optimization settings
+    this.enableParallelSearch = options.enableParallelSearch !== false;
+    this.enableDatabaseOptimization = options.enableDatabaseOptimization !== false;
+    this.enablePerformanceBenchmarking = options.enablePerformanceBenchmarking !== false;
     
     // Initialize tracing
     this.ragTracing = new RAGTracing(options.tracingManager);
@@ -45,6 +51,31 @@ class RAGManager {
       includeMetadata: options.includeMetadata !== false,
       includeSources: options.includeSources !== false
     });
+
+    // Initialize performance optimization components
+    if (this.enableDatabaseOptimization) {
+      this.databaseOptimizer = new DatabaseOptimizer({
+        databaseManager: this.databaseManager,
+        enableQueryCaching: options.enableQueryCaching !== false,
+        cacheSize: options.cacheSize || 1000,
+        cacheTTL: options.cacheTTL || 300000
+      });
+    }
+
+    if (this.enableParallelSearch) {
+      this.parallelSearchManager = new ParallelSearchManager({
+        documentRetriever: this.documentRetriever,
+        maxConcurrency: options.maxConcurrency || 3,
+        timeoutMs: options.timeoutMs || 5000
+      });
+    }
+
+    if (this.enablePerformanceBenchmarking) {
+      this.performanceBenchmark = new PerformanceBenchmark({
+        ragManager: this,
+        parallelSearchManager: this.parallelSearchManager
+      });
+    }
     
     this.isInitialized = false;
   }
@@ -61,6 +92,18 @@ class RAGManager {
       await this.documentRetriever.initialize();
       await this.responseGenerator.initialize();
       await this.outputFormatter.initialize();
+      
+      if (this.enableDatabaseOptimization) {
+        await this.databaseOptimizer.initialize();
+      }
+
+      if (this.enableParallelSearch) {
+        await this.parallelSearchManager.initialize();
+      }
+
+      if (this.enablePerformanceBenchmarking) {
+        await this.performanceBenchmark.initialize();
+      }
       
       this.isInitialized = true;
       logger.info('RAG Manager initialized successfully');
@@ -120,11 +163,19 @@ class RAGManager {
               threshold: processedInput.filters?.threshold || 0.7,
             },
             async () => {
-              return await this.documentRetriever.retrieve(
-                processedInput.query,
-                processedInput.filters,
-                userAuth
-              );
+              if (this.enableParallelSearch) {
+                return await this.parallelSearchManager.performParallelSearch(
+                  processedInput.query,
+                  processedInput.filters,
+                  userAuth
+                );
+              } else {
+                return await this.documentRetriever.retrieve(
+                  processedInput.query,
+                  processedInput.filters,
+                  userAuth
+                );
+              }
             }
           );
           
@@ -205,6 +256,18 @@ class RAGManager {
       timestamp: new Date().toISOString()
     };
     
+    if (this.enableDatabaseOptimization) {
+      status.components.databaseOptimizer = await this.databaseOptimizer.getStatus();
+    }
+
+    if (this.enableParallelSearch) {
+      status.components.parallelSearchManager = await this.parallelSearchManager.getStatus();
+    }
+
+    if (this.enablePerformanceBenchmarking) {
+      status.components.performanceBenchmark = await this.performanceBenchmark.getStatus();
+    }
+    
     return status;
   }
 
@@ -228,6 +291,18 @@ class RAGManager {
         this.responseGenerator.shutdown(),
         this.outputFormatter.shutdown()
       ]);
+      
+      if (this.enableDatabaseOptimization) {
+        await this.databaseOptimizer.shutdown();
+      }
+
+      if (this.enableParallelSearch) {
+        await this.parallelSearchManager.shutdown();
+      }
+
+      if (this.enablePerformanceBenchmarking) {
+        await this.performanceBenchmark.shutdown();
+      }
       
       this.isInitialized = false;
       logger.info('RAG Manager shut down successfully');
