@@ -81,6 +81,9 @@ describe('ORM Database Integration', () => {
 
   describe('Source Model Integration', () => {
     it('should create and retrieve a source', async () => {
+      if (skipIfNoDatabase || process.env.SKIP_DB_TESTS) {
+        return;
+      }
       const Source = ormManager.getModel('Source');
       
       // Create test source
@@ -110,6 +113,9 @@ describe('ORM Database Integration', () => {
     });
 
     it('should find active sources', async () => {
+      if (skipIfNoDatabase || process.env.SKIP_DB_TESTS) {
+        return;
+      }
       const Source = ormManager.getModel('Source');
       
       const activeSources = await Source.findActive();
@@ -122,6 +128,9 @@ describe('ORM Database Integration', () => {
     });
 
     it('should find sources by type', async () => {
+      if (skipIfNoDatabase || process.env.SKIP_DB_TESTS) {
+        return;
+      }
       const Source = ormManager.getModel('Source');
       
       const staticSources = await Source.findByType('static');
@@ -134,6 +143,9 @@ describe('ORM Database Integration', () => {
     });
 
     it('should update source status', async () => {
+      if (skipIfNoDatabase || process.env.SKIP_DB_TESTS) {
+        return;
+      }
       const Source = ormManager.getModel('Source');
       
       // Update source status
@@ -158,6 +170,9 @@ describe('ORM Database Integration', () => {
 
   describe('Document Model Integration', () => {
     it('should create and retrieve a document', async () => {
+      if (skipIfNoDatabase || process.env.SKIP_DB_TESTS) {
+        return;
+      }
       const Document = ormManager.getModel('Document');
       
       // Create test document
@@ -192,6 +207,9 @@ describe('ORM Database Integration', () => {
     });
 
     it('should find documents by source', async () => {
+      if (skipIfNoDatabase || process.env.SKIP_DB_TESTS) {
+        return;
+      }
       const Document = ormManager.getModel('Document');
       
       const sourceDocuments = await Document.findBySource(testSourceId);
@@ -205,6 +223,9 @@ describe('ORM Database Integration', () => {
     });
 
     it('should find document by content hash', async () => {
+      if (skipIfNoDatabase || process.env.SKIP_DB_TESTS) {
+        return;
+      }
       const Document = ormManager.getModel('Document');
       
       // Get the test document to find its hash
@@ -218,6 +239,9 @@ describe('ORM Database Integration', () => {
     });
 
     it('should handle vector embeddings', async () => {
+      if (skipIfNoDatabase || process.env.SKIP_DB_TESTS) {
+        return;
+      }
       const Document = ormManager.getModel('Document');
       
       // Get test document
@@ -237,6 +261,9 @@ describe('ORM Database Integration', () => {
     });
 
     it('should update enrichment status', async () => {
+      if (skipIfNoDatabase || process.env.SKIP_DB_TESTS) {
+        return;
+      }
       const Document = ormManager.getModel('Document');
       
       // Update enrichment status
@@ -256,6 +283,9 @@ describe('ORM Database Integration', () => {
 
   describe('Model Associations', () => {
     it('should load source with documents', async () => {
+      if (skipIfNoDatabase || process.env.SKIP_DB_TESTS) {
+        return;
+      }
       const Source = ormManager.getModel('Source');
       const Document = ormManager.getModel('Document');
       
@@ -274,6 +304,9 @@ describe('ORM Database Integration', () => {
     });
 
     it('should load document with source', async () => {
+      if (skipIfNoDatabase || process.env.SKIP_DB_TESTS) {
+        return;
+      }
       const Document = ormManager.getModel('Document');
       const Source = ormManager.getModel('Source');
       
@@ -290,6 +323,9 @@ describe('ORM Database Integration', () => {
 
   describe('Transaction Support', () => {
     it('should support transactions for atomic operations', async () => {
+      if (skipIfNoDatabase || process.env.SKIP_DB_TESTS) {
+        return;
+      }
       const Source = ormManager.getModel('Source');
       const Document = ormManager.getModel('Document');
       
@@ -350,6 +386,10 @@ describe('ORM Database Integration', () => {
 
   describe('Raw Queries', () => {
     it('should execute raw SQL queries', async () => {
+      if (skipIfNoDatabase || process.env.SKIP_DB_TESTS) {
+        return;
+      }
+      
       const [results] = await ormManager.query(
         'SELECT COUNT(*) as count FROM sources WHERE status = :status',
         {
@@ -364,6 +404,10 @@ describe('ORM Database Integration', () => {
     });
 
     it('should handle parameterized queries safely', async () => {
+      if (skipIfNoDatabase || process.env.SKIP_DB_TESTS) {
+        return;
+      }
+      
       const results = await ormManager.query(
         'SELECT id, name FROM sources WHERE name = :name LIMIT 1',
         {
@@ -381,6 +425,10 @@ describe('ORM Database Integration', () => {
 
   describe('Health Check', () => {
     it('should perform ORM health check', async () => {
+      if (skipIfNoDatabase || process.env.SKIP_DB_TESTS) {
+        return;
+      }
+      
       const health = await ormManager.healthCheck();
       
       expect(health).toBeDefined();

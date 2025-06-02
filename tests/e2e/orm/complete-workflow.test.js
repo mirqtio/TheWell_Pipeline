@@ -92,6 +92,9 @@ describe('ORM Complete Workflow E2E', () => {
 
   describe('Document Ingestion Workflow', () => {
     it('should complete full document ingestion pipeline', async () => {
+      if (skipIfNoDatabase || process.env.SKIP_DB_TESTS) {
+        return;
+      }
       const Source = orm.getModel('Source');
       const Document = orm.getModel('Document');
       const Job = orm.getModel('Job');
@@ -179,6 +182,9 @@ describe('ORM Complete Workflow E2E', () => {
 
   describe('Document Enrichment Workflow', () => {
     it('should complete document enrichment with embeddings', async () => {
+      if (skipIfNoDatabase || process.env.SKIP_DB_TESTS) {
+        return;
+      }
       const Document = orm.getModel('Document');
       const Job = orm.getModel('Job');
 
@@ -231,6 +237,9 @@ describe('ORM Complete Workflow E2E', () => {
     });
 
     it('should find similar documents using embeddings', async () => {
+      if (skipIfNoDatabase || process.env.SKIP_DB_TESTS) {
+        return;
+      }
       const Document = orm.getModel('Document');
 
       // Get the enriched document
@@ -265,6 +274,9 @@ describe('ORM Complete Workflow E2E', () => {
 
   describe('Feedback Collection Workflow', () => {
     it('should collect and aggregate document feedback', async () => {
+      if (skipIfNoDatabase || process.env.SKIP_DB_TESTS) {
+        return;
+      }
       const Document = orm.getModel('Document');
       const DocumentFeedback = orm.getModel('DocumentFeedback');
       const FeedbackAggregate = orm.getModel('FeedbackAggregate');
@@ -327,6 +339,9 @@ describe('ORM Complete Workflow E2E', () => {
 
   describe('Cost Tracking Workflow', () => {
     it('should track costs across the pipeline', async () => {
+      if (skipIfNoDatabase || process.env.SKIP_DB_TESTS) {
+        return;
+      }
       const CostEvent = orm.getModel('CostEvent');
       const CostBudget = orm.getModel('CostBudget');
 
@@ -396,6 +411,9 @@ describe('ORM Complete Workflow E2E', () => {
 
   describe('Complete Pipeline Health Check', () => {
     it('should verify all components are working together', async () => {
+      if (skipIfNoDatabase || process.env.SKIP_DB_TESTS) {
+        return;
+      }
       // Test ORM health
       const ormHealth = await orm.healthCheck();
       expect(ormHealth.status).toBe('healthy');
@@ -443,6 +461,9 @@ describe('ORM Complete Workflow E2E', () => {
 
   describe('Performance and Scalability', () => {
     it('should handle bulk operations efficiently', async () => {
+      if (skipIfNoDatabase || process.env.SKIP_DB_TESTS) {
+        return;
+      }
       const Document = orm.getModel('Document');
       const startTime = Date.now();
 
