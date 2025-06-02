@@ -265,7 +265,7 @@
             1
           ],
           "details": "Implement vector embedding generation for documents and queries. Create keyword-based search functionality with BM25 or similar algorithms. Develop a ranking system to combine results from both approaches. Include relevance scoring and filtering capabilities to improve search precision. Testing requirements: 1) Write unit tests for search algorithms and ranking logic, 2) Create integration tests for search result quality, 3) Implement e2e tests for complete search workflows, 4) Run all tests and resolve any issues, 5) Merge to master and verify CI passes via GitHub logs.",
-          "status": "pending"
+          "status": "in-progress"
         },
         {
           "id": 3,

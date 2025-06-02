@@ -76,12 +76,13 @@ describe('End-to-End Migration Workflow Tests', () => {
       return;
     }
     
-    // Clean up any existing test data before each test
+    // Clean up any existing test data and migration state
     try {
       await db.query('DROP TABLE IF EXISTS schema_migrations');
       await db.query('DROP TABLE IF EXISTS e2e_test_documents');
       await db.query('DROP TABLE IF EXISTS e2e_test_sources');
       await db.query('DROP TABLE IF EXISTS audit_log');
+      await db.query('DROP TABLE IF EXISTS integrity_test');
     } catch (error) {
       // Ignore if tables don't exist
     }
