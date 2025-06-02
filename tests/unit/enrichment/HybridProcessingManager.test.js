@@ -22,7 +22,15 @@ describe('HybridProcessingManager', () => {
       complexityThreshold: 0.5,
       costThreshold: 0.05,
       maxConcurrentLocal: 2,
-      maxConcurrentCloud: 5
+      maxConcurrentCloud: 5,
+      localProviders: ['local-llm', 'ollama'],
+      cloudProviders: ['openai', 'anthropic'],
+      sensitivityLevels: {
+        public: 0,
+        internal: 1,
+        confidential: 2,
+        restricted: 3
+      }
     });
   });
 
@@ -106,7 +114,7 @@ describe('HybridProcessingManager', () => {
   });
 
   describe('strategy selection', () => {
-    it('should select monolithic strategy for simple documents', () => {
+    it('should select monolithic strategy for simple documents', async () => {
       const analysis = {
         size: 500,
         complexity: 0.3,
@@ -115,11 +123,11 @@ describe('HybridProcessingManager', () => {
         estimatedLatency: 1000
       };
 
-      const strategy = manager.selectProcessingStrategy(analysis);
+      const strategy = await manager.selectProcessingStrategy(analysis);
       expect(strategy.strategy).toBe('monolithic');
     });
 
-    it('should select chunked strategy for large documents', () => {
+    it('should select chunked strategy for large documents', async () => {
       const analysis = {
         size: 2000,
         complexity: 0.4,
@@ -128,11 +136,11 @@ describe('HybridProcessingManager', () => {
         estimatedLatency: 2000
       };
 
-      const strategy = manager.selectProcessingStrategy(analysis);
+      const strategy = await manager.selectProcessingStrategy(analysis);
       expect(strategy.strategy).toBe('chunked');
     });
 
-    it('should select agent strategy for complex documents', () => {
+    it('should select agent strategy for complex documents', async () => {
       const analysis = {
         size: 800,
         complexity: 0.8,
@@ -141,11 +149,11 @@ describe('HybridProcessingManager', () => {
         estimatedLatency: 1500
       };
 
-      const strategy = manager.selectProcessingStrategy(analysis);
+      const strategy = await manager.selectProcessingStrategy(analysis);
       expect(strategy.strategy).toBe('agent');
     });
 
-    it('should enforce local processing for sensitive data', () => {
+    it('should enforce local processing for sensitive data', async () => {
       const analysis = {
         size: 500,
         complexity: 0.3,
@@ -154,11 +162,11 @@ describe('HybridProcessingManager', () => {
         estimatedLatency: 1000
       };
 
-      const strategy = manager.selectProcessingStrategy(analysis);
+      const strategy = await manager.selectProcessingStrategy(analysis);
       expect(strategy.routing.processingLocation).toBe('local');
     });
 
-    it('should consider cost constraints in strategy selection', () => {
+    it('should consider cost constraints in strategy selection', async () => {
       const analysis = {
         size: 500,
         complexity: 0.3,
@@ -167,7 +175,7 @@ describe('HybridProcessingManager', () => {
         estimatedLatency: 1000
       };
 
-      const strategy = manager.selectProcessingStrategy(analysis);
+      const strategy = await manager.selectProcessingStrategy(analysis);
       // Should prefer local processing for cost savings
       expect(strategy.routing.processingLocation).toMatch(/local|hybrid/);
     });
@@ -330,7 +338,7 @@ describe('HybridProcessingManager', () => {
       const analysis = await manager.analyzeDocument(document, metadata);
       
       // Select strategy
-      const strategy = manager.selectProcessingStrategy(analysis);
+      const strategy = await manager.selectProcessingStrategy(analysis);
       
       // Execute processing
       const result = await manager.executeProcessing(
@@ -353,7 +361,7 @@ describe('HybridProcessingManager', () => {
       manager.on('processing_complete', completeHandler);
 
       const analysis = await manager.analyzeDocument(document, metadata);
-      const strategy = manager.selectProcessingStrategy(analysis);
+      const strategy = await manager.selectProcessingStrategy(analysis);
       
       await manager.executeProcessing(document, metadata, strategy, mockProviderManager);
 
@@ -377,7 +385,7 @@ describe('HybridProcessingManager', () => {
       manager.on('processing_failed', failHandler);
 
       const analysis = await manager.analyzeDocument(document, metadata);
-      const strategy = manager.selectProcessingStrategy(analysis);
+      const strategy = await manager.selectProcessingStrategy(analysis);
       
       await expect(
         manager.executeProcessing(document, metadata, strategy, mockProviderManager)
@@ -398,7 +406,7 @@ describe('HybridProcessingManager', () => {
       const metadata = { documentId: 'test-1' };
 
       const analysis = await manager.analyzeDocument(document, metadata);
-      const strategy = manager.selectProcessingStrategy(analysis);
+      const strategy = await manager.selectProcessingStrategy(analysis);
       
       // Start processing (should increment resource usage)
       const processingPromise = manager.executeProcessing(
