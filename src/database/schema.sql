@@ -4,6 +4,9 @@
 -- Enable UUID extension
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
+-- Enable pgvector extension for vector similarity search
+CREATE EXTENSION IF NOT EXISTS vector;
+
 -- Enable full-text search
 CREATE EXTENSION IF NOT EXISTS "pg_trgm";
 
@@ -23,7 +26,7 @@ CREATE TABLE sources (
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
--- Documents: Core document storage
+-- Documents: Core document storage with vector search capabilities
 CREATE TABLE documents (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     source_id UUID REFERENCES sources(id) ON DELETE CASCADE,
@@ -36,8 +39,25 @@ CREATE TABLE documents (
     hash VARCHAR(64) UNIQUE, -- Content hash for deduplication
     word_count INTEGER,
     language VARCHAR(10),
+    
+    -- Vector embeddings for semantic similarity search
+    embedding vector(1536), -- OpenAI ada-002 embedding dimension
+    embedding_model VARCHAR(100) DEFAULT 'text-embedding-ada-002',
+    
+    -- Visibility and quality controls
+    visibility VARCHAR(20) DEFAULT 'internal', -- 'internal', 'external', 'private', 'public'
+    believability_score DECIMAL(3,2) DEFAULT 0.5, -- 0.0-1.0 scale
+    quality_score DECIMAL(3,2), -- Optional quality assessment
+    
+    -- Enrichment tracking
+    enrichments JSONB DEFAULT '{}', -- Store enrichment results
+    enrichment_status VARCHAR(20) DEFAULT 'pending', -- 'pending', 'processing', 'completed', 'failed'
+    enriched_at TIMESTAMP WITH TIME ZONE,
+    
+    -- Timestamps
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    ingested_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     
     -- Full-text search
     search_vector tsvector
@@ -293,6 +313,53 @@ CREATE TABLE config_history (
 );
 
 -- =====================================================
+-- FEEDBACK AND QUALITY MANAGEMENT TABLES
+-- =====================================================
+
+-- Document Feedback: User feedback on document quality and relevance
+CREATE TABLE document_feedback (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    document_id UUID REFERENCES documents(id) ON DELETE CASCADE,
+    user_id VARCHAR(255), -- User identifier (could be email, username, etc.)
+    feedback_type VARCHAR(20) NOT NULL, -- 'quality', 'relevance', 'accuracy', 'usefulness'
+    rating INTEGER CHECK (rating >= 1 AND rating <= 5), -- 1-5 scale
+    comment TEXT,
+    metadata JSONB DEFAULT '{}', -- Additional feedback context
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Feedback Aggregates: Computed feedback statistics per document
+CREATE TABLE feedback_aggregates (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    document_id UUID REFERENCES documents(id) ON DELETE CASCADE UNIQUE,
+    total_feedback_count INTEGER DEFAULT 0,
+    average_quality_rating DECIMAL(3,2),
+    average_relevance_rating DECIMAL(3,2),
+    average_accuracy_rating DECIMAL(3,2),
+    average_usefulness_rating DECIMAL(3,2),
+    overall_score DECIMAL(3,2), -- Weighted average of all ratings
+    last_updated TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Document Deduplication: Track duplicate detection and merging
+CREATE TABLE document_duplicates (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    primary_document_id UUID REFERENCES documents(id) ON DELETE CASCADE,
+    duplicate_document_id UUID REFERENCES documents(id) ON DELETE CASCADE,
+    similarity_type VARCHAR(20) NOT NULL, -- 'content_hash', 'semantic', 'url', 'title'
+    similarity_score DECIMAL(5,4), -- 0.0000-1.0000 similarity score
+    detection_method VARCHAR(50), -- 'hash_comparison', 'vector_similarity', 'fuzzy_match'
+    status VARCHAR(20) DEFAULT 'detected', -- 'detected', 'confirmed', 'merged', 'ignored'
+    reviewed_by VARCHAR(255), -- User who reviewed the duplicate
+    reviewed_at TIMESTAMP WITH TIME ZONE,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    
+    UNIQUE(primary_document_id, duplicate_document_id)
+);
+
+-- =====================================================
 -- INDEXES FOR PERFORMANCE
 -- =====================================================
 
@@ -302,6 +369,11 @@ CREATE INDEX idx_documents_hash ON documents(hash);
 CREATE INDEX idx_documents_created_at ON documents(created_at);
 CREATE INDEX idx_documents_search_vector ON documents USING gin(search_vector);
 CREATE INDEX idx_documents_metadata ON documents USING gin(metadata);
+CREATE INDEX idx_documents_embedding ON documents USING ivfflat (embedding vector_cosine_ops) WITH (lists = 100);
+CREATE INDEX idx_documents_visibility ON documents(visibility);
+CREATE INDEX idx_documents_believability_score ON documents(believability_score);
+CREATE INDEX idx_documents_enrichment_status ON documents(enrichment_status);
+CREATE INDEX idx_documents_ingested_at ON documents(ingested_at);
 
 -- Jobs indexes
 CREATE INDEX idx_jobs_status ON jobs(status);
@@ -349,6 +421,20 @@ CREATE INDEX idx_cost_alerts_created_at ON cost_alerts(created_at);
 CREATE INDEX idx_cost_reports_report_type ON cost_reports(report_type);
 CREATE INDEX idx_cost_reports_date_range ON cost_reports(date_range_start, date_range_end);
 
+-- Feedback indexes
+CREATE INDEX idx_document_feedback_document_id ON document_feedback(document_id);
+CREATE INDEX idx_document_feedback_user_id ON document_feedback(user_id);
+CREATE INDEX idx_document_feedback_created_at ON document_feedback(created_at);
+
+CREATE INDEX idx_feedback_aggregates_document_id ON feedback_aggregates(document_id);
+CREATE INDEX idx_feedback_aggregates_last_updated ON feedback_aggregates(last_updated);
+
+CREATE INDEX idx_document_duplicates_primary_document_id ON document_duplicates(primary_document_id);
+CREATE INDEX idx_document_duplicates_duplicate_document_id ON document_duplicates(duplicate_document_id);
+CREATE INDEX idx_document_duplicates_similarity_type ON document_duplicates(similarity_type);
+CREATE INDEX idx_document_duplicates_detection_method ON document_duplicates(detection_method);
+CREATE INDEX idx_document_duplicates_status ON document_duplicates(status);
+
 -- =====================================================
 -- TRIGGERS FOR AUTOMATIC UPDATES
 -- =====================================================
@@ -384,6 +470,62 @@ $$ language 'plpgsql';
 CREATE TRIGGER update_documents_search_vector 
     BEFORE INSERT OR UPDATE ON documents 
     FOR EACH ROW EXECUTE FUNCTION update_document_search_vector();
+
+-- Update feedback aggregates automatically
+CREATE OR REPLACE FUNCTION update_feedback_aggregates()
+RETURNS TRIGGER AS $$
+BEGIN
+    -- Insert or update feedback aggregates for the document
+    INSERT INTO feedback_aggregates (
+        document_id,
+        total_feedback_count,
+        average_quality_rating,
+        average_relevance_rating,
+        average_accuracy_rating,
+        average_usefulness_rating,
+        overall_score,
+        last_updated
+    )
+    SELECT 
+        COALESCE(NEW.document_id, OLD.document_id) as document_id,
+        COUNT(*) as total_feedback_count,
+        AVG(CASE WHEN feedback_type = 'quality' THEN rating END) as average_quality_rating,
+        AVG(CASE WHEN feedback_type = 'relevance' THEN rating END) as average_relevance_rating,
+        AVG(CASE WHEN feedback_type = 'accuracy' THEN rating END) as average_accuracy_rating,
+        AVG(CASE WHEN feedback_type = 'usefulness' THEN rating END) as average_usefulness_rating,
+        AVG(rating) as overall_score,
+        NOW() as last_updated
+    FROM document_feedback 
+    WHERE document_id = COALESCE(NEW.document_id, OLD.document_id)
+    GROUP BY document_id
+    ON CONFLICT (document_id) 
+    DO UPDATE SET
+        total_feedback_count = EXCLUDED.total_feedback_count,
+        average_quality_rating = EXCLUDED.average_quality_rating,
+        average_relevance_rating = EXCLUDED.average_relevance_rating,
+        average_accuracy_rating = EXCLUDED.average_accuracy_rating,
+        average_usefulness_rating = EXCLUDED.average_usefulness_rating,
+        overall_score = EXCLUDED.overall_score,
+        last_updated = EXCLUDED.last_updated;
+    
+    RETURN COALESCE(NEW, OLD);
+END;
+$$ language 'plpgsql';
+
+CREATE TRIGGER update_feedback_aggregates_on_insert
+    AFTER INSERT ON document_feedback
+    FOR EACH ROW EXECUTE FUNCTION update_feedback_aggregates();
+
+CREATE TRIGGER update_feedback_aggregates_on_update
+    AFTER UPDATE ON document_feedback
+    FOR EACH ROW EXECUTE FUNCTION update_feedback_aggregates();
+
+CREATE TRIGGER update_feedback_aggregates_on_delete
+    AFTER DELETE ON document_feedback
+    FOR EACH ROW EXECUTE FUNCTION update_feedback_aggregates();
+
+-- Add triggers for new feedback tables to update timestamps
+CREATE TRIGGER update_document_feedback_updated_at BEFORE UPDATE ON document_feedback FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
 -- =====================================================
 -- INITIAL DATA

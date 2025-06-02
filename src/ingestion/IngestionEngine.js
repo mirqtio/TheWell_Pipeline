@@ -3,6 +3,7 @@ const SourceHandlerFactory = require('./handlers/SourceHandlerFactory');
 const SourceHandlerRegistry = require('./handlers/SourceHandlerRegistry');
 const VisibilityManager = require('./VisibilityManager');
 const VisibilityDatabase = require('./VisibilityDatabase');
+const DeduplicationEngine = require('../storage/DeduplicationEngine');
 const { SOURCE_TYPES } = require('./types');
 const logger = require('../utils/logger');
 
@@ -20,6 +21,7 @@ class IngestionEngine extends EventEmitter {
       retryAttempts: 3,
       retryDelay: 1000,
       enableVisibilityManagement: true,
+      enableDeduplication: true,
       batchSize: 50,
       maxRetries: 3,
       ...options
@@ -53,6 +55,17 @@ class IngestionEngine extends EventEmitter {
       });
     }
 
+    // Initialize deduplication engine if enabled
+    if (this.options.enableDeduplication) {
+      this.deduplicationEngine = new DeduplicationEngine({
+        database: this.options.database,
+        vectorSimilarityThreshold: this.options.vectorSimilarityThreshold || 0.95,
+        titleSimilarityThreshold: this.options.titleSimilarityThreshold || 0.85,
+        contentSimilarityThreshold: this.options.contentSimilarityThreshold || 0.90,
+        ...this.options.deduplication
+      });
+    }
+
     // Register event handlers
     this.registry.on('handlerRegistered', (handlerId) => {
       this.emit('sourceAdded', handlerId);
@@ -81,6 +94,12 @@ class IngestionEngine extends EventEmitter {
         await this.visibilityDatabase.initialize();
       }
       
+      // Initialize deduplication engine if enabled
+      if (this.options.enableDeduplication && this.deduplicationEngine) {
+        // Deduplication engine is ready to use (no async initialization needed)
+        logger.info('Deduplication engine initialized');
+      }
+      
       // Register built-in source handlers
       await this._registerBuiltInHandlers();
       
@@ -105,6 +124,11 @@ class IngestionEngine extends EventEmitter {
     try {
       // Cleanup all registered handlers
       await this.registry.cleanup();
+      
+      // Close deduplication engine if enabled
+      if (this.deduplicationEngine) {
+        await this.deduplicationEngine.close();
+      }
       
       // Clear sources
       this.sources.clear();
@@ -249,6 +273,51 @@ class IngestionEngine extends EventEmitter {
         sourceId: sourceId,
         processedAt: new Date()
       };
+
+      // Generate content hash for deduplication
+      if (this.deduplicationEngine) {
+        transformedDocument.hash = this.deduplicationEngine.generateContentHash(
+          transformedDocument.content || '', 
+          transformedDocument.title || ''
+        );
+      }
+
+      // Check for duplicates if deduplication is enabled
+      if (this.deduplicationEngine && this.options.enableDeduplication) {
+        const deduplicationResult = await this.deduplicationEngine.checkForDuplicates(transformedDocument);
+        
+        if (deduplicationResult.isDuplicate) {
+          this.emit('documentDuplicateDetected', sourceId, document.id, deduplicationResult);
+          
+          // Record duplicates in database
+          for (const duplicate of deduplicationResult.duplicates) {
+            await this.deduplicationEngine.recordDuplicate(
+              duplicate.id,
+              transformedDocument.id || `temp_${Date.now()}`,
+              duplicate.strategy,
+              duplicate.score,
+              duplicate.strategy
+            );
+          }
+          
+          // Add deduplication metadata
+          transformedDocument.metadata.deduplication = {
+            isDuplicate: true,
+            duplicateCount: deduplicationResult.duplicates.length,
+            strategies: deduplicationResult.strategies,
+            duplicates: deduplicationResult.duplicates.map(d => ({
+              id: d.id,
+              strategy: d.strategy,
+              score: d.score
+            }))
+          };
+        } else {
+          transformedDocument.metadata.deduplication = {
+            isDuplicate: false,
+            checkedAt: new Date()
+          };
+        }
+      }
 
       this.emit('documentProcessingCompleted', sourceId, document.id);
       return transformedDocument;
@@ -628,6 +697,47 @@ class IngestionEngine extends EventEmitter {
     } catch (error) {
       this.emit('error', { type: 'audit_log_failed', documentId, error: error.message });
       throw error;
+    }
+  }
+
+  /**
+   * Merge duplicate documents
+   */
+  async mergeDuplicates(primaryDocumentId, duplicateDocumentIds, mergeStrategy = 'keep_primary') {
+    if (!this.deduplicationEngine) {
+      throw new Error('Deduplication engine not enabled');
+    }
+
+    try {
+      await this.deduplicationEngine.mergeDuplicates(primaryDocumentId, duplicateDocumentIds, mergeStrategy);
+      this.emit('duplicatesMerged', primaryDocumentId, duplicateDocumentIds, mergeStrategy);
+      return { success: true, merged: duplicateDocumentIds.length };
+    } catch (error) {
+      this.emit('error', { type: 'duplicate_merge_failed', primaryDocumentId, duplicateDocumentIds, error: error.message });
+      throw error;
+    }
+  }
+
+  /**
+   * Get deduplication statistics
+   */
+  getDeduplicationStats() {
+    if (!this.deduplicationEngine) {
+      return { enabled: false };
+    }
+
+    return {
+      enabled: true,
+      ...this.deduplicationEngine.getStats()
+    };
+  }
+
+  /**
+   * Reset deduplication statistics
+   */
+  resetDeduplicationStats() {
+    if (this.deduplicationEngine) {
+      this.deduplicationEngine.resetStats();
     }
   }
 
