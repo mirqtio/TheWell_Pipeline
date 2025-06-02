@@ -292,7 +292,7 @@ class MigrationManager {
           const storedChecksum = result.rows[0].checksum;
           if (currentChecksum !== storedChecksum) {
             issues.push({
-              version: migration.version,
+              migration: migration.version,
               issue: 'checksum_mismatch',
               message: 'Migration file has been modified after application'
             });
@@ -300,7 +300,7 @@ class MigrationManager {
         }
       } catch (error) {
         issues.push({
-          version: migration.version,
+          migration: migration.version,
           issue: 'file_missing',
           message: 'Migration file not found'
         });
