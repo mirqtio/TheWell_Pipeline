@@ -1,6 +1,6 @@
-const { Pool } = require('pg');
 const fs = require('fs').promises;
 const path = require('path');
+const { Pool } = require('pg');
 const logger = require('../utils/logger');
 
 /**
@@ -8,17 +8,28 @@ const logger = require('../utils/logger');
  */
 class DatabaseManager {
   constructor(config = {}) {
-    this.config = {
-      host: config.host || process.env.DB_HOST || 'localhost',
-      port: parseInt(config.port || process.env.DB_PORT || 5432),
-      database: config.database || process.env.DB_NAME || 'thewell_pipeline',
-      user: config.user || process.env.DB_USER || 'postgres',
-      password: config.password || process.env.DB_PASSWORD || '',
-      max: config.max || 20,
-      idleTimeoutMillis: config.idleTimeoutMillis || 30000,
-      connectionTimeoutMillis: config.connectionTimeoutMillis || 2000,
-      ...config
-    };
+    // Support DATABASE_URL for CI/production environments
+    if (process.env.DATABASE_URL && !config.connectionString) {
+      this.config = {
+        connectionString: process.env.DATABASE_URL,
+        max: config.max || 20,
+        idleTimeoutMillis: config.idleTimeoutMillis || 30000,
+        connectionTimeoutMillis: config.connectionTimeoutMillis || 2000,
+        ...config
+      };
+    } else {
+      this.config = {
+        host: config.host || process.env.DB_HOST || 'localhost',
+        port: parseInt(config.port || process.env.DB_PORT || 5432),
+        database: config.database || process.env.DB_NAME || 'thewell_pipeline',
+        user: config.user || process.env.DB_USER || 'postgres',
+        password: config.password || process.env.DB_PASSWORD || '',
+        max: config.max || 20,
+        idleTimeoutMillis: config.idleTimeoutMillis || 30000,
+        connectionTimeoutMillis: config.connectionTimeoutMillis || 2000,
+        ...config
+      };
+    }
         
     this.pool = null;
     this.isConnected = false;
