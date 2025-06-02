@@ -141,6 +141,62 @@ class HybridProcessingManager extends EventEmitter {
   /**
    * Select optimal processing strategy based on document analysis
    */
+  async selectProcessingStrategy(analysis) {
+    // Apply constraints (budget, time, data sensitivity)
+    const effectiveConstraints = {
+      maxCost: analysis.maxCost || Infinity,
+      maxLatency: analysis.maxLatency || Infinity,
+      requiresLocalProcessing: analysis.sensitivity >= this.config.sensitivityLevels.confidential
+    };
+
+    let selectedStrategy = 'monolithic'; // default
+
+    // Strategy selection logic
+    if (effectiveConstraints.requiresLocalProcessing) {
+      // High sensitivity data must be processed locally
+      if (analysis.complexity > this.config.complexityThreshold) {
+        selectedStrategy = 'agent';
+      } else if (analysis.size > this.config.documentSizeThreshold) {
+        selectedStrategy = 'chunked';
+      } else {
+        selectedStrategy = 'monolithic';
+      }
+    } else {
+      // Can use cloud processing
+      if (analysis.complexity > this.config.complexityThreshold && 
+          analysis.estimatedLatency < effectiveConstraints.maxLatency) {
+        selectedStrategy = 'agent';
+      } else if (analysis.size > this.config.documentSizeThreshold) {
+        selectedStrategy = 'chunked';
+      } else if (analysis.estimatedCost > this.config.costThreshold && 
+                 this.resourceUsage.local < this.config.maxConcurrentLocal) {
+        selectedStrategy = 'monolithic'; // prefer local for cost savings
+      } else {
+        selectedStrategy = 'monolithic';
+      }
+    }
+
+    // Check if hybrid strategy would be better
+    if (this.shouldUseHybridStrategy(analysis, selectedStrategy)) {
+      selectedStrategy = 'hybrid';
+    }
+
+    logger.info('Processing strategy selected', {
+      strategy: selectedStrategy,
+      analysis,
+      constraints: effectiveConstraints
+    });
+
+    return {
+      strategy: selectedStrategy,
+      config: this.config.strategies[selectedStrategy],
+      routing: this.determineProviderRouting(selectedStrategy, analysis, effectiveConstraints)
+    };
+  }
+
+  /**
+   * Select optimal processing strategy based on document analysis
+   */
   async _selectProcessingStrategy(document, metadata, _selectedStrategy) {
     const {
       size,
