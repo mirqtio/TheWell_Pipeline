@@ -3,29 +3,37 @@
  * Configures test environment and mocks for database and external services
  */
 
-// Mock PostgreSQL connections for integration tests
-jest.mock('pg', () => {
-  const mockClient = {
-    connect: jest.fn().mockResolvedValue(undefined),
-    query: jest.fn().mockResolvedValue({ rows: [], rowCount: 0 }),
-    release: jest.fn().mockResolvedValue(undefined),
-    end: jest.fn().mockResolvedValue(undefined)
-  };
+// Only mock PostgreSQL for unit tests, not integration/E2E tests
+const testPath = expect.getState().testPath || '';
+const isUnitTest = testPath.includes('/unit/') || testPath.includes('\\unit\\');
+const isIntegrationTest = testPath.includes('/integration/') || testPath.includes('\\integration\\');
+const isE2ETest = testPath.includes('/e2e/') || testPath.includes('\\e2e\\');
 
-  const mockPool = {
-    connect: jest.fn().mockResolvedValue(mockClient),
-    query: jest.fn().mockResolvedValue({ rows: [], rowCount: 0 }),
-    end: jest.fn().mockResolvedValue(undefined),
-    totalCount: 0,
-    idleCount: 0,
-    waitingCount: 0
-  };
+if (isUnitTest && !isIntegrationTest && !isE2ETest) {
+  // Mock PostgreSQL connections for unit tests
+  jest.mock('pg', () => {
+    const mockClient = {
+      connect: jest.fn().mockResolvedValue(undefined),
+      query: jest.fn().mockResolvedValue({ rows: [], rowCount: 0 }),
+      release: jest.fn().mockResolvedValue(undefined),
+      end: jest.fn().mockResolvedValue(undefined)
+    };
 
-  return {
-    Pool: jest.fn(() => mockPool),
-    Client: jest.fn(() => mockClient)
-  };
-});
+    const mockPool = {
+      connect: jest.fn().mockResolvedValue(mockClient),
+      query: jest.fn().mockResolvedValue({ rows: [], rowCount: 0 }),
+      end: jest.fn().mockResolvedValue(undefined),
+      totalCount: 0,
+      idleCount: 0,
+      waitingCount: 0
+    };
+
+    return {
+      Pool: jest.fn(() => mockPool),
+      Client: jest.fn(() => mockClient)
+    };
+  });
+}
 
 // Mock Redis connections
 jest.mock('redis', () => ({
