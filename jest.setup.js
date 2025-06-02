@@ -3,6 +3,9 @@
  * Configures test environment and mocks for database and external services
  */
 
+// Load environment variables
+require('dotenv').config();
+
 // Mock PostgreSQL connections for unit tests
 jest.mock('pg', () => {
   const mockClient = {
