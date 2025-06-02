@@ -237,6 +237,10 @@ DROP TABLE IF EXISTS audit_log;`;
       // Insert test documents
       const testDocuments = [];
       for (let i = 0; i < 100; i++) {
+        const isPublic = i % 2 === 0;
+        // Ensure public documents have quality_score > 3.0 for predictable test results
+        const qualityScore = isPublic ? (3.5 + Math.random() * 1.5).toFixed(2) : (Math.random() * 5).toFixed(2);
+        
         testDocuments.push([
           sourceId,
           `Test Document ${i}`,
@@ -244,8 +248,8 @@ DROP TABLE IF EXISTS audit_log;`;
           `https://example.com/doc${i}`,
           `hash${i}`,
           JSON.stringify({ test: true, index: i }),
-          i % 2 === 0 ? 'public' : 'private',
-          (Math.random() * 5).toFixed(2)
+          isPublic ? 'public' : 'private',
+          qualityScore
         ]);
       }
             
