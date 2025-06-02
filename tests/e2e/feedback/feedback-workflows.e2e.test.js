@@ -331,7 +331,7 @@ const DatabaseManager = require('../../../src/database/DatabaseManager');
   describe('Error Handling and Edge Cases', () => {
     it('should handle invalid feedback data gracefully', async () => {
       const invalidData = {
-        documentId: 'invalid-uuid',
+        documentId: '00000000-0000-0000-0000-000000000001', // Use a valid UUID format that doesn't exist
         appId: 'test-app',
         feedbackType: 'rating',
         content: { rating: 'invalid' }
