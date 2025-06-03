@@ -3,6 +3,9 @@
  * Tests comprehensive permission enforcement system
  */
 
+// Unmock PermissionManager for unit tests
+jest.unmock('../../../src/permissions/PermissionManager');
+
 const PermissionManager = require('../../../src/permissions/PermissionManager');
 const DatabaseManager = require('../../../src/database/DatabaseManager');
 const logger = require('../../../src/utils/logger');

@@ -2,6 +2,9 @@
  * Unit tests for authentication middleware
  */
 
+// Unmock PermissionManager for auth middleware tests
+jest.unmock('../../../../src/permissions/PermissionManager');
+
 const request = require('supertest');
 const express = require('express');
 const authMiddleware = require('../../../../src/web/middleware/auth');

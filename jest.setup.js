@@ -129,7 +129,11 @@ jest.mock('./src/permissions/PermissionManager', () => {
     getUserPermissions: jest.fn().mockResolvedValue(['read', 'search']),
     checkDocumentAccess: jest.fn().mockResolvedValue(true),
     initialize: jest.fn().mockResolvedValue(undefined),
-    close: jest.fn().mockResolvedValue(undefined)
+    close: jest.fn().mockResolvedValue(undefined),
+    clearCache: jest.fn(),
+    clearUserCache: jest.fn(),
+    _getCacheKey: jest.fn().mockReturnValue('test-cache-key'),
+    logAccess: jest.fn().mockResolvedValue(undefined)
   }));
 });
 
