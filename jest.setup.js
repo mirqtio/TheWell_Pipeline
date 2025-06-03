@@ -122,6 +122,17 @@ jest.mock('axios', () => ({
   head: jest.fn().mockResolvedValue({ headers: {} })
 }));
 
+// Mock PermissionManager to prevent database hanging in contract tests
+jest.mock('./src/permissions/PermissionManager', () => {
+  return jest.fn().mockImplementation(() => ({
+    hasPermission: jest.fn().mockResolvedValue(true),
+    getUserPermissions: jest.fn().mockResolvedValue(['read', 'search']),
+    checkDocumentAccess: jest.fn().mockResolvedValue(true),
+    initialize: jest.fn().mockResolvedValue(undefined),
+    close: jest.fn().mockResolvedValue(undefined)
+  }));
+});
+
 // Set test environment variables
 process.env.NODE_ENV = 'test';
 process.env.DB_HOST = 'localhost';
