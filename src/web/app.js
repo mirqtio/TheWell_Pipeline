@@ -8,6 +8,7 @@ const path = require('path');
 const cors = require('cors');
 const bodyParser = require('body-parser');
 const logger = require('../utils/logger');
+const SourceReliabilityService = require('../services/SourceReliabilityService');
 
 // Import Swagger configuration
 const { serve, setup } = require('./swagger');
@@ -22,6 +23,7 @@ const apiRoutes = require('./routes/api');
 const visibilityRoutes = require('./routes/visibility');
 const feedbackRoutes = require('./routes/feedback');
 const ragRoutes = require('./routes/rag');
+const reliabilityRoutes = require('./routes/reliability');
 
 // Import middleware
 const authMiddleware = require('./middleware/auth');
@@ -114,6 +116,24 @@ app.use('/api/v1/jobs', jobRoutes);
 app.use('/api/v1', apiRoutes);
 app.use('/api/v1/visibility', visibilityRoutes);
 app.use('/api/v1/feedback', feedbackRoutes);
+
+// Initialize SourceReliabilityService for production use
+let sourceReliabilityService = global.testSourceReliabilityService;
+if (!sourceReliabilityService) {
+  try {
+    // Only initialize if we're in a proper server context with dependencies
+    sourceReliabilityService = new SourceReliabilityService();
+  } catch (error) {
+    // If initialization fails (missing dependencies), use null
+    logger.warn('SourceReliabilityService initialization failed, using null:', error.message);
+    sourceReliabilityService = null;
+  }
+}
+
+// Reliability routes with dependencies injection
+app.use('/api/v1/reliability', reliabilityRoutes({
+  sourceReliabilityService: sourceReliabilityService
+}));
 
 // RAG routes with dependencies injection
 app.use('/api/v1/rag', ragRoutes({

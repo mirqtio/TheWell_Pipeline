@@ -96,13 +96,13 @@ This includes implementing APIs and business logic for managing curation tasks, 
 ### Details:
 This subtask covers designing a schema for audit logs, integrating logging into workflow actions, and exposing audit data in the dashboard for review. Testing requirements: 1) Write unit tests for audit logging functions, 2) Create integration tests for audit trail persistence, 3) Implement e2e tests for audit trail workflows, 4) Run all tests and resolve any issues, 5) Merge to master and verify CI passes via GitHub logs.
 
-## 4. Enable Bulk Operations Functionality [in-progress]
+## 4. Enable Bulk Operations Functionality [done]
 ### Dependencies: 6.2
 ### Description: Add support for bulk actions (e.g., tagging, approval, deletion) on curated data items through both the UI and backend.
 ### Details:
 This involves designing efficient batch processing endpoints, updating the UI for multi-select and bulk action controls, and ensuring audit logging for bulk changes. Testing requirements: 1) Write unit tests for bulk operation logic, 2) Create browser-based integration tests for bulk UI interactions, 3) Implement e2e tests for complete bulk operation workflows, 4) Run all tests and resolve any issues, 5) Merge to master and verify CI passes via GitHub logs.
 
-## 5. Integrate Source Reliability Scoring [pending]
+## 5. Integrate Source Reliability Scoring [in-progress]
 ### Dependencies: 6.2
 ### Description: Develop and integrate a system for scoring and displaying the reliability of data sources within the curation interface.
 ### Details:

@@ -7,6 +7,7 @@
 const path = require('path');
 const ManualReviewServer = require('./server');
 const logger = require('../utils/logger');
+const SourceReliabilityService = require('../services/SourceReliabilityService');
 
 // Mock dependencies for development
 class MockQueueManager {
@@ -302,11 +303,51 @@ class MockIngestionEngine {
   }
 }
 
+// Mock SourceReliabilityService for development
+class MockSourceReliabilityService {
+  constructor() {
+    this.initialized = true;
+  }
+
+  async getReliabilityScore(sourceId) {
+    return {
+      sourceId,
+      overallScore: 0.85,
+      reliabilityLevel: 'high',
+      breakdown: {
+        quality: { score: 0.9, weight: 0.3 },
+        consistency: { score: 0.8, weight: 0.2 },
+        feedback: { score: 0.85, weight: 0.2 },
+        historical: { score: 0.75, weight: 0.15 },
+        error: { score: 0.95, weight: 0.15 }
+      },
+      metrics: {
+        totalDocuments: 100,
+        averageQuality: 0.9
+      },
+      calculatedAt: new Date().toISOString(),
+      timeframe: '30 days'
+    };
+  }
+
+  async calculateReliabilityScore(sourceId, options = {}) {
+    return this.getReliabilityScore(sourceId);
+  }
+
+  async getAllReliabilityScores() {
+    return [
+      { sourceId: 'source1', overallScore: 0.9, reliabilityLevel: 'high' },
+      { sourceId: 'source2', overallScore: 0.8, reliabilityLevel: 'medium' }
+    ];
+  }
+}
+
 async function startWebServer() {
   try {
     // Initialize mock dependencies
     const queueManager = new MockQueueManager();
     const ingestionEngine = new MockIngestionEngine();
+    const sourceReliabilityService = new MockSourceReliabilityService();
 
     logger.info('Starting TheWell Pipeline Manual Review Web Interface...');
 
@@ -319,6 +360,7 @@ async function startWebServer() {
       host,
       queueManager,
       ingestionEngine,
+      sourceReliabilityService,
       logger
     });
 
@@ -360,4 +402,4 @@ if (require.main === module) {
   startWebServer();
 }
 
-module.exports = { startWebServer, MockQueueManager, MockIngestionEngine };
+module.exports = { startWebServer, MockQueueManager, MockIngestionEngine, MockSourceReliabilityService };

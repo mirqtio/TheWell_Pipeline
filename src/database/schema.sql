@@ -359,6 +359,22 @@ CREATE TABLE feedback_aggregates (
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
+-- Source Reliability Scores: Track reliability metrics for data sources
+CREATE TABLE source_reliability_scores (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    source_id UUID REFERENCES sources(id) ON DELETE CASCADE,
+    overall_score DECIMAL(3,2) NOT NULL CHECK (overall_score >= 0 AND overall_score <= 1),
+    reliability_level VARCHAR(20) NOT NULL CHECK (reliability_level IN ('high', 'medium', 'low')),
+    score_breakdown JSONB NOT NULL, -- Individual metric scores
+    metrics_data JSONB NOT NULL, -- Raw metrics used for calculation
+    calculated_at TIMESTAMP WITH TIME ZONE NOT NULL,
+    timeframe VARCHAR(50) NOT NULL, -- e.g., '30 days', '90 days'
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    
+    UNIQUE(source_id) -- One current score per source
+);
+
 -- Document Deduplication: Track duplicate detection and merging
 CREATE TABLE document_duplicates (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
@@ -461,6 +477,12 @@ CREATE INDEX idx_document_duplicates_similarity_type ON document_duplicates(simi
 CREATE INDEX idx_document_duplicates_detection_method ON document_duplicates(detection_method);
 CREATE INDEX idx_document_duplicates_status ON document_duplicates(status);
 
+-- Source reliability scores indexes
+CREATE INDEX idx_source_reliability_scores_source_id ON source_reliability_scores(source_id);
+CREATE INDEX idx_source_reliability_scores_reliability_level ON source_reliability_scores(reliability_level);
+CREATE INDEX idx_source_reliability_scores_overall_score ON source_reliability_scores(overall_score);
+CREATE INDEX idx_source_reliability_scores_calculated_at ON source_reliability_scores(calculated_at);
+
 -- =====================================================
 -- TRIGGERS FOR AUTOMATIC UPDATES
 -- =====================================================
@@ -553,6 +575,7 @@ CREATE TRIGGER update_feedback_aggregates_on_delete
 -- Add triggers for new feedback tables to update timestamps
 CREATE TRIGGER update_feedback_updated_at BEFORE UPDATE ON feedback FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 CREATE TRIGGER update_document_feedback_updated_at BEFORE UPDATE ON document_feedback FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+CREATE TRIGGER update_source_reliability_scores_updated_at BEFORE UPDATE ON source_reliability_scores FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
 -- =====================================================
 -- INITIAL DATA

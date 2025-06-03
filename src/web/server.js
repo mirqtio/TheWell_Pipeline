@@ -16,6 +16,7 @@ const apiRoutes = require('./routes/api');
 const visibilityRoutes = require('./routes/visibility');
 const feedbackRoutes = require('./routes/feedback');
 const ragRoutes = require('./routes/rag');
+const reliabilityRoutes = require('./routes/reliability');
 
 // Import middleware
 const authMiddleware = require('./middleware/auth');
@@ -31,6 +32,7 @@ class ManualReviewServer {
     this.databaseManager = options.databaseManager;
     this.ragManager = options.ragManager;
     this.cacheManager = options.cacheManager;
+    this.sourceReliabilityService = options.sourceReliabilityService;
     
     // Initialize tracing middleware
     this.tracingMiddleware = new TracingMiddleware({
@@ -133,6 +135,13 @@ class ManualReviewServer {
       this.app.use('/api/v1/rag', ragRoutes({
         ragManager: this.ragManager,
         cacheManager: this.cacheManager
+      }));
+    }
+
+    // Reliability API routes
+    if (this.sourceReliabilityService) {
+      this.app.use('/api/v1/reliability', reliabilityRoutes({
+        sourceReliabilityService: this.sourceReliabilityService
       }));
     }
 
