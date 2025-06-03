@@ -51,7 +51,7 @@ class CostReporter {
    */
   async generateReport(options = {}) {
     try {
-      const {
+      let {
         startDate = new Date(Date.now() - this.config.defaultDateRange * 24 * 60 * 60 * 1000),
         endDate = new Date(),
         format = this.config.defaultFormat,
@@ -61,6 +61,24 @@ class CostReporter {
         groupBy = 'provider',
         filters = {}
       } = options;
+
+      // Ensure dates are Date objects
+      if (typeof startDate === 'string') {
+        startDate = new Date(startDate);
+      } else if (!(startDate instanceof Date)) {
+        startDate = new Date(startDate);
+      }
+      
+      if (typeof endDate === 'string') {
+        endDate = new Date(endDate);
+      } else if (!(endDate instanceof Date)) {
+        endDate = new Date(endDate);
+      }
+
+      // Validate date range
+      if (startDate > endDate) {
+        throw new Error('Invalid date range: start date must be before or equal to end date');
+      }
 
       logger.info('CostReporter: Generating cost report', {
         startDate: startDate.toISOString(),
@@ -84,8 +102,16 @@ class CostReporter {
         ? await this.dao.getActiveBudgets()
         : [];
 
+      // Get budget spending status
+      const budgetStatus = this.config.enablePersistence 
+        ? await this.generateBudgetStatus(budgets)
+        : null;
+
       // Build comprehensive report
+      const reportType = options.reportType || this.determineReportType(startDate, endDate);
       const report = {
+        reportType,
+        date: reportType === 'daily' ? startDate : undefined,
         metadata: {
           generatedAt: new Date().toISOString(),
           dateRange: {
@@ -101,14 +127,23 @@ class CostReporter {
         events: costEvents.slice(0, 1000), // Limit events for report size
         ...(includeAnalytics && { analytics: await this.generateAnalytics(costEvents, costSummary) }),
         ...(includeTrends && { trends: this.generateTrends(costEvents) }),
-        ...(includeRecommendations && { recommendations: this.generateRecommendations(costSummary, budgets, costEvents) })
+        ...(includeRecommendations && budgetStatus && { recommendations: this.generateRecommendations(costSummary, budgetStatus, costEvents) }),
+        budgetStatus
       };
+
+      // Add provider and model breakdowns for easier access
+      if (report.summary.byProvider) {
+        report.providerBreakdown = report.summary.byProvider;
+      }
+      if (report.summary.byModel) {
+        report.modelBreakdown = report.summary.byModel;
+      }
 
       // Save report to database if persistence enabled
       if (this.config.enablePersistence) {
         const reportRecord = {
           reportName: `Cost Report ${startDate.toISOString().split('T')[0]} to ${endDate.toISOString().split('T')[0]}`,
-          reportType: this.determineReportType(startDate, endDate),
+          reportType: reportType,
           dateRangeStart: startDate,
           dateRangeEnd: endDate,
           totalCost: report.summary.totalCost,
@@ -145,10 +180,52 @@ class CostReporter {
     const totalCost = costEvents.reduce((sum, event) => sum + event.totalCost, 0);
     const totalTokens = costEvents.reduce((sum, event) => sum + event.inputTokens + event.outputTokens, 0);
     
+    // Generate breakdowns by different dimensions
+    const byProvider = {};
+    const byModel = {};
+    const byOperation = {};
+    const bySourceType = {};
+    
+    costEvents.forEach(event => {
+      // By provider
+      if (!byProvider[event.provider]) {
+        byProvider[event.provider] = { totalCost: 0, tokens: 0, count: 0 };
+      }
+      byProvider[event.provider].totalCost += event.totalCost;
+      byProvider[event.provider].tokens += event.inputTokens + event.outputTokens;
+      byProvider[event.provider].count += 1;
+      
+      // By model
+      if (!byModel[event.model]) {
+        byModel[event.model] = { totalCost: 0, tokens: 0, count: 0 };
+      }
+      byModel[event.model].totalCost += event.totalCost;
+      byModel[event.model].tokens += event.inputTokens + event.outputTokens;
+      byModel[event.model].count += 1;
+      
+      // By operation
+      if (!byOperation[event.operation]) {
+        byOperation[event.operation] = { totalCost: 0, tokens: 0, count: 0 };
+      }
+      byOperation[event.operation].totalCost += event.totalCost;
+      byOperation[event.operation].tokens += event.inputTokens + event.outputTokens;
+      byOperation[event.operation].count += 1;
+      
+      // By source type (use operation as fallback if sourceType not available)
+      const sourceType = event.sourceType || event.operation || 'unknown';
+      if (!bySourceType[sourceType]) {
+        bySourceType[sourceType] = { totalCost: 0, tokens: 0, count: 0 };
+      }
+      bySourceType[sourceType].totalCost += event.totalCost;
+      bySourceType[sourceType].tokens += event.inputTokens + event.outputTokens;
+      bySourceType[sourceType].count += 1;
+    });
+    
     return {
       totalCost: totalCost,
       totalTokens: totalTokens,
       recordCount: costEvents.length,
+      eventCount: costEvents.length, // Alias for recordCount
       avgCostPerEvent: costEvents.length > 0 ? totalCost / costEvents.length : 0,
       avgCostPerToken: totalTokens > 0 ? totalCost / totalTokens : 0,
       dateRange: {
@@ -157,7 +234,11 @@ class CostReporter {
       },
       providers: [...new Set(costEvents.map(e => e.provider))],
       models: [...new Set(costEvents.map(e => e.model))],
-      operations: [...new Set(costEvents.map(e => e.operation))]
+      operations: [...new Set(costEvents.map(e => e.operation))],
+      byProvider,
+      byModel,
+      byOperation,
+      bySourceType
     };
   }
 
@@ -228,23 +309,23 @@ class CostReporter {
     const avgCostPerToken = summary.totalTokens > 0 ? summary.totalCost / summary.totalTokens : 0;
     
     // Find most/least expensive operations
-    const operationsByEfficiency = Object.entries(summary.byOperation)
+    const operationsByEfficiency = Object.entries(summary.byOperation || {})
       .map(([operation, data]) => ({
         operation,
         ...data,
-        avgCostPerDocument: data.count > 0 ? data.cost / data.count : 0,
-        avgCostPerToken: data.tokens > 0 ? data.cost / data.tokens : 0
+        avgCostPerDocument: data.count > 0 ? data.totalCost / data.count : 0,
+        avgCostPerToken: data.tokens > 0 ? data.totalCost / data.tokens : 0
       }))
       .sort((a, b) => b.avgCostPerDocument - a.avgCostPerDocument);
 
     // Provider efficiency comparison
-    const providerEfficiency = Object.entries(summary.byProvider)
+    const providerEfficiency = Object.entries(summary.byProvider || {})
       .map(([provider, data]) => ({
         provider,
         ...data,
-        avgCostPerDocument: data.count > 0 ? data.cost / data.count : 0,
-        avgCostPerToken: data.tokens > 0 ? data.cost / data.tokens : 0,
-        marketShare: (data.cost / summary.totalCost) * 100
+        avgCostPerDocument: data.count > 0 ? data.totalCost / data.count : 0,
+        avgCostPerToken: data.tokens > 0 ? data.totalCost / data.tokens : 0,
+        marketShare: summary.totalCost > 0 ? (data.totalCost / summary.totalCost) * 100 : 0
       }))
       .sort((a, b) => b.marketShare - a.marketShare);
 
@@ -256,8 +337,8 @@ class CostReporter {
       },
       operationsByEfficiency,
       providerEfficiency,
-      topModels: this.getTopModels(summary.byModel),
-      topSourceTypes: this.getTopSourceTypes(summary.bySourceType)
+      topModels: this.getTopModels(summary.byModel || {}),
+      topSourceTypes: this.getTopSourceTypes(summary.bySourceType || {})
     };
   }
 
@@ -267,6 +348,17 @@ class CostReporter {
    * @returns {Object} Trends data
    */
   async generateTrends(costEvents) {
+    if (!costEvents || costEvents.length === 0) {
+      return {
+        daily: [],
+        weekly: [],
+        monthly: [],
+        growthRate: 0,
+        projections: null
+      };
+    }
+
+    // Get daily and monthly totals from DAO
     const dailyTotals = await this.dao.getDailyTotals();
     const monthlyTotals = await this.dao.getMonthlyTotals();
     
@@ -311,33 +403,33 @@ class CostReporter {
     const recommendations = [];
     
     // Budget recommendations
-    if (budgetStatus.daily.percentage > 80) {
+    if (budgetStatus && budgetStatus.daily && budgetStatus.daily.percentage > 80) {
       recommendations.push({
         type: 'budget_alert',
         priority: 'high',
         message: `Daily budget is ${budgetStatus.daily.percentage.toFixed(1)}% utilized`,
-        action: 'Consider reducing LLM usage or increasing daily budget'
+        action: 'Consider reducing usage or increasing daily budget limit'
       });
     }
-    
-    if (budgetStatus.monthly.percentage > 90) {
+
+    if (budgetStatus && budgetStatus.monthly && budgetStatus.monthly.percentage > 90) {
       recommendations.push({
         type: 'budget_alert',
-        priority: 'critical',
+        priority: 'high',
         message: `Monthly budget is ${budgetStatus.monthly.percentage.toFixed(1)}% utilized`,
-        action: 'Immediate action required to avoid budget overrun'
+        action: 'Review monthly spending patterns and adjust budget'
       });
     }
     
     // Provider optimization recommendations
-    const providers = Object.entries(summary.byProvider);
+    const providers = Object.entries(summary.byProvider || {});
     if (providers.length > 1) {
       const mostExpensive = providers.reduce((max, current) => 
-        current[1].cost > max[1].cost ? current : max
+        current[1].totalCost > max[1].totalCost ? current : max
       );
       
       const avgCostPerToken = mostExpensive[1].tokens > 0 ? 
-        mostExpensive[1].cost / mostExpensive[1].tokens : 0;
+        mostExpensive[1].totalCost / mostExpensive[1].tokens : 0;
       
       if (avgCostPerToken > 0.001) { // Threshold for expensive tokens
         recommendations.push({
@@ -372,9 +464,9 @@ class CostReporter {
       .map(([model, data]) => ({
         model,
         ...data,
-        avgCostPerDocument: data.count > 0 ? data.cost / data.count : 0
+        avgCostPerDocument: data.count > 0 ? data.totalCost / data.count : 0
       }))
-      .sort((a, b) => b.cost - a.cost)
+      .sort((a, b) => b.totalCost - a.totalCost)
       .slice(0, 10);
   }
 
@@ -388,9 +480,9 @@ class CostReporter {
       .map(([sourceType, data]) => ({
         sourceType,
         ...data,
-        avgCostPerDocument: data.count > 0 ? data.cost / data.count : 0
+        avgCostPerDocument: data.count > 0 ? data.totalCost / data.count : 0
       }))
-      .sort((a, b) => b.cost - a.cost)
+      .sort((a, b) => b.totalCost - a.totalCost)
       .slice(0, 10);
   }
 
@@ -465,7 +557,7 @@ class CostReporter {
   formatReport(report, format) {
     switch (format.toLowerCase()) {
     case 'json':
-      return report;
+      return JSON.stringify(report, null, 2);
       
     case 'csv':
       return this.formatAsCSV(report);
@@ -495,9 +587,9 @@ class CostReporter {
     // Provider breakdown
     lines.push('PROVIDER BREAKDOWN');
     lines.push('Provider,Cost,Tokens,Count,Avg Cost Per Document');
-    Object.entries(report.summary.byProvider).forEach(([provider, data]) => {
-      const avgCost = data.count > 0 ? data.cost / data.count : 0;
-      lines.push(`${provider},${data.cost},${data.tokens},${data.count},${avgCost}`);
+    Object.entries(report.summary.byProvider || {}).forEach(([provider, data]) => {
+      const avgCost = data.count > 0 ? data.totalCost / data.count : 0;
+      lines.push(`${provider},${data.totalCost},${data.tokens},${data.count},${avgCost}`);
     });
     lines.push('');
     
@@ -547,38 +639,38 @@ class CostReporter {
         <tr><th>Period</th><th>Spent</th><th>Limit</th><th>Remaining</th><th>Usage %</th></tr>
         <tr>
             <td>Daily</td>
-            <td>$${report.budgetStatus.daily.spent.toFixed(2)}</td>
-            <td>$${report.budgetStatus.daily.limit.toFixed(2)}</td>
-            <td>$${report.budgetStatus.daily.remaining.toFixed(2)}</td>
-            <td class="${report.budgetStatus.daily.percentage > 80 ? 'alert' : ''}">${report.budgetStatus.daily.percentage.toFixed(1)}%</td>
+            <td>$${report.budgetStatus?.daily?.spent?.toFixed(2) || 0}</td>
+            <td>$${report.budgetStatus?.daily?.limit?.toFixed(2) || 0}</td>
+            <td>$${report.budgetStatus?.daily?.remaining?.toFixed(2) || 0}</td>
+            <td class="${report.budgetStatus?.daily?.percentage > 80 ? 'alert' : ''}">${report.budgetStatus?.daily?.percentage?.toFixed(1) || 0}%</td>
         </tr>
         <tr>
             <td>Monthly</td>
-            <td>$${report.budgetStatus.monthly.spent.toFixed(2)}</td>
-            <td>$${report.budgetStatus.monthly.limit.toFixed(2)}</td>
-            <td>$${report.budgetStatus.monthly.remaining.toFixed(2)}</td>
-            <td class="${report.budgetStatus.monthly.percentage > 80 ? 'alert' : ''}">${report.budgetStatus.monthly.percentage.toFixed(1)}%</td>
+            <td>$${report.budgetStatus?.monthly?.spent?.toFixed(2) || 0}</td>
+            <td>$${report.budgetStatus?.monthly?.limit?.toFixed(2) || 0}</td>
+            <td>$${report.budgetStatus?.monthly?.remaining?.toFixed(2) || 0}</td>
+            <td class="${report.budgetStatus?.monthly?.percentage > 80 ? 'alert' : ''}">${report.budgetStatus?.monthly?.percentage?.toFixed(1) || 0}%</td>
         </tr>
     </table>
     
     <h2>Recommendations</h2>
-    ${report.recommendations.map(rec => `
+    ${report.recommendations?.map(rec => `
         <div class="recommendation">
             <strong>${rec.priority.toUpperCase()}:</strong> ${rec.message}<br>
             <em>Action:</em> ${rec.action}
         </div>
-    `).join('')}
+    `)?.join('') || ''}
     
     <h2>Provider Breakdown</h2>
     <table>
         <tr><th>Provider</th><th>Cost</th><th>Tokens</th><th>Count</th><th>Avg Cost/Doc</th></tr>
-        ${Object.entries(report.summary.byProvider).map(([provider, data]) => `
+        ${Object.entries(report.summary.byProvider || {}).map(([provider, data]) => `
             <tr>
                 <td>${provider}</td>
-                <td>$${data.cost.toFixed(2)}</td>
+                <td>$${data.totalCost.toFixed(2)}</td>
                 <td>${data.tokens.toLocaleString()}</td>
                 <td>${data.count}</td>
-                <td>$${(data.count > 0 ? data.cost / data.count : 0).toFixed(4)}</td>
+                <td>$${(data.count > 0 ? data.totalCost / data.count : 0).toFixed(4)}</td>
             </tr>
         `).join('')}
     </table>
@@ -618,6 +710,70 @@ class CostReporter {
     
     logger.info('Cost report exported', { filePath, format });
     return filePath;
+  }
+
+  async generateBudgetStatus(budgets) {
+    const now = new Date();
+    const budgetStatus = {};
+    
+    for (const budget of budgets) {
+      if (!budget.isActive) continue;
+      
+      // Calculate period boundaries
+      const { periodStart, periodEnd } = this.getBudgetPeriod(budget.budgetType, now);
+      
+      try {
+        // Get current spending for this budget
+        const spending = await this.dao.getBudgetSpending(budget.id, periodStart, periodEnd);
+        const percentage = budget.limitAmount > 0 ? (spending.currentSpending / budget.limitAmount) * 100 : 0;
+        
+        budgetStatus[budget.budgetType] = {
+          spent: spending.currentSpending,
+          limit: budget.limitAmount,
+          remaining: Math.max(0, budget.limitAmount - spending.currentSpending),
+          percentage: percentage,
+          eventCount: spending.eventCount,
+          periodStart,
+          periodEnd
+        };
+      } catch (error) {
+        logger.warn('Failed to get budget spending', { budgetId: budget.id, error: error.message });
+        // Set default values if spending data unavailable
+        budgetStatus[budget.budgetType] = {
+          spent: 0,
+          limit: budget.limitAmount,
+          remaining: budget.limitAmount,
+          percentage: 0,
+          eventCount: 0,
+          periodStart,
+          periodEnd
+        };
+      }
+    }
+    
+    return budgetStatus;
+  }
+
+  getBudgetPeriod(budgetType, date) {
+    const now = new Date(date);
+    
+    if (budgetType === 'daily') {
+      const start = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+      const end = new Date(start);
+      end.setDate(end.getDate() + 1);
+      return { periodStart: start, periodEnd: end };
+    } else if (budgetType === 'monthly') {
+      const start = new Date(now.getFullYear(), now.getMonth(), 1);
+      const end = new Date(start);
+      end.setMonth(end.getMonth() + 1);
+      return { periodStart: start, periodEnd: end };
+    }
+    
+    // Default to daily if unknown type
+    const start = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const end = new Date(start);
+    end.setDate(end.getDate() + 1);
+    return { periodStart: start, periodEnd: end };
   }
 }
 

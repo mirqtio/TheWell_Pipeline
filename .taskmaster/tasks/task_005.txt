@@ -1,6 +1,6 @@
 # Task ID: 5
 # Title: Monitoring and Cost Tracking System
-# Status: pending
+# Status: in-progress
 # Dependencies: 2, 4
 # Priority: medium
 # Description: Implement comprehensive monitoring for costs, quality metrics, and system health with dashboards and alerting.
@@ -89,7 +89,7 @@ Create a monitoring service with the following components:
 10. CI verification through GitHub logs via MCP or CLI
 
 # Subtasks:
-## 1. Implement Cost Tracking Mechanisms [pending]
+## 1. Implement Cost Tracking Mechanisms [in-progress]
 ### Dependencies: None
 ### Description: Set up systems to monitor and track infrastructure and operational costs across the distributed environment, integrating with cloud billing APIs and resource usage metrics.
 ### Details:

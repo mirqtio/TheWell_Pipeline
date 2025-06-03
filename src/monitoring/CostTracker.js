@@ -251,7 +251,17 @@ class CostTracker extends EventEmitter {
    * @param {Object} costRecord - Cost record
    */
   updateTotals(costRecord) {
-    const date = costRecord.timestamp.toISOString().split('T')[0]; // YYYY-MM-DD
+    // Ensure we have a valid timestamp
+    let timestamp = costRecord.timestamp;
+    if (!timestamp) {
+      timestamp = new Date();
+    } else if (typeof timestamp === 'string') {
+      timestamp = new Date(timestamp);
+    } else if (!(timestamp instanceof Date)) {
+      timestamp = new Date();
+    }
+    
+    const date = timestamp.toISOString().split('T')[0]; // YYYY-MM-DD
     const month = date.substring(0, 7); // YYYY-MM
     
     // Daily totals
