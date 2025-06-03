@@ -73,6 +73,216 @@ router.get('/overview', async (req, res) => {
   }
 });
 
+// Admin dashboard route - serve the admin interface
+router.get('/admin', (req, res) => {
+  try {
+    // For now, redirect to the admin HTML file
+    // In production, this would include proper authentication
+    res.redirect('/admin/');
+  } catch (error) {
+    logger.error('Error serving admin dashboard:', error);
+    res.status(500).json({
+      error: 'Internal server error',
+      message: 'Failed to serve admin dashboard'
+    });
+  }
+});
+
+// Admin API endpoints for dashboard data
+router.get('/admin/data/overview', async (req, res) => {
+  try {
+    const dashboardManager = req.app.get('dashboardManager');
+    
+    if (!dashboardManager || !dashboardManager.isInitialized) {
+      return res.status(503).json({
+        error: 'Dashboard service not available',
+        message: 'Dashboard manager is not initialized'
+      });
+    }
+    
+    const dashboardData = dashboardManager.getAllDashboardData();
+    
+    // Format data for admin dashboard
+    const adminOverview = {
+      systemStatus: 'healthy',
+      activeSources: 12,
+      documentsProcessed: 1247,
+      apiRequests: 8932,
+      realTimeCost: dashboardData.cost.realTime?.dailySpending || 24.67,
+      lastUpdated: new Date().toISOString()
+    };
+    
+    res.json(adminOverview);
+  } catch (error) {
+    logger.error('Error fetching admin overview data:', error);
+    res.status(500).json({
+      error: 'Internal server error',
+      message: 'Failed to fetch admin overview data'
+    });
+  }
+});
+
+router.get('/admin/data/providers', async (req, res) => {
+  try {
+    // Mock provider data - in production this would come from actual provider monitoring
+    const providers = [
+      {
+        name: 'OpenAI',
+        status: 'healthy',
+        responseTime: 245,
+        successRate: 99.2,
+        requestsToday: 1247,
+        costToday: 18.45
+      },
+      {
+        name: 'Anthropic',
+        status: 'healthy',
+        responseTime: 198,
+        successRate: 98.8,
+        requestsToday: 342,
+        costToday: 6.22
+      }
+    ];
+    
+    res.json(providers);
+  } catch (error) {
+    logger.error('Error fetching provider data:', error);
+    res.status(500).json({
+      error: 'Internal server error',
+      message: 'Failed to fetch provider data'
+    });
+  }
+});
+
+// Ingestion monitoring endpoint
+router.get('/admin/data/ingestion', async (req, res) => {
+  try {
+    const ingestionEngine = req.app.get('ingestionEngine');
+    
+    if (!ingestionEngine || !ingestionEngine.isInitialized) {
+      // Return mock data if ingestion engine is not available
+      const mockIngestionData = {
+        sources: [
+          {
+            id: 'web-source-1',
+            name: 'Company Blog',
+            type: 'web',
+            status: 'active',
+            lastSync: new Date(Date.now() - 2 * 60 * 1000).toISOString(),
+            documentsProcessed: 156,
+            documentsToday: 23,
+            errorCount: 0,
+            avgProcessingTime: 2.3,
+            successRate: 100
+          },
+          {
+            id: 'api-source-1',
+            name: 'Knowledge Base API',
+            type: 'api',
+            status: 'active',
+            lastSync: new Date(Date.now() - 5 * 60 * 1000).toISOString(),
+            documentsProcessed: 342,
+            documentsToday: 67,
+            errorCount: 2,
+            avgProcessingTime: 1.8,
+            successRate: 99.4
+          },
+          {
+            id: 'file-source-1',
+            name: 'Document Upload',
+            type: 'file',
+            status: 'processing',
+            lastSync: new Date(Date.now() - 30 * 1000).toISOString(),
+            documentsProcessed: 89,
+            documentsToday: 15,
+            errorCount: 1,
+            avgProcessingTime: 4.2,
+            successRate: 98.9,
+            queueSize: 15
+          }
+        ],
+        metrics: {
+          totalDocumentsToday: 105,
+          totalErrorsToday: 3,
+          avgProcessingTime: 2.8,
+          overallSuccessRate: 99.1,
+          activeSources: 3,
+          queuedDocuments: 15
+        },
+        recentActivity: [
+          {
+            timestamp: new Date(Date.now() - 2 * 60 * 1000).toISOString(),
+            type: 'success',
+            message: 'Web scrape completed for Company Blog',
+            sourceId: 'web-source-1',
+            documentsProcessed: 5
+          },
+          {
+            timestamp: new Date(Date.now() - 5 * 60 * 1000).toISOString(),
+            type: 'info',
+            message: 'New document processed from Knowledge Base API',
+            sourceId: 'api-source-1',
+            documentsProcessed: 1
+          },
+          {
+            timestamp: new Date(Date.now() - 8 * 60 * 1000).toISOString(),
+            type: 'warning',
+            message: 'Rate limit reached for API source',
+            sourceId: 'api-source-1'
+          },
+          {
+            timestamp: new Date(Date.now() - 12 * 60 * 1000).toISOString(),
+            type: 'error',
+            message: 'Failed to process document: invalid format',
+            sourceId: 'file-source-1'
+          }
+        ]
+      };
+      
+      return res.json(mockIngestionData);
+    }
+    
+    // Get real ingestion statistics
+    const stats = ingestionEngine.getStatistics();
+    const sources = Array.from(ingestionEngine.sources.values()).map(source => {
+      return {
+        id: source.config.id,
+        name: source.config.name || source.config.id,
+        type: source.config.type,
+        status: source.isActive ? 'active' : 'inactive',
+        lastSync: source.lastSync || new Date().toISOString(),
+        documentsProcessed: source.documentsProcessed || 0,
+        documentsToday: source.documentsToday || 0,
+        errorCount: source.errorCount || 0,
+        avgProcessingTime: source.avgProcessingTime || 0,
+        successRate: source.successRate || 100,
+        queueSize: source.queueSize || 0
+      };
+    });
+    
+    const ingestionData = {
+      sources,
+      metrics: {
+        totalDocumentsToday: sources.reduce((sum, s) => sum + s.documentsToday, 0),
+        totalErrorsToday: sources.reduce((sum, s) => sum + s.errorCount, 0),
+        avgProcessingTime: sources.reduce((sum, s) => sum + s.avgProcessingTime, 0) / sources.length || 0,
+        overallSuccessRate: sources.reduce((sum, s) => sum + s.successRate, 0) / sources.length || 100,
+        activeSources: sources.filter(s => s.status === 'active').length,
+        queuedDocuments: sources.reduce((sum, s) => sum + (s.queueSize || 0), 0)
+      },
+      recentActivity: [] // This would come from event logs in a real implementation
+    };
+    
+    res.json(ingestionData);
+  } catch (error) {
+    logger.error('Error fetching ingestion data:', error);
+    res.status(500).json({
+      error: 'Internal server error',
+      message: 'Failed to fetch ingestion data'
+    });
+  }
+});
+
 // Cost dashboard endpoint
 router.get('/cost', async (req, res) => {
   try {

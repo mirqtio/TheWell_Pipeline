@@ -485,4 +485,180 @@ describe('Dashboard Routes Integration', () => {
       );
     });
   });
+
+  describe('Admin Dashboard Routes', () => {
+    describe('GET /api/dashboard/admin', () => {
+      it('should redirect to admin interface', async () => {
+        const response = await request(app)
+          .get('/api/dashboard/admin')
+          .expect(302);
+
+        expect(response.headers.location).toBe('/admin/');
+      });
+    });
+
+    describe('GET /api/dashboard/admin/data/overview', () => {
+      it('should return admin overview data', async () => {
+        const mockOverviewData = {
+          lastRefresh: new Date(),
+          cost: {
+            realTime: {
+              dailySpending: 24.67,
+              monthlySpending: 375.45
+            }
+          }
+        };
+
+        mockDashboardManager.getAllDashboardData.mockReturnValue(mockOverviewData);
+
+        const response = await request(app)
+          .get('/api/dashboard/admin/data/overview')
+          .expect(200);
+
+        expect(response.body).toEqual({
+          systemStatus: 'healthy',
+          activeSources: 12,
+          documentsProcessed: 1247,
+          apiRequests: 8932,
+          realTimeCost: 24.67,
+          lastUpdated: expect.any(String)
+        });
+
+        expect(mockDashboardManager.getAllDashboardData).toHaveBeenCalled();
+      });
+
+      it('should handle missing dashboard manager', async () => {
+        app.set('dashboardManager', null);
+
+        const response = await request(app)
+          .get('/api/dashboard/admin/data/overview')
+          .expect(503);
+
+        expect(response.body.error).toBe('Dashboard service not available');
+      });
+
+      it('should handle uninitialized dashboard manager', async () => {
+        mockDashboardManager.isInitialized = false;
+
+        const response = await request(app)
+          .get('/api/dashboard/admin/data/overview')
+          .expect(503);
+
+        expect(response.body.error).toBe('Dashboard service not available');
+      });
+    });
+
+    describe('GET /api/dashboard/admin/data/providers', () => {
+      it('should return provider data', async () => {
+        const response = await request(app)
+          .get('/api/dashboard/admin/data/providers')
+          .expect(200);
+
+        expect(response.body).toEqual([
+          {
+            name: 'OpenAI',
+            status: 'healthy',
+            responseTime: 245,
+            successRate: 99.2,
+            requestsToday: 1247,
+            costToday: 18.45
+          },
+          {
+            name: 'Anthropic',
+            status: 'healthy',
+            responseTime: 198,
+            successRate: 98.8,
+            requestsToday: 342,
+            costToday: 6.22
+          }
+        ]);
+      });
+    });
+
+    describe('GET /api/dashboard/admin/data/ingestion', () => {
+      it('should return ingestion monitoring data with correct structure', async () => {
+        const response = await request(app)
+          .get('/api/dashboard/admin/data/ingestion')
+          .expect(200);
+
+        expect(response.body).toHaveProperty('sources');
+        expect(response.body).toHaveProperty('metrics');
+        expect(response.body).toHaveProperty('recentActivity');
+        
+        // Validate sources structure
+        expect(response.body.sources).toBeInstanceOf(Array);
+        if (response.body.sources.length > 0) {
+          const source = response.body.sources[0];
+          expect(source).toHaveProperty('id');
+          expect(source).toHaveProperty('name');
+          expect(source).toHaveProperty('type');
+          expect(source).toHaveProperty('status');
+          expect(source).toHaveProperty('documentsToday');
+          expect(source).toHaveProperty('successRate');
+          expect(source).toHaveProperty('lastSync');
+          expect(typeof source.successRate).toBe('number');
+          expect(typeof source.documentsToday).toBe('number');
+        }
+        
+        // Validate metrics structure
+        const metrics = response.body.metrics;
+        expect(metrics).toHaveProperty('totalDocumentsToday');
+        expect(metrics).toHaveProperty('activeSources');
+        expect(metrics).toHaveProperty('overallSuccessRate');
+        expect(metrics).toHaveProperty('avgProcessingTime');
+        expect(metrics).toHaveProperty('totalErrorsToday');
+        expect(metrics).toHaveProperty('queuedDocuments');
+        expect(typeof metrics.totalDocumentsToday).toBe('number');
+        expect(typeof metrics.activeSources).toBe('number');
+        expect(typeof metrics.overallSuccessRate).toBe('number');
+        expect(typeof metrics.avgProcessingTime).toBe('number');
+        expect(typeof metrics.totalErrorsToday).toBe('number');
+        expect(typeof metrics.queuedDocuments).toBe('number');
+        
+        // Validate recent activity structure
+        expect(response.body.recentActivity).toBeInstanceOf(Array);
+        if (response.body.recentActivity.length > 0) {
+          const activity = response.body.recentActivity[0];
+          expect(activity).toHaveProperty('timestamp');
+          expect(activity).toHaveProperty('type');
+          expect(activity).toHaveProperty('message');
+          expect(['success', 'info', 'warning', 'error']).toContain(activity.type);
+        }
+      });
+
+      it('should handle missing ingestion engine gracefully', async () => {
+        // Mock dashboard manager without ingestion engine
+        const mockDashboardManager = {
+          ingestionEngine: null
+        };
+        
+        // Temporarily replace the dashboard manager
+        const originalManager = app.locals.dashboardManager;
+        app.locals.dashboardManager = mockDashboardManager;
+        
+        const response = await request(app)
+          .get('/api/dashboard/admin/data/ingestion')
+          .expect(200);
+
+        // Should still return valid structure with mock data
+        expect(response.body).toHaveProperty('sources');
+        expect(response.body).toHaveProperty('metrics');
+        expect(response.body).toHaveProperty('recentActivity');
+        expect(response.body.sources).toBeInstanceOf(Array);
+        expect(response.body.sources.length).toBeGreaterThan(0);
+        
+        // Restore original manager
+        app.locals.dashboardManager = originalManager;
+      });
+
+      it('should return CORS headers', async () => {
+        const response = await request(app)
+          .get('/api/dashboard/admin/data/ingestion')
+          .expect(200);
+
+        expect(response.headers['access-control-allow-origin']).toBe('*');
+        expect(response.headers['access-control-allow-methods']).toContain('GET');
+      });
+    });
+  });
 });

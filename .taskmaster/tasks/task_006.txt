@@ -1,6 +1,6 @@
 # Task ID: 6
 # Title: Manual Curation Interface
-# Status: in-progress
+# Status: done
 # Dependencies: 1
 # Priority: medium
 # Description: Develop a user interface for manual review and curation of ingested content with approval workflows and audit trails.
@@ -102,7 +102,7 @@ This subtask covers designing a schema for audit logs, integrating logging into 
 ### Details:
 This involves designing efficient batch processing endpoints, updating the UI for multi-select and bulk action controls, and ensuring audit logging for bulk changes. Testing requirements: 1) Write unit tests for bulk operation logic, 2) Create browser-based integration tests for bulk UI interactions, 3) Implement e2e tests for complete bulk operation workflows, 4) Run all tests and resolve any issues, 5) Merge to master and verify CI passes via GitHub logs.
 
-## 5. Integrate Source Reliability Scoring [in-progress]
+## 5. Integrate Source Reliability Scoring [done]
 ### Dependencies: 6.2
 ### Description: Develop and integrate a system for scoring and displaying the reliability of data sources within the curation interface.
 ### Details:

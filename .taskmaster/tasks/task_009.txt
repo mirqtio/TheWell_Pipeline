@@ -1,6 +1,6 @@
 # Task ID: 9
 # Title: Admin Dashboard Development
-# Status: pending
+# Status: in-progress
 # Dependencies: 5, 8
 # Priority: medium
 # Description: Build a comprehensive admin dashboard for system monitoring, configuration management, and operational control.
@@ -52,13 +52,13 @@ Create an admin dashboard with the following components:
 10. CI verification through GitHub logs via MCP or CLI
 
 # Subtasks:
-## 1. Design Dashboard Layout [pending]
+## 1. Design Dashboard Layout [done]
 ### Dependencies: None
 ### Description: Create the overall structure and layout of the admin dashboard with appropriate navigation and component placement
 ### Details:
 Design a hierarchical layout that accommodates all required views (monitoring, pipeline, knowledge explorer, user management). Use decomposition tree visualization to effectively organize complex data relationships. Implement color-coding for different sections and ensure responsive design. Testing requirements: 1) Write unit tests for layout components, 2) Create browser-based integration tests for layout responsiveness, 3) Implement e2e tests for navigation and layout interactions, 4) Run all tests and resolve any issues, 5) Merge to master and verify CI passes via GitHub logs.
 
-## 2. Develop Ingestion Monitoring Component [pending]
+## 2. Develop Ingestion Monitoring Component [in-progress]
 ### Dependencies: 9.1
 ### Description: Create a real-time monitoring view for data ingestion processes
 ### Details:
