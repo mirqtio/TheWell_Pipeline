@@ -694,7 +694,7 @@
             1
           ],
           "details": "Create a flowchart-like structure showing data transformation stages. Implement color-coded nodes to indicate pipeline health. Design interactive elements to expand pipeline components for detailed metrics and configuration options. Testing requirements: 1) Write unit tests for visualization components, 2) Create browser-based integration tests for interactive elements, 3) Implement e2e tests for pipeline visualization workflows, 4) Run all tests and resolve any issues, 5) Merge to master and verify CI passes via GitHub logs.",
-          "status": "in-progress"
+          "status": "done"
         },
         {
           "id": 4,
@@ -704,7 +704,7 @@
             1
           ],
           "details": "Develop a decomposition tree visualization that breaks down knowledge content by categories and subcategories. Include search functionality, filtering options, and interactive node expansion. Add percentage indicators and progress bars to show content distribution. Testing requirements: 1) Write unit tests for explorer components, 2) Create browser-based integration tests for search and filtering, 3) Implement e2e tests for knowledge exploration workflows, 4) Run all tests and resolve any issues, 5) Merge to master and verify CI passes via GitHub logs.",
-          "status": "pending"
+          "status": "in-progress"
         },
         {
           "id": 5,

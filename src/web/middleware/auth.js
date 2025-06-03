@@ -23,9 +23,9 @@ async function authMiddleware(req, res, next) {
     const apiKey = req.headers['x-api-key'] || req.query.apiKey;
     const expectedApiKey = process.env.REVIEW_API_KEY || 'dev-review-key';
 
-    // In development mode, allow bypass with mock user
-    if (process.env.NODE_ENV === 'development' && !apiKey) {
-      logger.warn('Authentication bypassed in development mode');
+    // In development or test mode, allow bypass with mock user
+    if ((process.env.NODE_ENV === 'development' || process.env.NODE_ENV === 'test') && !apiKey) {
+      logger.warn(`Authentication bypassed in ${process.env.NODE_ENV} mode`);
       req.user = {
         id: 'dev-user-123',
         username: 'dev-user',

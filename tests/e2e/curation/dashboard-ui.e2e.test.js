@@ -3,7 +3,7 @@
  * Tests the complete dashboard workflow including Kanban board interactions
  */
 
-const { chromium } = require('playwright');
+const { chromium, expect } = require('playwright');
 const { spawn } = require('child_process');
 const path = require('path');
 const { waitForServer, killProcess } = require('../../helpers/server');
