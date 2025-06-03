@@ -81,7 +81,7 @@ module.exports = (sequelize, DataTypes) => {
   });
 
   // Define associations
-  AuditLog.associate = function(models) {
+  AuditLog.associate = function(_models) {
     // No direct associations - audit log is independent for data integrity
     // But we can define virtual relationships for convenience
   };
