@@ -340,9 +340,10 @@ const DatabaseManager = require('../../../src/database/DatabaseManager');
       const response = await request(app)
         .post('/api/feedback')
         .send(invalidData)
-        .expect(500);
+        .expect(404); // Expect 404 for non-existent document, not 500
 
       expect(response.body.success).toBe(false);
+      expect(response.body.error).toBe('Document not found');
     });
 
     it('should handle non-existent document gracefully', async () => {
@@ -350,10 +351,10 @@ const DatabaseManager = require('../../../src/database/DatabaseManager');
       
       const response = await request(app)
         .get(`/api/feedback/document/${fakeDocId}`)
-        .expect(200);
+        .expect(404);
 
-      expect(response.body.data.feedback).toHaveLength(0);
-      expect(response.body.data.pagination.total).toBe(0);
+      expect(response.body.success).toBe(false);
+      expect(response.body.error).toBe('Document not found');
     });
 
     it('should handle feedback deletion workflow', async () => {

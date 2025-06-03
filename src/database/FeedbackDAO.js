@@ -21,28 +21,46 @@ class FeedbackDAO {
       sessionId
     } = feedbackData;
 
-    const query = `
-      INSERT INTO feedback (document_id, app_id, feedback_type, content, user_id, session_id)
-      VALUES ($1, $2, $3, $4, $5, $6)
-      RETURNING *
-    `;
-    
-    const values = [
-      documentId, 
-      appId, 
-      feedbackType, 
-      JSON.stringify(content), 
-      userId, 
-      sessionId
-    ];
-    const result = await this.db.pool.query(query, values);
-    
-    // Update feedback aggregates if this is a rating-type feedback
-    if (feedbackType === 'rating' && content.rating) {
-      await this.updateFeedbackAggregates(documentId);
+    try {
+      // First check if the document exists
+      const documentCheck = await this.db.pool.query(
+        'SELECT id FROM documents WHERE id = $1',
+        [documentId]
+      );
+      
+      if (documentCheck.rows.length === 0) {
+        throw new Error(`Document with ID ${documentId} not found`);
+      }
+
+      const query = `
+        INSERT INTO feedback (document_id, app_id, feedback_type, content, user_id, session_id)
+        VALUES ($1, $2, $3, $4, $5, $6)
+        RETURNING *
+      `;
+      
+      const values = [
+        documentId, 
+        appId, 
+        feedbackType, 
+        JSON.stringify(content), 
+        userId, 
+        sessionId
+      ];
+      const result = await this.db.pool.query(query, values);
+      
+      // Update feedback aggregates if this is a rating-type feedback
+      if (feedbackType === 'rating' && content.rating) {
+        await this.updateFeedbackAggregates(documentId);
+      }
+      
+      return result.rows[0];
+    } catch (error) {
+      // Handle foreign key constraint violations and other database errors
+      if (error.code === '23503') { // Foreign key violation
+        throw new Error(`Document with ID ${documentId} not found`);
+      }
+      throw error;
     }
-    
-    return result.rows[0];
   }
 
   /**
@@ -94,10 +112,20 @@ class FeedbackDAO {
   }
 
   /**
-   * Get all feedback for a document
+   * Get feedback for a specific document
    */
   async getFeedbackByDocumentId(documentId, options = {}) {
     const { limit = 50, offset = 0, feedbackType } = options;
+    
+    // First check if the document exists
+    const documentCheck = await this.db.pool.query(
+      'SELECT id FROM documents WHERE id = $1',
+      [documentId]
+    );
+    
+    if (documentCheck.rows.length === 0) {
+      throw new Error(`Document with ID ${documentId} not found`);
+    }
     
     let query = 'SELECT * FROM feedback WHERE document_id = $1';
     const values = [documentId];

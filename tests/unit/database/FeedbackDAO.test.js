@@ -50,12 +50,17 @@ describe('FeedbackDAO', () => {
       };
 
       mockDb.pool.query
+        .mockResolvedValueOnce({ rows: [{ id: 'doc-123' }] }) // document existence check
         .mockResolvedValueOnce({ rows: [mockFeedback] }) // createFeedback
         .mockResolvedValueOnce({ rows: [{ total_feedback_count: 1, average_rating: 4 }] }) // calculate aggregates
         .mockResolvedValueOnce({ rows: [{ document_id: 'doc-123', total_feedback_count: 1, overall_score: 4 }] }); // upsert aggregates
 
       const result = await feedbackDAO.createFeedback(feedbackData);
 
+      expect(mockDb.pool.query).toHaveBeenCalledWith(
+        'SELECT id FROM documents WHERE id = $1',
+        ['doc-123']
+      );
       expect(mockDb.pool.query).toHaveBeenCalledWith(
         expect.stringContaining('INSERT INTO feedback'),
         ['doc-123', 'test-app', 'rating', JSON.stringify({ rating: 4, comment: 'Good quality document' }), 'user-456', 'session-789']
@@ -172,10 +177,16 @@ describe('FeedbackDAO', () => {
         }
       ];
 
-      mockDb.pool.query.mockResolvedValue({ rows: mockFeedback });
+      mockDb.pool.query
+        .mockResolvedValueOnce({ rows: [{ id: 'doc-123' }] }) // document existence check
+        .mockResolvedValueOnce({ rows: mockFeedback }); // feedback query
 
       const result = await feedbackDAO.getFeedbackByDocumentId(documentId);
 
+      expect(mockDb.pool.query).toHaveBeenCalledWith(
+        'SELECT id FROM documents WHERE id = $1',
+        [documentId]
+      );
       expect(mockDb.pool.query).toHaveBeenCalledWith(
         'SELECT * FROM feedback WHERE document_id = $1 ORDER BY created_at DESC LIMIT $2 OFFSET $3',
         [documentId, 50, 0]
@@ -197,10 +208,16 @@ describe('FeedbackDAO', () => {
         }
       ];
 
-      mockDb.pool.query.mockResolvedValue({ rows: mockFeedback });
+      mockDb.pool.query
+        .mockResolvedValueOnce({ rows: [{ id: 'doc-123' }] }) // document existence check
+        .mockResolvedValueOnce({ rows: mockFeedback }); // feedback query
 
       const result = await feedbackDAO.getFeedbackByDocumentId(documentId, { feedbackType });
 
+      expect(mockDb.pool.query).toHaveBeenCalledWith(
+        'SELECT id FROM documents WHERE id = $1',
+        [documentId]
+      );
       expect(mockDb.pool.query).toHaveBeenCalledWith(
         'SELECT * FROM feedback WHERE document_id = $1 AND feedback_type = $2 ORDER BY created_at DESC LIMIT $3 OFFSET $4',
         [documentId, feedbackType, 50, 0]
@@ -213,10 +230,16 @@ describe('FeedbackDAO', () => {
       const documentId = 'doc-123';
       const options = { limit: 10, offset: 20 };
 
-      mockDb.pool.query.mockResolvedValue({ rows: [] });
+      mockDb.pool.query
+        .mockResolvedValueOnce({ rows: [{ id: 'doc-123' }] }) // document existence check
+        .mockResolvedValueOnce({ rows: [] }); // feedback query
 
       await feedbackDAO.getFeedbackByDocumentId(documentId, options);
 
+      expect(mockDb.pool.query).toHaveBeenCalledWith(
+        'SELECT id FROM documents WHERE id = $1',
+        [documentId]
+      );
       expect(mockDb.pool.query).toHaveBeenCalledWith(
         'SELECT * FROM feedback WHERE document_id = $1 ORDER BY created_at DESC LIMIT $2 OFFSET $3',
         [documentId, 10, 20]

@@ -61,6 +61,16 @@ router.post('/', async (req, res) => {
   } catch (error) {
     console.error('Error creating feedback:', error);
     console.error('Error stack:', error.stack);
+    
+    // Handle document not found error specifically
+    if (error.message && error.message.includes('not found')) {
+      return res.status(404).json({
+        success: false,
+        error: 'Document not found',
+        message: error.message
+      });
+    }
+    
     res.status(500).json({
       success: false,
       error: 'Internal server error',
@@ -111,6 +121,16 @@ router.get('/document/:documentId', async (req, res) => {
   } catch (error) {
     console.error('Error getting document feedback:', error);
     console.error('Error stack:', error.stack);
+    
+    // Handle document not found error specifically
+    if (error.message && error.message.includes('not found')) {
+      return res.status(404).json({
+        success: false,
+        error: 'Document not found',
+        message: error.message
+      });
+    }
+    
     res.status(500).json({
       success: false,
       error: 'Internal server error',
@@ -174,6 +194,16 @@ router.get('/statistics', async (req, res) => {
   } catch (error) {
     console.error('Error getting feedback statistics:', error);
     console.error('Error stack:', error.stack);
+    
+    // Handle document not found error specifically
+    if (error.message && error.message.includes('not found')) {
+      return res.status(404).json({
+        success: false,
+        error: 'Document not found',
+        message: error.message
+      });
+    }
+    
     res.status(500).json({
       success: false,
       error: 'Internal server error',
@@ -206,6 +236,16 @@ router.get('/trends', async (req, res) => {
   } catch (error) {
     console.error('Error getting feedback trends:', error);
     console.error('Error stack:', error.stack);
+    
+    // Handle document not found error specifically
+    if (error.message && error.message.includes('not found')) {
+      return res.status(404).json({
+        success: false,
+        error: 'Document not found',
+        message: error.message
+      });
+    }
+    
     res.status(500).json({
       success: false,
       error: 'Internal server error',
@@ -238,6 +278,16 @@ router.get('/document/:documentId/aggregates', async (req, res) => {
   } catch (error) {
     console.error('Error getting feedback aggregates:', error);
     console.error('Error stack:', error.stack);
+    
+    // Handle document not found error specifically
+    if (error.message && error.message.includes('not found')) {
+      return res.status(404).json({
+        success: false,
+        error: 'Document not found',
+        message: error.message
+      });
+    }
+    
     res.status(500).json({
       success: false,
       error: 'Internal server error',
@@ -277,6 +327,16 @@ router.post('/bulk', async (req, res) => {
   } catch (error) {
     console.error('Error creating bulk feedback:', error);
     console.error('Error stack:', error.stack);
+    
+    // Handle document not found error specifically
+    if (error.message && error.message.includes('not found')) {
+      return res.status(404).json({
+        success: false,
+        error: 'Document not found',
+        message: error.message
+      });
+    }
+    
     res.status(500).json({
       success: false,
       error: 'Internal server error',
