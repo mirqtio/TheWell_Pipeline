@@ -1401,8 +1401,8 @@ class ManualReviewApp {
    */
   getCardActions(item, status) {
     switch (status) {
-      case 'pending':
-        return `
+    case 'pending':
+      return `
           <button class="btn btn-sm btn-outline-primary" onclick="app.startReview('${item.id}')">
             <i class="bi bi-eye"></i>
           </button>
@@ -1413,20 +1413,20 @@ class ManualReviewApp {
             <i class="bi bi-x"></i>
           </button>
         `;
-      case 'in-review':
-        return `
+    case 'in-review':
+      return `
           <button class="btn btn-sm btn-primary" onclick="app.openReviewModal('${item.id}')">
             <i class="bi bi-pencil"></i> Review
           </button>
         `;
-      case 'processed':
-        return `
+    case 'processed':
+      return `
           <button class="btn btn-sm btn-outline-info" onclick="app.viewProcessedItem('${item.id}')">
             <i class="bi bi-info-circle"></i>
           </button>
         `;
-      default:
-        return '';
+    default:
+      return '';
     }
   }
 
@@ -1529,12 +1529,12 @@ class ManualReviewApp {
    */
   getStatusUpdateEndpoint(status) {
     switch (status) {
-      case 'in-review':
-        return '/api/v1/review/start-review/:id';
-      case 'processed':
-        return '/api/v1/review/approve/:id';
-      default:
-        return null;
+    case 'in-review':
+      return '/api/v1/review/start-review/:id';
+    case 'processed':
+      return '/api/v1/review/approve/:id';
+    default:
+      return null;
     }
   }
 
@@ -1993,7 +1993,7 @@ class ManualReviewApp {
   }
 
   // ===== END CURATION INTERFACE METHODS =====
-};
+}
 
 // Global functions for backward compatibility
 window.refreshReviewData = () => {

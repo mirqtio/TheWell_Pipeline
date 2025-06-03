@@ -1,0 +1,1551 @@
+test (18.x)	Set up job	﻿2025-06-03T08:28:56.9183019Z Current runner version: '2.324.0'
+test (18.x)	Set up job	2025-06-03T08:28:56.9211506Z ##[group]Operating System
+test (18.x)	Set up job	2025-06-03T08:28:56.9212345Z Ubuntu
+test (18.x)	Set up job	2025-06-03T08:28:56.9212837Z 24.04.2
+test (18.x)	Set up job	2025-06-03T08:28:56.9213324Z LTS
+test (18.x)	Set up job	2025-06-03T08:28:56.9213811Z ##[endgroup]
+test (18.x)	Set up job	2025-06-03T08:28:56.9214283Z ##[group]Runner Image
+test (18.x)	Set up job	2025-06-03T08:28:56.9214925Z Image: ubuntu-24.04
+test (18.x)	Set up job	2025-06-03T08:28:56.9215426Z Version: 20250527.1.0
+test (18.x)	Set up job	2025-06-03T08:28:56.9216461Z Included Software: https://github.com/actions/runner-images/blob/ubuntu24/20250527.1/images/ubuntu/Ubuntu2404-Readme.md
+test (18.x)	Set up job	2025-06-03T08:28:56.9218173Z Image Release: https://github.com/actions/runner-images/releases/tag/ubuntu24%2F20250527.1
+test (18.x)	Set up job	2025-06-03T08:28:56.9219067Z ##[endgroup]
+test (18.x)	Set up job	2025-06-03T08:28:56.9219595Z ##[group]Runner Image Provisioner
+test (18.x)	Set up job	2025-06-03T08:28:56.9220167Z 2.0.437.1
+test (18.x)	Set up job	2025-06-03T08:28:56.9220700Z ##[endgroup]
+test (18.x)	Set up job	2025-06-03T08:28:56.9221762Z ##[group]GITHUB_TOKEN Permissions
+test (18.x)	Set up job	2025-06-03T08:28:56.9224369Z Contents: read
+test (18.x)	Set up job	2025-06-03T08:28:56.9224887Z Metadata: read
+test (18.x)	Set up job	2025-06-03T08:28:56.9225383Z Packages: read
+test (18.x)	Set up job	2025-06-03T08:28:56.9226174Z ##[endgroup]
+test (18.x)	Set up job	2025-06-03T08:28:56.9228949Z Secret source: Actions
+test (18.x)	Set up job	2025-06-03T08:28:56.9230057Z Prepare workflow directory
+test (18.x)	Set up job	2025-06-03T08:28:56.9711255Z Prepare all required actions
+test (18.x)	Set up job	2025-06-03T08:28:56.9769420Z Getting action download info
+test (18.x)	Set up job	2025-06-03T08:28:57.4429551Z ##[group]Download immutable action package 'actions/checkout@v4'
+test (18.x)	Set up job	2025-06-03T08:28:57.4430651Z Version: 4.2.2
+test (18.x)	Set up job	2025-06-03T08:28:57.4431714Z Digest: sha256:ccb2698953eaebd21c7bf6268a94f9c26518a7e38e27e0b83c1fe1ad049819b1
+test (18.x)	Set up job	2025-06-03T08:28:57.4432877Z Source commit SHA: 11bd71901bbe5b1630ceea73d27597364c9af683
+test (18.x)	Set up job	2025-06-03T08:28:57.4433657Z ##[endgroup]
+test (18.x)	Set up job	2025-06-03T08:28:57.5391210Z ##[group]Download immutable action package 'actions/setup-node@v4'
+test (18.x)	Set up job	2025-06-03T08:28:57.5392031Z Version: 4.4.0
+test (18.x)	Set up job	2025-06-03T08:28:57.5392757Z Digest: sha256:9427cefe82346e992fb5b949e3569b39d537ae41aa3086483b14eceebfc16bc1
+test (18.x)	Set up job	2025-06-03T08:28:57.5393799Z Source commit SHA: 49933ea5288caeca8642d1e84afbd3f7d6820020
+test (18.x)	Set up job	2025-06-03T08:28:57.5394524Z ##[endgroup]
+test (18.x)	Set up job	2025-06-03T08:28:57.6339751Z Download action repository 'codecov/codecov-action@v3' (SHA:ab904c41d6ece82784817410c45d8b8c02684457)
+test (18.x)	Set up job	2025-06-03T08:28:58.2067087Z ##[group]Download immutable action package 'actions/upload-artifact@v4'
+test (18.x)	Set up job	2025-06-03T08:28:58.2068276Z Version: 4.6.2
+test (18.x)	Set up job	2025-06-03T08:28:58.2069102Z Digest: sha256:290722aa3281d5caf23d0acdc3dbeb3424786a1a01a9cc97e72f147225e37c38
+test (18.x)	Set up job	2025-06-03T08:28:58.2070215Z Source commit SHA: ea165f8d65b6e75b540449e92b4886f43607fa02
+test (18.x)	Set up job	2025-06-03T08:28:58.2071020Z ##[endgroup]
+test (18.x)	Set up job	2025-06-03T08:28:58.4314278Z Complete job name: test (18.x)
+test (18.x)	Initialize containers	﻿2025-06-03T08:28:58.4823053Z ##[group]Checking docker version
+test (18.x)	Initialize containers	2025-06-03T08:28:58.4836706Z ##[command]/usr/bin/docker version --format '{{.Server.APIVersion}}'
+test (18.x)	Initialize containers	2025-06-03T08:28:58.5520753Z '1.48'
+test (18.x)	Initialize containers	2025-06-03T08:28:58.5533667Z Docker daemon API version: '1.48'
+test (18.x)	Initialize containers	2025-06-03T08:28:58.5534628Z ##[command]/usr/bin/docker version --format '{{.Client.APIVersion}}'
+test (18.x)	Initialize containers	2025-06-03T08:28:58.5714687Z '1.48'
+test (18.x)	Initialize containers	2025-06-03T08:28:58.5728437Z Docker client API version: '1.48'
+test (18.x)	Initialize containers	2025-06-03T08:28:58.5734239Z ##[endgroup]
+test (18.x)	Initialize containers	2025-06-03T08:28:58.5738129Z ##[group]Clean up resources from previous jobs
+test (18.x)	Initialize containers	2025-06-03T08:28:58.5743944Z ##[command]/usr/bin/docker ps --all --quiet --no-trunc --filter "label=c59fc8"
+test (18.x)	Initialize containers	2025-06-03T08:28:58.5898137Z ##[command]/usr/bin/docker network prune --force --filter "label=c59fc8"
+test (18.x)	Initialize containers	2025-06-03T08:28:58.6044771Z ##[endgroup]
+test (18.x)	Initialize containers	2025-06-03T08:28:58.6045368Z ##[group]Create local container network
+test (18.x)	Initialize containers	2025-06-03T08:28:58.6056034Z ##[command]/usr/bin/docker network create --label c59fc8 github_network_1550fd58a3274057a2da8e8f3c285337
+test (18.x)	Initialize containers	2025-06-03T08:28:58.6642564Z 52b93be27f06956d415ee471624833a28c7739ed6ffbb092517b8787da44bfdf
+test (18.x)	Initialize containers	2025-06-03T08:28:58.6665362Z ##[endgroup]
+test (18.x)	Initialize containers	2025-06-03T08:28:58.6693883Z ##[group]Starting postgres service container
+test (18.x)	Initialize containers	2025-06-03T08:28:58.6718238Z ##[command]/usr/bin/docker pull pgvector/pgvector:pg15
+test (18.x)	Initialize containers	2025-06-03T08:28:59.6556464Z pg15: Pulling from pgvector/pgvector
+test (18.x)	Initialize containers	2025-06-03T08:28:59.9336580Z 7cf63256a31a: Pulling fs layer
+test (18.x)	Initialize containers	2025-06-03T08:28:59.9339100Z edfaf7a52bcf: Pulling fs layer
+test (18.x)	Initialize containers	2025-06-03T08:28:59.9339946Z 0746858db57e: Pulling fs layer
+test (18.x)	Initialize containers	2025-06-03T08:28:59.9340747Z ef78128b1396: Pulling fs layer
+test (18.x)	Initialize containers	2025-06-03T08:28:59.9341551Z 8719220a2756: Pulling fs layer
+test (18.x)	Initialize containers	2025-06-03T08:28:59.9342376Z 40f1e01322c4: Pulling fs layer
+test (18.x)	Initialize containers	2025-06-03T08:28:59.9343133Z c503a22414ac: Pulling fs layer
+test (18.x)	Initialize containers	2025-06-03T08:28:59.9343865Z 4b27853477e4: Pulling fs layer
+test (18.x)	Initialize containers	2025-06-03T08:28:59.9344593Z 67a3fb353e87: Pulling fs layer
+test (18.x)	Initialize containers	2025-06-03T08:28:59.9345309Z 998e67044cbc: Pulling fs layer
+test (18.x)	Initialize containers	2025-06-03T08:28:59.9346053Z ad88e09b12b7: Pulling fs layer
+test (18.x)	Initialize containers	2025-06-03T08:28:59.9347035Z 2862e1b17ae5: Pulling fs layer
+test (18.x)	Initialize containers	2025-06-03T08:28:59.9347828Z 61f047619781: Pulling fs layer
+test (18.x)	Initialize containers	2025-06-03T08:28:59.9348593Z 02efa678ec06: Pulling fs layer
+test (18.x)	Initialize containers	2025-06-03T08:28:59.9349367Z 6811f9b51c40: Pulling fs layer
+test (18.x)	Initialize containers	2025-06-03T08:28:59.9350176Z 69de7f33821b: Pulling fs layer
+test (18.x)	Initialize containers	2025-06-03T08:28:59.9350919Z 998e67044cbc: Waiting
+test (18.x)	Initialize containers	2025-06-03T08:28:59.9351643Z ef78128b1396: Waiting
+test (18.x)	Initialize containers	2025-06-03T08:28:59.9352366Z 8719220a2756: Waiting
+test (18.x)	Initialize containers	2025-06-03T08:28:59.9353119Z ad88e09b12b7: Waiting
+test (18.x)	Initialize containers	2025-06-03T08:28:59.9353846Z 40f1e01322c4: Waiting
+test (18.x)	Initialize containers	2025-06-03T08:28:59.9354641Z 2862e1b17ae5: Waiting
+test (18.x)	Initialize containers	2025-06-03T08:28:59.9355452Z c503a22414ac: Waiting
+test (18.x)	Initialize containers	2025-06-03T08:28:59.9356261Z 02efa678ec06: Waiting
+test (18.x)	Initialize containers	2025-06-03T08:28:59.9357256Z 4b27853477e4: Waiting
+test (18.x)	Initialize containers	2025-06-03T08:28:59.9358086Z 6811f9b51c40: Waiting
+test (18.x)	Initialize containers	2025-06-03T08:28:59.9358963Z 67a3fb353e87: Waiting
+test (18.x)	Initialize containers	2025-06-03T08:28:59.9359921Z 69de7f33821b: Waiting
+test (18.x)	Initialize containers	2025-06-03T08:28:59.9360875Z 61f047619781: Waiting
+test (18.x)	Initialize containers	2025-06-03T08:29:00.1891526Z edfaf7a52bcf: Verifying Checksum
+test (18.x)	Initialize containers	2025-06-03T08:29:00.1893584Z edfaf7a52bcf: Download complete
+test (18.x)	Initialize containers	2025-06-03T08:29:00.2113911Z 0746858db57e: Verifying Checksum
+test (18.x)	Initialize containers	2025-06-03T08:29:00.2116530Z 0746858db57e: Download complete
+test (18.x)	Initialize containers	2025-06-03T08:29:00.4496150Z ef78128b1396: Verifying Checksum
+test (18.x)	Initialize containers	2025-06-03T08:29:00.4501326Z ef78128b1396: Download complete
+test (18.x)	Initialize containers	2025-06-03T08:29:00.5216921Z 8719220a2756: Verifying Checksum
+test (18.x)	Initialize containers	2025-06-03T08:29:00.5218957Z 8719220a2756: Download complete
+test (18.x)	Initialize containers	2025-06-03T08:29:00.6897381Z 7cf63256a31a: Verifying Checksum
+test (18.x)	Initialize containers	2025-06-03T08:29:00.6900329Z 7cf63256a31a: Download complete
+test (18.x)	Initialize containers	2025-06-03T08:29:00.6970219Z 40f1e01322c4: Verifying Checksum
+test (18.x)	Initialize containers	2025-06-03T08:29:00.6973279Z 40f1e01322c4: Download complete
+test (18.x)	Initialize containers	2025-06-03T08:29:00.7685042Z c503a22414ac: Verifying Checksum
+test (18.x)	Initialize containers	2025-06-03T08:29:00.7686950Z c503a22414ac: Download complete
+test (18.x)	Initialize containers	2025-06-03T08:29:00.9264878Z 4b27853477e4: Verifying Checksum
+test (18.x)	Initialize containers	2025-06-03T08:29:00.9267125Z 4b27853477e4: Download complete
+test (18.x)	Initialize containers	2025-06-03T08:29:01.0163820Z 998e67044cbc: Verifying Checksum
+test (18.x)	Initialize containers	2025-06-03T08:29:01.0167348Z 998e67044cbc: Download complete
+test (18.x)	Initialize containers	2025-06-03T08:29:01.1841697Z ad88e09b12b7: Verifying Checksum
+test (18.x)	Initialize containers	2025-06-03T08:29:01.1846664Z ad88e09b12b7: Download complete
+test (18.x)	Initialize containers	2025-06-03T08:29:01.2732160Z 2862e1b17ae5: Verifying Checksum
+test (18.x)	Initialize containers	2025-06-03T08:29:01.2735659Z 2862e1b17ae5: Download complete
+test (18.x)	Initialize containers	2025-06-03T08:29:01.4260469Z 61f047619781: Verifying Checksum
+test (18.x)	Initialize containers	2025-06-03T08:29:01.4264377Z 61f047619781: Download complete
+test (18.x)	Initialize containers	2025-06-03T08:29:01.5143940Z 02efa678ec06: Verifying Checksum
+test (18.x)	Initialize containers	2025-06-03T08:29:01.5153028Z 02efa678ec06: Download complete
+test (18.x)	Initialize containers	2025-06-03T08:29:01.5323277Z 67a3fb353e87: Download complete
+test (18.x)	Initialize containers	2025-06-03T08:29:01.6924782Z 6811f9b51c40: Download complete
+test (18.x)	Initialize containers	2025-06-03T08:29:01.7789122Z 69de7f33821b: Verifying Checksum
+test (18.x)	Initialize containers	2025-06-03T08:29:01.7789718Z 69de7f33821b: Download complete
+test (18.x)	Initialize containers	2025-06-03T08:29:01.9367245Z 7cf63256a31a: Pull complete
+test (18.x)	Initialize containers	2025-06-03T08:29:02.2327083Z edfaf7a52bcf: Pull complete
+test (18.x)	Initialize containers	2025-06-03T08:29:02.4206309Z 0746858db57e: Pull complete
+test (18.x)	Initialize containers	2025-06-03T08:29:02.4877799Z ef78128b1396: Pull complete
+test (18.x)	Initialize containers	2025-06-03T08:29:02.8325647Z 8719220a2756: Pull complete
+test (18.x)	Initialize containers	2025-06-03T08:29:02.9298822Z 40f1e01322c4: Pull complete
+test (18.x)	Initialize containers	2025-06-03T08:29:02.9418626Z c503a22414ac: Pull complete
+test (18.x)	Initialize containers	2025-06-03T08:29:02.9619212Z 4b27853477e4: Pull complete
+test (18.x)	Initialize containers	2025-06-03T08:29:05.8376047Z 67a3fb353e87: Pull complete
+test (18.x)	Initialize containers	2025-06-03T08:29:05.8785965Z 998e67044cbc: Pull complete
+test (18.x)	Initialize containers	2025-06-03T08:29:05.8921815Z ad88e09b12b7: Pull complete
+test (18.x)	Initialize containers	2025-06-03T08:29:05.9057385Z 2862e1b17ae5: Pull complete
+test (18.x)	Initialize containers	2025-06-03T08:29:05.9210197Z 61f047619781: Pull complete
+test (18.x)	Initialize containers	2025-06-03T08:29:05.9345506Z 02efa678ec06: Pull complete
+test (18.x)	Initialize containers	2025-06-03T08:29:06.0133424Z 6811f9b51c40: Pull complete
+test (18.x)	Initialize containers	2025-06-03T08:29:06.1010191Z 69de7f33821b: Pull complete
+test (18.x)	Initialize containers	2025-06-03T08:29:06.1062087Z Digest: sha256:240c5c37437a379123d79e48e3635c7a1d960fba20e8fbae68a94243eb81fab3
+test (18.x)	Initialize containers	2025-06-03T08:29:06.1079970Z Status: Downloaded newer image for pgvector/pgvector:pg15
+test (18.x)	Initialize containers	2025-06-03T08:29:06.1094611Z docker.io/pgvector/pgvector:pg15
+test (18.x)	Initialize containers	2025-06-03T08:29:06.1159125Z ##[command]/usr/bin/docker create --name c03ce44f6b4f4c24beaf5d329ace7e7e_pgvectorpgvectorpg15_fff198 --label c59fc8 --network github_network_1550fd58a3274057a2da8e8f3c285337 --network-alias postgres -p 5432:5432 --health-cmd pg_isready --health-interval 10s --health-timeout 5s --health-retries 5 -e "POSTGRES_PASSWORD=postgres" -e "POSTGRES_USER=postgres" -e "POSTGRES_DB=thewell_pipeline_test" -e GITHUB_ACTIONS=true -e CI=true pgvector/pgvector:pg15
+test (18.x)	Initialize containers	2025-06-03T08:29:06.1438377Z f4b6b5c012b32588d9dea6690c990b7e87f76cfc9d056b9050e03d5813398a4e
+test (18.x)	Initialize containers	2025-06-03T08:29:06.1464985Z ##[command]/usr/bin/docker start f4b6b5c012b32588d9dea6690c990b7e87f76cfc9d056b9050e03d5813398a4e
+test (18.x)	Initialize containers	2025-06-03T08:29:06.3555228Z f4b6b5c012b32588d9dea6690c990b7e87f76cfc9d056b9050e03d5813398a4e
+test (18.x)	Initialize containers	2025-06-03T08:29:06.3578117Z ##[command]/usr/bin/docker ps --all --filter id=f4b6b5c012b32588d9dea6690c990b7e87f76cfc9d056b9050e03d5813398a4e --filter status=running --no-trunc --format "{{.ID}} {{.Status}}"
+test (18.x)	Initialize containers	2025-06-03T08:29:06.3719653Z f4b6b5c012b32588d9dea6690c990b7e87f76cfc9d056b9050e03d5813398a4e Up Less than a second (health: starting)
+test (18.x)	Initialize containers	2025-06-03T08:29:06.3741421Z ##[command]/usr/bin/docker port f4b6b5c012b32588d9dea6690c990b7e87f76cfc9d056b9050e03d5813398a4e
+test (18.x)	Initialize containers	2025-06-03T08:29:06.3886092Z 5432/tcp -> 0.0.0.0:5432
+test (18.x)	Initialize containers	2025-06-03T08:29:06.3888928Z 5432/tcp -> [::]:5432
+test (18.x)	Initialize containers	2025-06-03T08:29:06.3936009Z ##[endgroup]
+test (18.x)	Initialize containers	2025-06-03T08:29:06.3937613Z ##[group]Starting redis service container
+test (18.x)	Initialize containers	2025-06-03T08:29:06.3938945Z ##[command]/usr/bin/docker pull redis:7-alpine
+test (18.x)	Initialize containers	2025-06-03T08:29:07.3799314Z 7-alpine: Pulling from library/redis
+test (18.x)	Initialize containers	2025-06-03T08:29:07.6212935Z f18232174bc9: Pulling fs layer
+test (18.x)	Initialize containers	2025-06-03T08:29:07.6213608Z 43d45750a845: Pulling fs layer
+test (18.x)	Initialize containers	2025-06-03T08:29:07.6213955Z e5c719682459: Pulling fs layer
+test (18.x)	Initialize containers	2025-06-03T08:29:07.6214307Z 890691a58c5f: Pulling fs layer
+test (18.x)	Initialize containers	2025-06-03T08:29:07.6214666Z 12a814a1432a: Pulling fs layer
+test (18.x)	Initialize containers	2025-06-03T08:29:07.6215007Z 249de296e9ec: Pulling fs layer
+test (18.x)	Initialize containers	2025-06-03T08:29:07.6215375Z 4f4fb700ef54: Pulling fs layer
+test (18.x)	Initialize containers	2025-06-03T08:29:07.6215775Z 235a05f8b97c: Pulling fs layer
+test (18.x)	Initialize containers	2025-06-03T08:29:07.6216108Z 890691a58c5f: Waiting
+test (18.x)	Initialize containers	2025-06-03T08:29:07.6216406Z 12a814a1432a: Waiting
+test (18.x)	Initialize containers	2025-06-03T08:29:07.6217469Z 249de296e9ec: Waiting
+test (18.x)	Initialize containers	2025-06-03T08:29:07.6217778Z 4f4fb700ef54: Waiting
+test (18.x)	Initialize containers	2025-06-03T08:29:07.6218083Z 235a05f8b97c: Waiting
+test (18.x)	Initialize containers	2025-06-03T08:29:07.8599170Z 43d45750a845: Verifying Checksum
+test (18.x)	Initialize containers	2025-06-03T08:29:07.8599755Z 43d45750a845: Download complete
+test (18.x)	Initialize containers	2025-06-03T08:29:07.8855304Z e5c719682459: Verifying Checksum
+test (18.x)	Initialize containers	2025-06-03T08:29:07.8855780Z e5c719682459: Download complete
+test (18.x)	Initialize containers	2025-06-03T08:29:07.8915458Z f18232174bc9: Verifying Checksum
+test (18.x)	Initialize containers	2025-06-03T08:29:07.8918528Z f18232174bc9: Download complete
+test (18.x)	Initialize containers	2025-06-03T08:29:08.0002852Z f18232174bc9: Pull complete
+test (18.x)	Initialize containers	2025-06-03T08:29:08.0282855Z 43d45750a845: Pull complete
+test (18.x)	Initialize containers	2025-06-03T08:29:08.1239030Z 890691a58c5f: Verifying Checksum
+test (18.x)	Initialize containers	2025-06-03T08:29:08.1239894Z 890691a58c5f: Download complete
+test (18.x)	Initialize containers	2025-06-03T08:29:08.1380296Z 249de296e9ec: Download complete
+test (18.x)	Initialize containers	2025-06-03T08:29:08.1875583Z e5c719682459: Pull complete
+test (18.x)	Initialize containers	2025-06-03T08:29:08.1984525Z 12a814a1432a: Verifying Checksum
+test (18.x)	Initialize containers	2025-06-03T08:29:08.1984896Z 12a814a1432a: Download complete
+test (18.x)	Initialize containers	2025-06-03T08:29:08.2298665Z 890691a58c5f: Pull complete
+test (18.x)	Initialize containers	2025-06-03T08:29:08.3802169Z 235a05f8b97c: Verifying Checksum
+test (18.x)	Initialize containers	2025-06-03T08:29:08.3802661Z 235a05f8b97c: Download complete
+test (18.x)	Initialize containers	2025-06-03T08:29:08.3803045Z 4f4fb700ef54: Verifying Checksum
+test (18.x)	Initialize containers	2025-06-03T08:29:08.3803427Z 4f4fb700ef54: Download complete
+test (18.x)	Initialize containers	2025-06-03T08:29:08.4404776Z 12a814a1432a: Pull complete
+test (18.x)	Initialize containers	2025-06-03T08:29:08.4529002Z 249de296e9ec: Pull complete
+test (18.x)	Initialize containers	2025-06-03T08:29:08.4625946Z 4f4fb700ef54: Pull complete
+test (18.x)	Initialize containers	2025-06-03T08:29:08.4751133Z 235a05f8b97c: Pull complete
+test (18.x)	Initialize containers	2025-06-03T08:29:08.4797133Z Digest: sha256:ee9e8748ace004102a267f7b8265dab2c618317df22507b89d16a8add7154273
+test (18.x)	Initialize containers	2025-06-03T08:29:08.4815053Z Status: Downloaded newer image for redis:7-alpine
+test (18.x)	Initialize containers	2025-06-03T08:29:08.4826065Z docker.io/library/redis:7-alpine
+test (18.x)	Initialize containers	2025-06-03T08:29:08.4844134Z ##[command]/usr/bin/docker create --name d58c4d8715934746b0e866bbc3ff9005_redis7alpine_834721 --label c59fc8 --network github_network_1550fd58a3274057a2da8e8f3c285337 --network-alias redis -p 6379:6379 --health-cmd "redis-cli ping" --health-interval 10s --health-timeout 5s --health-retries 5 -e GITHUB_ACTIONS=true -e CI=true redis:7-alpine
+test (18.x)	Initialize containers	2025-06-03T08:29:08.5102128Z 105a6ec964b40c5ad414fe1cc9c9a0e71ea294469d514fff89c3492527037a1e
+test (18.x)	Initialize containers	2025-06-03T08:29:08.5117719Z ##[command]/usr/bin/docker start 105a6ec964b40c5ad414fe1cc9c9a0e71ea294469d514fff89c3492527037a1e
+test (18.x)	Initialize containers	2025-06-03T08:29:08.6533154Z 105a6ec964b40c5ad414fe1cc9c9a0e71ea294469d514fff89c3492527037a1e
+test (18.x)	Initialize containers	2025-06-03T08:29:08.6550854Z ##[command]/usr/bin/docker ps --all --filter id=105a6ec964b40c5ad414fe1cc9c9a0e71ea294469d514fff89c3492527037a1e --filter status=running --no-trunc --format "{{.ID}} {{.Status}}"
+test (18.x)	Initialize containers	2025-06-03T08:29:08.6745424Z 105a6ec964b40c5ad414fe1cc9c9a0e71ea294469d514fff89c3492527037a1e Up Less than a second (health: starting)
+test (18.x)	Initialize containers	2025-06-03T08:29:08.6759800Z ##[command]/usr/bin/docker port 105a6ec964b40c5ad414fe1cc9c9a0e71ea294469d514fff89c3492527037a1e
+test (18.x)	Initialize containers	2025-06-03T08:29:08.6880249Z 6379/tcp -> 0.0.0.0:6379
+test (18.x)	Initialize containers	2025-06-03T08:29:08.6880709Z 6379/tcp -> [::]:6379
+test (18.x)	Initialize containers	2025-06-03T08:29:08.6894594Z ##[endgroup]
+test (18.x)	Initialize containers	2025-06-03T08:29:08.6906040Z ##[group]Waiting for all services to be ready
+test (18.x)	Initialize containers	2025-06-03T08:29:08.6920225Z ##[command]/usr/bin/docker inspect --format="{{if .Config.Healthcheck}}{{print .State.Health.Status}}{{end}}" f4b6b5c012b32588d9dea6690c990b7e87f76cfc9d056b9050e03d5813398a4e
+test (18.x)	Initialize containers	2025-06-03T08:29:08.7045075Z starting
+test (18.x)	Initialize containers	2025-06-03T08:29:08.7068237Z postgres service is starting, waiting 2 seconds before checking again.
+test (18.x)	Initialize containers	2025-06-03T08:29:10.7074851Z ##[command]/usr/bin/docker inspect --format="{{if .Config.Healthcheck}}{{print .State.Health.Status}}{{end}}" f4b6b5c012b32588d9dea6690c990b7e87f76cfc9d056b9050e03d5813398a4e
+test (18.x)	Initialize containers	2025-06-03T08:29:10.7206884Z starting
+test (18.x)	Initialize containers	2025-06-03T08:29:10.7221355Z postgres service is starting, waiting 4 seconds before checking again.
+test (18.x)	Initialize containers	2025-06-03T08:29:14.8494518Z ##[command]/usr/bin/docker inspect --format="{{if .Config.Healthcheck}}{{print .State.Health.Status}}{{end}}" f4b6b5c012b32588d9dea6690c990b7e87f76cfc9d056b9050e03d5813398a4e
+test (18.x)	Initialize containers	2025-06-03T08:29:14.8619577Z starting
+test (18.x)	Initialize containers	2025-06-03T08:29:14.8633868Z postgres service is starting, waiting 8 seconds before checking again.
+test (18.x)	Initialize containers	2025-06-03T08:29:22.8906669Z ##[command]/usr/bin/docker inspect --format="{{if .Config.Healthcheck}}{{print .State.Health.Status}}{{end}}" f4b6b5c012b32588d9dea6690c990b7e87f76cfc9d056b9050e03d5813398a4e
+test (18.x)	Initialize containers	2025-06-03T08:29:22.9034312Z healthy
+test (18.x)	Initialize containers	2025-06-03T08:29:22.9057300Z postgres service is healthy.
+test (18.x)	Initialize containers	2025-06-03T08:29:22.9058208Z ##[command]/usr/bin/docker inspect --format="{{if .Config.Healthcheck}}{{print .State.Health.Status}}{{end}}" 105a6ec964b40c5ad414fe1cc9c9a0e71ea294469d514fff89c3492527037a1e
+test (18.x)	Initialize containers	2025-06-03T08:29:22.9183432Z healthy
+test (18.x)	Initialize containers	2025-06-03T08:29:22.9198011Z redis service is healthy.
+test (18.x)	Initialize containers	2025-06-03T08:29:22.9198767Z ##[endgroup]
+test (18.x)	Run actions/checkout@v4	﻿2025-06-03T08:29:22.9447127Z ##[group]Run actions/checkout@v4
+test (18.x)	Run actions/checkout@v4	2025-06-03T08:29:22.9447714Z with:
+test (18.x)	Run actions/checkout@v4	2025-06-03T08:29:22.9447934Z   repository: mirqtio/TheWell_Pipeline
+test (18.x)	Run actions/checkout@v4	2025-06-03T08:29:22.9448410Z   token: ***
+test (18.x)	Run actions/checkout@v4	2025-06-03T08:29:22.9448605Z   ssh-strict: true
+test (18.x)	Run actions/checkout@v4	2025-06-03T08:29:22.9448790Z   ssh-user: git
+test (18.x)	Run actions/checkout@v4	2025-06-03T08:29:22.9448992Z   persist-credentials: true
+test (18.x)	Run actions/checkout@v4	2025-06-03T08:29:22.9449213Z   clean: true
+test (18.x)	Run actions/checkout@v4	2025-06-03T08:29:22.9449405Z   sparse-checkout-cone-mode: true
+test (18.x)	Run actions/checkout@v4	2025-06-03T08:29:22.9449638Z   fetch-depth: 1
+test (18.x)	Run actions/checkout@v4	2025-06-03T08:29:22.9449819Z   fetch-tags: false
+test (18.x)	Run actions/checkout@v4	2025-06-03T08:29:22.9450015Z   show-progress: true
+test (18.x)	Run actions/checkout@v4	2025-06-03T08:29:22.9450206Z   lfs: false
+test (18.x)	Run actions/checkout@v4	2025-06-03T08:29:22.9450386Z   submodules: false
+test (18.x)	Run actions/checkout@v4	2025-06-03T08:29:22.9450821Z   set-safe-directory: true
+test (18.x)	Run actions/checkout@v4	2025-06-03T08:29:22.9451290Z ##[endgroup]
+test (18.x)	Run actions/checkout@v4	2025-06-03T08:29:23.1527365Z Syncing repository: mirqtio/TheWell_Pipeline
+test (18.x)	Run actions/checkout@v4	2025-06-03T08:29:23.1528888Z ##[group]Getting Git version info
+test (18.x)	Run actions/checkout@v4	2025-06-03T08:29:23.1529315Z Working directory is '/home/runner/work/TheWell_Pipeline/TheWell_Pipeline'
+test (18.x)	Run actions/checkout@v4	2025-06-03T08:29:23.1529976Z [command]/usr/bin/git version
+test (18.x)	Run actions/checkout@v4	2025-06-03T08:29:23.1580741Z git version 2.49.0
+test (18.x)	Run actions/checkout@v4	2025-06-03T08:29:23.1610065Z ##[endgroup]
+test (18.x)	Run actions/checkout@v4	2025-06-03T08:29:23.1632777Z Temporarily overriding HOME='/home/runner/work/_temp/6c4ae44b-8a38-4204-ad07-35bb4b96870b' before making global git config changes
+test (18.x)	Run actions/checkout@v4	2025-06-03T08:29:23.1633718Z Adding repository directory to the temporary git global config as a safe directory
+test (18.x)	Run actions/checkout@v4	2025-06-03T08:29:23.1638696Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/TheWell_Pipeline/TheWell_Pipeline
+test (18.x)	Run actions/checkout@v4	2025-06-03T08:29:23.1679959Z Deleting the contents of '/home/runner/work/TheWell_Pipeline/TheWell_Pipeline'
+test (18.x)	Run actions/checkout@v4	2025-06-03T08:29:23.1684109Z ##[group]Initializing the repository
+test (18.x)	Run actions/checkout@v4	2025-06-03T08:29:23.1689234Z [command]/usr/bin/git init /home/runner/work/TheWell_Pipeline/TheWell_Pipeline
+test (18.x)	Run actions/checkout@v4	2025-06-03T08:29:23.1759730Z hint: Using 'master' as the name for the initial branch. This default branch name
+test (18.x)	Run actions/checkout@v4	2025-06-03T08:29:23.1760975Z hint: is subject to change. To configure the initial branch name to use in all
+test (18.x)	Run actions/checkout@v4	2025-06-03T08:29:23.1761828Z hint: of your new repositories, which will suppress this warning, call:
+test (18.x)	Run actions/checkout@v4	2025-06-03T08:29:23.1762314Z hint:
+test (18.x)	Run actions/checkout@v4	2025-06-03T08:29:23.1762693Z hint: 	git config --global init.defaultBranch <name>
+test (18.x)	Run actions/checkout@v4	2025-06-03T08:29:23.1763102Z hint:
+test (18.x)	Run actions/checkout@v4	2025-06-03T08:29:23.1763490Z hint: Names commonly chosen instead of 'master' are 'main', 'trunk' and
+test (18.x)	Run actions/checkout@v4	2025-06-03T08:29:23.1764283Z hint: 'development'. The just-created branch can be renamed via this command:
+test (18.x)	Run actions/checkout@v4	2025-06-03T08:29:23.1765114Z hint:
+test (18.x)	Run actions/checkout@v4	2025-06-03T08:29:23.1765581Z hint: 	git branch -m <name>
+test (18.x)	Run actions/checkout@v4	2025-06-03T08:29:23.1766299Z Initialized empty Git repository in /home/runner/work/TheWell_Pipeline/TheWell_Pipeline/.git/
+test (18.x)	Run actions/checkout@v4	2025-06-03T08:29:23.1779622Z [command]/usr/bin/git remote add origin https://github.com/mirqtio/TheWell_Pipeline
+test (18.x)	Run actions/checkout@v4	2025-06-03T08:29:23.1843798Z ##[endgroup]
+test (18.x)	Run actions/checkout@v4	2025-06-03T08:29:23.1844254Z ##[group]Disabling automatic garbage collection
+test (18.x)	Run actions/checkout@v4	2025-06-03T08:29:23.1849263Z [command]/usr/bin/git config --local gc.auto 0
+test (18.x)	Run actions/checkout@v4	2025-06-03T08:29:23.1922631Z ##[endgroup]
+test (18.x)	Run actions/checkout@v4	2025-06-03T08:29:23.1923325Z ##[group]Setting up auth
+test (18.x)	Run actions/checkout@v4	2025-06-03T08:29:23.1932283Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+test (18.x)	Run actions/checkout@v4	2025-06-03T08:29:23.1972303Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+test (18.x)	Run actions/checkout@v4	2025-06-03T08:29:23.2289602Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+test (18.x)	Run actions/checkout@v4	2025-06-03T08:29:23.2321528Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+test (18.x)	Run actions/checkout@v4	2025-06-03T08:29:23.2571638Z [command]/usr/bin/git config --local http.https://github.com/.extraheader AUTHORIZATION: basic ***
+test (18.x)	Run actions/checkout@v4	2025-06-03T08:29:23.2620998Z ##[endgroup]
+test (18.x)	Run actions/checkout@v4	2025-06-03T08:29:23.2621601Z ##[group]Fetching the repository
+test (18.x)	Run actions/checkout@v4	2025-06-03T08:29:23.2630787Z [command]/usr/bin/git -c protocol.version=2 fetch --no-tags --prune --no-recurse-submodules --depth=1 origin +8d7c33bdae707d715c0b8e514be276a1b3be6efc:refs/remotes/origin/main
+test (18.x)	Run actions/checkout@v4	2025-06-03T08:29:25.3422508Z From https://github.com/mirqtio/TheWell_Pipeline
+test (18.x)	Run actions/checkout@v4	2025-06-03T08:29:25.3423248Z  * [new ref]           8d7c33bdae707d715c0b8e514be276a1b3be6efc -> origin/main
+test (18.x)	Run actions/checkout@v4	2025-06-03T08:29:25.3455410Z ##[endgroup]
+test (18.x)	Run actions/checkout@v4	2025-06-03T08:29:25.3456262Z ##[group]Determining the checkout info
+test (18.x)	Run actions/checkout@v4	2025-06-03T08:29:25.3457975Z ##[endgroup]
+test (18.x)	Run actions/checkout@v4	2025-06-03T08:29:25.3465302Z [command]/usr/bin/git sparse-checkout disable
+test (18.x)	Run actions/checkout@v4	2025-06-03T08:29:25.3513422Z [command]/usr/bin/git config --local --unset-all extensions.worktreeConfig
+test (18.x)	Run actions/checkout@v4	2025-06-03T08:29:25.3549421Z ##[group]Checking out the ref
+test (18.x)	Run actions/checkout@v4	2025-06-03T08:29:25.3554704Z [command]/usr/bin/git checkout --progress --force -B main refs/remotes/origin/main
+test (18.x)	Run actions/checkout@v4	2025-06-03T08:29:26.3809851Z Updating files:  69% (16695/23944)
+test (18.x)	Run actions/checkout@v4	2025-06-03T08:29:26.3945594Z Updating files:  70% (16761/23944)
+test (18.x)	Run actions/checkout@v4	2025-06-03T08:29:26.4035647Z Updating files:  71% (17001/23944)
+test (18.x)	Run actions/checkout@v4	2025-06-03T08:29:26.4155793Z Updating files:  72% (17240/23944)
+test (18.x)	Run actions/checkout@v4	2025-06-03T08:29:26.4322617Z Updating files:  73% (17480/23944)
+test (18.x)	Run actions/checkout@v4	2025-06-03T08:29:26.4433933Z Updating files:  74% (17719/23944)
+test (18.x)	Run actions/checkout@v4	2025-06-03T08:29:26.4531688Z Updating files:  75% (17958/23944)
+test (18.x)	Run actions/checkout@v4	2025-06-03T08:29:26.4626631Z Updating files:  76% (18198/23944)
+test (18.x)	Run actions/checkout@v4	2025-06-03T08:29:26.4712446Z Updating files:  77% (18437/23944)
+test (18.x)	Run actions/checkout@v4	2025-06-03T08:29:26.4793387Z Updating files:  78% (18677/23944)
+test (18.x)	Run actions/checkout@v4	2025-06-03T08:29:26.4881613Z Updating files:  79% (18916/23944)
+test (18.x)	Run actions/checkout@v4	2025-06-03T08:29:26.4989469Z Updating files:  80% (19156/23944)
+test (18.x)	Run actions/checkout@v4	2025-06-03T08:29:26.5098498Z Updating files:  81% (19395/23944)
+test (18.x)	Run actions/checkout@v4	2025-06-03T08:29:26.5208299Z Updating files:  82% (19635/23944)
+test (18.x)	Run actions/checkout@v4	2025-06-03T08:29:26.5354030Z Updating files:  83% (19874/23944)
+test (18.x)	Run actions/checkout@v4	2025-06-03T08:29:26.5496015Z Updating files:  84% (20113/23944)
+test (18.x)	Run actions/checkout@v4	2025-06-03T08:29:26.5664153Z Updating files:  85% (20353/23944)
+test (18.x)	Run actions/checkout@v4	2025-06-03T08:29:26.5750723Z Updating files:  86% (20592/23944)
+test (18.x)	Run actions/checkout@v4	2025-06-03T08:29:26.5867038Z Updating files:  87% (20832/23944)
+test (18.x)	Run actions/checkout@v4	2025-06-03T08:29:26.5971348Z Updating files:  88% (21071/23944)
+test (18.x)	Run actions/checkout@v4	2025-06-03T08:29:26.6066432Z Updating files:  89% (21311/23944)
+test (18.x)	Run actions/checkout@v4	2025-06-03T08:29:26.6196572Z Updating files:  90% (21550/23944)
+test (18.x)	Run actions/checkout@v4	2025-06-03T08:29:26.6282845Z Updating files:  91% (21790/23944)
+test (18.x)	Run actions/checkout@v4	2025-06-03T08:29:26.6516566Z Updating files:  92% (22029/23944)
+test (18.x)	Run actions/checkout@v4	2025-06-03T08:29:26.6645535Z Updating files:  93% (22268/23944)
+test (18.x)	Run actions/checkout@v4	2025-06-03T08:29:26.6798780Z Updating files:  94% (22508/23944)
+test (18.x)	Run actions/checkout@v4	2025-06-03T08:29:26.6927131Z Updating files:  95% (22747/23944)
+test (18.x)	Run actions/checkout@v4	2025-06-03T08:29:26.7060213Z Updating files:  96% (22987/23944)
+test (18.x)	Run actions/checkout@v4	2025-06-03T08:29:26.7168124Z Updating files:  97% (23226/23944)
+test (18.x)	Run actions/checkout@v4	2025-06-03T08:29:26.7292224Z Updating files:  98% (23466/23944)
+test (18.x)	Run actions/checkout@v4	2025-06-03T08:29:26.7481705Z Updating files:  99% (23705/23944)
+test (18.x)	Run actions/checkout@v4	2025-06-03T08:29:26.7482609Z Updating files: 100% (23944/23944)
+test (18.x)	Run actions/checkout@v4	2025-06-03T08:29:26.7483207Z Updating files: 100% (23944/23944), done.
+test (18.x)	Run actions/checkout@v4	2025-06-03T08:29:26.7740006Z Switched to a new branch 'main'
+test (18.x)	Run actions/checkout@v4	2025-06-03T08:29:26.7741746Z branch 'main' set up to track 'origin/main'.
+test (18.x)	Run actions/checkout@v4	2025-06-03T08:29:26.7778961Z ##[endgroup]
+test (18.x)	Run actions/checkout@v4	2025-06-03T08:29:26.7822563Z [command]/usr/bin/git log -1 --format=%H
+test (18.x)	Run actions/checkout@v4	2025-06-03T08:29:26.7848678Z 8d7c33bdae707d715c0b8e514be276a1b3be6efc
+test (18.x)	Use Node.js 18.x	﻿2025-06-03T08:29:26.8073326Z ##[group]Run actions/setup-node@v4
+test (18.x)	Use Node.js 18.x	2025-06-03T08:29:26.8073600Z with:
+test (18.x)	Use Node.js 18.x	2025-06-03T08:29:26.8073770Z   node-version: 18.x
+test (18.x)	Use Node.js 18.x	2025-06-03T08:29:26.8073959Z   cache: npm
+test (18.x)	Use Node.js 18.x	2025-06-03T08:29:26.8074122Z   always-auth: false
+test (18.x)	Use Node.js 18.x	2025-06-03T08:29:26.8074303Z   check-latest: false
+test (18.x)	Use Node.js 18.x	2025-06-03T08:29:26.8074606Z   token: ***
+test (18.x)	Use Node.js 18.x	2025-06-03T08:29:26.8074777Z ##[endgroup]
+test (18.x)	Use Node.js 18.x	2025-06-03T08:29:26.9963919Z Found in cache @ /opt/hostedtoolcache/node/18.20.8/x64
+test (18.x)	Use Node.js 18.x	2025-06-03T08:29:26.9971745Z ##[group]Environment details
+test (18.x)	Use Node.js 18.x	2025-06-03T08:29:27.4139011Z node: v18.20.8
+test (18.x)	Use Node.js 18.x	2025-06-03T08:29:27.4139353Z npm: 10.8.2
+test (18.x)	Use Node.js 18.x	2025-06-03T08:29:27.4139584Z yarn: 1.22.22
+test (18.x)	Use Node.js 18.x	2025-06-03T08:29:27.4140302Z ##[endgroup]
+test (18.x)	Use Node.js 18.x	2025-06-03T08:29:27.4164114Z [command]/opt/hostedtoolcache/node/18.20.8/x64/bin/npm config get cache
+test (18.x)	Use Node.js 18.x	2025-06-03T08:29:27.5934001Z /home/runner/.npm
+test (18.x)	Use Node.js 18.x	2025-06-03T08:29:27.9095136Z Cache hit for: node-cache-Linux-x64-npm-b36d6fb87c3a182f965c4b1ee372388a329b2717d8629786c869301fd8989983
+test (18.x)	Use Node.js 18.x	2025-06-03T08:29:29.1787243Z Received 8388608 of 36066744 (23.3%), 8.0 MBs/sec
+test (18.x)	Use Node.js 18.x	2025-06-03T08:29:29.5042251Z Received 36066744 of 36066744 (100.0%), 26.0 MBs/sec
+test (18.x)	Use Node.js 18.x	2025-06-03T08:29:29.5043013Z Cache Size: ~34 MB (36066744 B)
+test (18.x)	Use Node.js 18.x	2025-06-03T08:29:29.5070336Z [command]/usr/bin/tar -xf /home/runner/work/_temp/8427a0f7-9830-4877-89ec-039e1bc1dba4/cache.tzst -P -C /home/runner/work/TheWell_Pipeline/TheWell_Pipeline --use-compress-program unzstd
+test (18.x)	Use Node.js 18.x	2025-06-03T08:29:29.7151684Z Cache restored successfully
+test (18.x)	Use Node.js 18.x	2025-06-03T08:29:29.7227509Z Cache restored from key: node-cache-Linux-x64-npm-b36d6fb87c3a182f965c4b1ee372388a329b2717d8629786c869301fd8989983
+test (18.x)	Install dependencies	﻿2025-06-03T08:29:29.7375184Z ##[group]Run npm ci
+test (18.x)	Install dependencies	2025-06-03T08:29:29.7375459Z [36;1mnpm ci[0m
+test (18.x)	Install dependencies	2025-06-03T08:29:29.7448976Z shell: /usr/bin/bash -e {0}
+test (18.x)	Install dependencies	2025-06-03T08:29:29.7449276Z ##[endgroup]
+test (18.x)	Install dependencies	2025-06-03T08:29:30.7940569Z npm warn EBADENGINE Unsupported engine {
+test (18.x)	Install dependencies	2025-06-03T08:29:30.7941591Z npm warn EBADENGINE   package: 'eventsource@4.0.0',
+test (18.x)	Install dependencies	2025-06-03T08:29:30.7942317Z npm warn EBADENGINE   required: { node: '>=20.0.0' },
+test (18.x)	Install dependencies	2025-06-03T08:29:30.7942982Z npm warn EBADENGINE   current: { node: 'v18.20.8', npm: '10.8.2' }
+test (18.x)	Install dependencies	2025-06-03T08:29:30.7943498Z npm warn EBADENGINE }
+test (18.x)	Install dependencies	2025-06-03T08:29:30.7970798Z npm warn EBADENGINE Unsupported engine {
+test (18.x)	Install dependencies	2025-06-03T08:29:30.7971931Z npm warn EBADENGINE   package: 'undici@7.10.0',
+test (18.x)	Install dependencies	2025-06-03T08:29:30.7973175Z npm warn EBADENGINE   required: { node: '>=20.18.1' },
+test (18.x)	Install dependencies	2025-06-03T08:29:30.7974881Z npm warn EBADENGINE   current: { node: 'v18.20.8', npm: '10.8.2' }
+test (18.x)	Install dependencies	2025-06-03T08:29:30.7975672Z npm warn EBADENGINE }
+test (18.x)	Install dependencies	2025-06-03T08:29:33.4299399Z npm warn deprecated inflight@1.0.6: This module is not supported, and leaks memory. Do not use it. Check out lru-cache if you want a good and tested way to coalesce async requests by a key value, which is much more comprehensive and powerful.
+test (18.x)	Install dependencies	2025-06-03T08:29:33.4824759Z npm warn deprecated lodash.get@4.4.2: This package is deprecated. Use the optional chaining (?.) operator instead.
+test (18.x)	Install dependencies	2025-06-03T08:29:33.5777449Z npm warn deprecated lodash.isequal@4.5.0: This package is deprecated. Use require('node:util').isDeepStrictEqual instead.
+test (18.x)	Install dependencies	2025-06-03T08:29:33.5982832Z npm warn deprecated @humanwhocodes/config-array@0.13.0: Use @eslint/config-array instead
+test (18.x)	Install dependencies	2025-06-03T08:29:33.6131071Z npm warn deprecated rimraf@3.0.2: Rimraf versions prior to v4 are no longer supported
+test (18.x)	Install dependencies	2025-06-03T08:29:33.7291881Z npm warn deprecated glob@7.2.3: Glob versions prior to v9 are no longer supported
+test (18.x)	Install dependencies	2025-06-03T08:29:33.7396106Z npm warn deprecated @humanwhocodes/object-schema@2.0.3: Use @eslint/object-schema instead
+test (18.x)	Install dependencies	2025-06-03T08:29:33.7759728Z npm warn deprecated glob@7.1.6: Glob versions prior to v9 are no longer supported
+test (18.x)	Install dependencies	2025-06-03T08:29:33.8728879Z npm warn deprecated multer@1.4.5-lts.2: Multer 1.x is impacted by a number of vulnerabilities, which have been patched in 2.x. You should upgrade to the latest 2.x version.
+test (18.x)	Install dependencies	2025-06-03T08:29:34.2845182Z npm warn deprecated node-domexception@1.0.0: Use your platform's native DOMException instead
+test (18.x)	Install dependencies	2025-06-03T08:29:34.4785943Z npm warn deprecated superagent@8.1.2: Please upgrade to v9.0.0+ as we have fixed a public vulnerability with formidable dependency. Note that v9.0.0+ requires Node.js v14.18.0+. See https://github.com/ladjs/superagent/pull/1800 for insight. This project is supported and maintained by the team at Forward Email @ https://forwardemail.net
+test (18.x)	Install dependencies	2025-06-03T08:29:34.6992383Z npm warn deprecated puppeteer@21.11.0: < 22.8.2 is no longer supported
+test (18.x)	Install dependencies	2025-06-03T08:29:36.1983064Z npm warn deprecated eslint@8.57.1: This version is no longer supported. Please see https://eslint.org/version-support for other options.
+test (18.x)	Install dependencies	2025-06-03T08:34:23.2719059Z 
+test (18.x)	Install dependencies	2025-06-03T08:34:23.2719877Z added 931 packages, and audited 932 packages in 5m
+test (18.x)	Install dependencies	2025-06-03T08:34:23.2720372Z 
+test (18.x)	Install dependencies	2025-06-03T08:34:23.2720666Z 154 packages are looking for funding
+test (18.x)	Install dependencies	2025-06-03T08:34:23.2721165Z   run `npm fund` for details
+test (18.x)	Install dependencies	2025-06-03T08:34:23.2936298Z 
+test (18.x)	Install dependencies	2025-06-03T08:34:23.2937203Z 5 high severity vulnerabilities
+test (18.x)	Install dependencies	2025-06-03T08:34:23.2937565Z 
+test (18.x)	Install dependencies	2025-06-03T08:34:23.2937956Z To address all issues (including breaking changes), run:
+test (18.x)	Install dependencies	2025-06-03T08:34:23.2938513Z   npm audit fix --force
+test (18.x)	Install dependencies	2025-06-03T08:34:23.2938738Z 
+test (18.x)	Install dependencies	2025-06-03T08:34:23.2938928Z Run `npm audit` for details.
+test (18.x)	Set up environment variables	﻿2025-06-03T08:34:23.3104074Z ##[group]Run echo "DATABASE_URL=***localhost:5432/thewell_pipeline_test" >> $GITHUB_ENV
+test (18.x)	Set up environment variables	2025-06-03T08:34:23.3104890Z [36;1mecho "DATABASE_URL=***localhost:5432/thewell_pipeline_test" >> $GITHUB_ENV[0m
+test (18.x)	Set up environment variables	2025-06-03T08:34:23.3105558Z [36;1mecho "REDIS_URL=redis://localhost:6379" >> $GITHUB_ENV[0m
+test (18.x)	Set up environment variables	2025-06-03T08:34:23.3105892Z [36;1mecho "NODE_ENV=test" >> $GITHUB_ENV[0m
+test (18.x)	Set up environment variables	2025-06-03T08:34:23.3106158Z [36;1mecho "WEB_PORT=0" >> $GITHUB_ENV[0m
+test (18.x)	Set up environment variables	2025-06-03T08:34:23.3159904Z shell: /usr/bin/bash -e {0}
+test (18.x)	Set up environment variables	2025-06-03T08:34:23.3160183Z ##[endgroup]
+test (18.x)	Wait for PostgreSQL	﻿2025-06-03T08:34:23.3281027Z ##[group]Run until pg_isready -h localhost -p 5432 -U postgres; do
+test (18.x)	Wait for PostgreSQL	2025-06-03T08:34:23.3281504Z [36;1muntil pg_isready -h localhost -p 5432 -U postgres; do[0m
+test (18.x)	Wait for PostgreSQL	2025-06-03T08:34:23.3281839Z [36;1m  echo "Waiting for PostgreSQL..."[0m
+test (18.x)	Wait for PostgreSQL	2025-06-03T08:34:23.3282095Z [36;1m  sleep 2[0m
+test (18.x)	Wait for PostgreSQL	2025-06-03T08:34:23.3282272Z [36;1mdone[0m
+test (18.x)	Wait for PostgreSQL	2025-06-03T08:34:23.3335401Z shell: /usr/bin/bash -e {0}
+test (18.x)	Wait for PostgreSQL	2025-06-03T08:34:23.3335649Z env:
+test (18.x)	Wait for PostgreSQL	2025-06-03T08:34:23.3336237Z   DATABASE_URL: ***localhost:5432/thewell_pipeline_test
+test (18.x)	Wait for PostgreSQL	2025-06-03T08:34:23.3336559Z   REDIS_URL: redis://localhost:6379
+test (18.x)	Wait for PostgreSQL	2025-06-03T08:34:23.3337023Z   NODE_ENV: test
+test (18.x)	Wait for PostgreSQL	2025-06-03T08:34:23.3337211Z   WEB_PORT: 0
+test (18.x)	Wait for PostgreSQL	2025-06-03T08:34:23.3337399Z ##[endgroup]
+test (18.x)	Wait for PostgreSQL	2025-06-03T08:34:23.4511479Z localhost:5432 - accepting connections
+test (18.x)	Set up database schema	﻿2025-06-03T08:34:23.4543891Z ##[group]Run PGPASSWORD=postgres psql -h localhost -U postgres -d thewell_pipeline_test -f src/database/schema.sql
+test (18.x)	Set up database schema	2025-06-03T08:34:23.4544657Z [36;1mPGPASSWORD=postgres psql -h localhost -U postgres -d thewell_pipeline_test -f src/database/schema.sql[0m
+test (18.x)	Set up database schema	2025-06-03T08:34:23.4597625Z shell: /usr/bin/bash -e {0}
+test (18.x)	Set up database schema	2025-06-03T08:34:23.4597880Z env:
+test (18.x)	Set up database schema	2025-06-03T08:34:23.4598443Z   DATABASE_URL: ***localhost:5432/thewell_pipeline_test
+test (18.x)	Set up database schema	2025-06-03T08:34:23.4598767Z   REDIS_URL: redis://localhost:6379
+test (18.x)	Set up database schema	2025-06-03T08:34:23.4599005Z   NODE_ENV: test
+test (18.x)	Set up database schema	2025-06-03T08:34:23.4599183Z   WEB_PORT: 0
+test (18.x)	Set up database schema	2025-06-03T08:34:23.4599344Z ##[endgroup]
+test (18.x)	Set up database schema	2025-06-03T08:34:23.6486326Z CREATE EXTENSION
+test (18.x)	Set up database schema	2025-06-03T08:34:23.6661261Z CREATE EXTENSION
+test (18.x)	Set up database schema	2025-06-03T08:34:23.6722287Z CREATE EXTENSION
+test (18.x)	Set up database schema	2025-06-03T08:34:23.6785948Z CREATE TABLE
+test (18.x)	Set up database schema	2025-06-03T08:34:23.6836352Z CREATE TABLE
+test (18.x)	Set up database schema	2025-06-03T08:34:23.6872457Z CREATE TABLE
+test (18.x)	Set up database schema	2025-06-03T08:34:23.6901597Z CREATE TABLE
+test (18.x)	Set up database schema	2025-06-03T08:34:23.6928869Z CREATE TABLE
+test (18.x)	Set up database schema	2025-06-03T08:34:23.6968142Z CREATE TABLE
+test (18.x)	Set up database schema	2025-06-03T08:34:23.6995284Z CREATE TABLE
+test (18.x)	Set up database schema	2025-06-03T08:34:23.7022437Z CREATE TABLE
+test (18.x)	Set up database schema	2025-06-03T08:34:23.7043034Z CREATE TABLE
+test (18.x)	Set up database schema	2025-06-03T08:34:23.7082422Z CREATE TABLE
+test (18.x)	Set up database schema	2025-06-03T08:34:23.7121033Z CREATE TABLE
+test (18.x)	Set up database schema	2025-06-03T08:34:23.7167820Z CREATE TABLE
+test (18.x)	Set up database schema	2025-06-03T08:34:23.7199952Z CREATE TABLE
+test (18.x)	Set up database schema	2025-06-03T08:34:23.7232922Z CREATE TABLE
+test (18.x)	Set up database schema	2025-06-03T08:34:23.7385190Z CREATE TABLE
+test (18.x)	Set up database schema	2025-06-03T08:34:23.7415969Z CREATE TABLE
+test (18.x)	Set up database schema	2025-06-03T08:34:23.7453024Z CREATE TABLE
+test (18.x)	Set up database schema	2025-06-03T08:34:23.7479190Z CREATE TABLE
+test (18.x)	Set up database schema	2025-06-03T08:34:23.7511552Z CREATE TABLE
+test (18.x)	Set up database schema	2025-06-03T08:34:23.7545528Z CREATE TABLE
+test (18.x)	Set up database schema	2025-06-03T08:34:23.7576053Z CREATE TABLE
+test (18.x)	Set up database schema	2025-06-03T08:34:23.7614360Z CREATE TABLE
+test (18.x)	Set up database schema	2025-06-03T08:34:23.7630109Z CREATE INDEX
+test (18.x)	Set up database schema	2025-06-03T08:34:23.7643173Z CREATE INDEX
+test (18.x)	Set up database schema	2025-06-03T08:34:23.7658306Z CREATE INDEX
+test (18.x)	Set up database schema	2025-06-03T08:34:23.7665895Z CREATE INDEX
+test (18.x)	Set up database schema	2025-06-03T08:34:23.7674432Z CREATE INDEX
+test (18.x)	Set up database schema	2025-06-03T08:34:23.7761725Z psql:src/database/schema.sql:388: NOTICE:  ivfflat index created with little data
+test (18.x)	Set up database schema	2025-06-03T08:34:23.7762562Z DETAIL:  This will cause low recall.
+test (18.x)	Set up database schema	2025-06-03T08:34:23.7763193Z HINT:  Drop the index until the table has more data.
+test (18.x)	Set up database schema	2025-06-03T08:34:23.7835837Z CREATE INDEX
+test (18.x)	Set up database schema	2025-06-03T08:34:23.7852251Z CREATE INDEX
+test (18.x)	Set up database schema	2025-06-03T08:34:23.7868795Z CREATE INDEX
+test (18.x)	Set up database schema	2025-06-03T08:34:23.7883132Z CREATE INDEX
+test (18.x)	Set up database schema	2025-06-03T08:34:23.7896163Z CREATE INDEX
+test (18.x)	Set up database schema	2025-06-03T08:34:23.7911542Z CREATE INDEX
+test (18.x)	Set up database schema	2025-06-03T08:34:23.7923956Z CREATE INDEX
+test (18.x)	Set up database schema	2025-06-03T08:34:23.7936132Z CREATE INDEX
+test (18.x)	Set up database schema	2025-06-03T08:34:23.7948331Z CREATE INDEX
+test (18.x)	Set up database schema	2025-06-03T08:34:23.7962889Z CREATE INDEX
+test (18.x)	Set up database schema	2025-06-03T08:34:23.7976347Z CREATE INDEX
+test (18.x)	Set up database schema	2025-06-03T08:34:23.7990840Z CREATE INDEX
+test (18.x)	Set up database schema	2025-06-03T08:34:23.8003008Z CREATE INDEX
+test (18.x)	Set up database schema	2025-06-03T08:34:23.8019690Z CREATE INDEX
+test (18.x)	Set up database schema	2025-06-03T08:34:23.8034820Z CREATE INDEX
+test (18.x)	Set up database schema	2025-06-03T08:34:23.8049906Z CREATE INDEX
+test (18.x)	Set up database schema	2025-06-03T08:34:23.8064238Z CREATE INDEX
+test (18.x)	Set up database schema	2025-06-03T08:34:23.8079176Z CREATE INDEX
+test (18.x)	Set up database schema	2025-06-03T08:34:23.8093426Z CREATE INDEX
+test (18.x)	Set up database schema	2025-06-03T08:34:23.8112710Z CREATE INDEX
+test (18.x)	Set up database schema	2025-06-03T08:34:23.8129542Z CREATE INDEX
+test (18.x)	Set up database schema	2025-06-03T08:34:23.8146175Z CREATE INDEX
+test (18.x)	Set up database schema	2025-06-03T08:34:23.8162974Z CREATE INDEX
+test (18.x)	Set up database schema	2025-06-03T08:34:23.8176080Z CREATE INDEX
+test (18.x)	Set up database schema	2025-06-03T08:34:23.8194441Z CREATE INDEX
+test (18.x)	Set up database schema	2025-06-03T08:34:23.8207411Z CREATE INDEX
+test (18.x)	Set up database schema	2025-06-03T08:34:23.8223417Z CREATE INDEX
+test (18.x)	Set up database schema	2025-06-03T08:34:23.8252218Z CREATE INDEX
+test (18.x)	Set up database schema	2025-06-03T08:34:23.8271501Z CREATE INDEX
+test (18.x)	Set up database schema	2025-06-03T08:34:23.8287267Z CREATE INDEX
+test (18.x)	Set up database schema	2025-06-03T08:34:23.8301467Z CREATE INDEX
+test (18.x)	Set up database schema	2025-06-03T08:34:23.8316898Z CREATE INDEX
+test (18.x)	Set up database schema	2025-06-03T08:34:23.8332084Z CREATE INDEX
+test (18.x)	Set up database schema	2025-06-03T08:34:23.8349135Z CREATE INDEX
+test (18.x)	Set up database schema	2025-06-03T08:34:23.8376707Z CREATE INDEX
+test (18.x)	Set up database schema	2025-06-03T08:34:23.8422277Z CREATE INDEX
+test (18.x)	Set up database schema	2025-06-03T08:34:23.8442934Z CREATE INDEX
+test (18.x)	Set up database schema	2025-06-03T08:34:23.8464207Z CREATE INDEX
+test (18.x)	Set up database schema	2025-06-03T08:34:23.8480666Z CREATE INDEX
+test (18.x)	Set up database schema	2025-06-03T08:34:23.8501443Z CREATE INDEX
+test (18.x)	Set up database schema	2025-06-03T08:34:23.8521031Z CREATE INDEX
+test (18.x)	Set up database schema	2025-06-03T08:34:23.8533538Z CREATE INDEX
+test (18.x)	Set up database schema	2025-06-03T08:34:23.8552404Z CREATE INDEX
+test (18.x)	Set up database schema	2025-06-03T08:34:23.8573810Z CREATE INDEX
+test (18.x)	Set up database schema	2025-06-03T08:34:23.8587085Z CREATE INDEX
+test (18.x)	Set up database schema	2025-06-03T08:34:23.8611245Z CREATE INDEX
+test (18.x)	Set up database schema	2025-06-03T08:34:23.8621923Z CREATE INDEX
+test (18.x)	Set up database schema	2025-06-03T08:34:23.8642764Z CREATE INDEX
+test (18.x)	Set up database schema	2025-06-03T08:34:23.8652965Z CREATE INDEX
+test (18.x)	Set up database schema	2025-06-03T08:34:23.8669002Z CREATE INDEX
+test (18.x)	Set up database schema	2025-06-03T08:34:23.8684456Z CREATE INDEX
+test (18.x)	Set up database schema	2025-06-03T08:34:23.8700776Z CREATE INDEX
+test (18.x)	Set up database schema	2025-06-03T08:34:23.8717929Z CREATE INDEX
+test (18.x)	Set up database schema	2025-06-03T08:34:23.8741485Z CREATE INDEX
+test (18.x)	Set up database schema	2025-06-03T08:34:23.8754961Z CREATE INDEX
+test (18.x)	Set up database schema	2025-06-03T08:34:23.8768751Z CREATE INDEX
+test (18.x)	Set up database schema	2025-06-03T08:34:23.8778053Z CREATE INDEX
+test (18.x)	Set up database schema	2025-06-03T08:34:23.8795292Z CREATE INDEX
+test (18.x)	Set up database schema	2025-06-03T08:34:23.8813285Z CREATE FUNCTION
+test (18.x)	Set up database schema	2025-06-03T08:34:23.8818853Z CREATE TRIGGER
+test (18.x)	Set up database schema	2025-06-03T08:34:23.8822691Z CREATE TRIGGER
+test (18.x)	Set up database schema	2025-06-03T08:34:23.8829733Z CREATE TRIGGER
+test (18.x)	Set up database schema	2025-06-03T08:34:23.8834073Z CREATE TRIGGER
+test (18.x)	Set up database schema	2025-06-03T08:34:23.8841263Z CREATE TRIGGER
+test (18.x)	Set up database schema	2025-06-03T08:34:23.8845467Z CREATE TRIGGER
+test (18.x)	Set up database schema	2025-06-03T08:34:23.8850006Z CREATE TRIGGER
+test (18.x)	Set up database schema	2025-06-03T08:34:23.8854347Z CREATE TRIGGER
+test (18.x)	Set up database schema	2025-06-03T08:34:23.8858877Z CREATE FUNCTION
+test (18.x)	Set up database schema	2025-06-03T08:34:23.8864522Z CREATE TRIGGER
+test (18.x)	Set up database schema	2025-06-03T08:34:23.8871854Z CREATE FUNCTION
+test (18.x)	Set up database schema	2025-06-03T08:34:23.8879614Z CREATE TRIGGER
+test (18.x)	Set up database schema	2025-06-03T08:34:23.8883561Z CREATE TRIGGER
+test (18.x)	Set up database schema	2025-06-03T08:34:23.8887792Z CREATE TRIGGER
+test (18.x)	Set up database schema	2025-06-03T08:34:23.8892520Z CREATE TRIGGER
+test (18.x)	Set up database schema	2025-06-03T08:34:23.8897138Z CREATE TRIGGER
+test (18.x)	Set up database schema	2025-06-03T08:34:23.8908426Z INSERT 0 3
+test (18.x)	Set up database schema	2025-06-03T08:34:23.8916676Z INSERT 0 3
+test (18.x)	Set up database schema	2025-06-03T08:34:23.8925564Z INSERT 0 5
+test (18.x)	Set up database schema	2025-06-03T08:34:23.8937372Z INSERT 0 4
+test (18.x)	Set up database schema	2025-06-03T08:34:23.8950390Z UPDATE 1
+test (18.x)	Set up database schema	2025-06-03T08:34:23.8956420Z UPDATE 1
+test (18.x)	Run linting	﻿2025-06-03T08:34:23.9041574Z ##[group]Run npm run lint
+test (18.x)	Run linting	2025-06-03T08:34:23.9042020Z [36;1mnpm run lint[0m
+test (18.x)	Run linting	2025-06-03T08:34:23.9115284Z shell: /usr/bin/bash -e {0}
+test (18.x)	Run linting	2025-06-03T08:34:23.9115697Z env:
+test (18.x)	Run linting	2025-06-03T08:34:23.9117039Z   DATABASE_URL: ***localhost:5432/thewell_pipeline_test
+test (18.x)	Run linting	2025-06-03T08:34:23.9117596Z   REDIS_URL: redis://localhost:6379
+test (18.x)	Run linting	2025-06-03T08:34:23.9118004Z   NODE_ENV: test
+test (18.x)	Run linting	2025-06-03T08:34:23.9118296Z   WEB_PORT: 0
+test (18.x)	Run linting	2025-06-03T08:34:23.9118604Z ##[endgroup]
+test (18.x)	Run linting	2025-06-03T08:34:24.0628290Z 
+test (18.x)	Run linting	2025-06-03T08:34:24.0628961Z > thewell-pipeline@1.0.0 lint
+test (18.x)	Run linting	2025-06-03T08:34:24.0629525Z > eslint src tests
+test (18.x)	Run linting	2025-06-03T08:34:24.0629747Z 
+test (18.x)	Run linting	2025-06-03T08:34:27.7733999Z 
+test (18.x)	Run linting	2025-06-03T08:34:27.7735394Z /home/runner/work/TheWell_Pipeline/TheWell_Pipeline/src/enrichment/LLMProviderManager.js
+test (18.x)	Run linting	2025-06-03T08:34:27.7767098Z ##[warning]  110:23  warning  '_provider' is assigned a value but never used  no-unused-vars
+test (18.x)	Run linting	2025-06-03T08:34:27.7778085Z ##[warning]  461:19  warning  '_provider' is assigned a value but never used  no-unused-vars
+test (18.x)	Run linting	2025-06-03T08:34:27.7779021Z 
+test (18.x)	Run linting	2025-06-03T08:34:27.7779540Z /home/runner/work/TheWell_Pipeline/TheWell_Pipeline/src/ingestion/handlers/DynamicUnstructuredSourceHandler.js
+test (18.x)	Run linting	2025-06-03T08:34:27.7780911Z ##[warning]  553:11  warning  'content' is assigned a value but never used  no-unused-vars
+test (18.x)	Run linting	2025-06-03T08:34:27.7781886Z 
+test (18.x)	Run linting	2025-06-03T08:34:27.7782257Z /home/runner/work/TheWell_Pipeline/TheWell_Pipeline/src/ingestion/queue/JobScheduler.js
+test (18.x)	Run linting	2025-06-03T08:34:27.7783781Z ##[warning]  341:21  warning  'schedule' is defined but never used. Allowed unused args must match /^_/u  no-unused-vars
+test (18.x)	Run linting	2025-06-03T08:34:27.7784579Z 
+test (18.x)	Run linting	2025-06-03T08:34:27.7784925Z /home/runner/work/TheWell_Pipeline/TheWell_Pipeline/src/ingestion/queue/QueueManager.js
+test (18.x)	Run linting	2025-06-03T08:34:27.7785718Z ##[warning]  333:19  warning  'name' is assigned a value but never used  no-unused-vars
+test (18.x)	Run linting	2025-06-03T08:34:27.7786374Z 
+test (18.x)	Run linting	2025-06-03T08:34:27.7786682Z /home/runner/work/TheWell_Pipeline/TheWell_Pipeline/src/ingestion/types/index.js
+test (18.x)	Run linting	2025-06-03T08:34:27.7787984Z ##[warning]  105:24  warning  'config' is defined but never used. Allowed unused args must match /^_/u    no-unused-vars
+test (18.x)	Run linting	2025-06-03T08:34:27.7789458Z ##[warning]  122:17  warning  'document' is defined but never used. Allowed unused args must match /^_/u  no-unused-vars
+test (18.x)	Run linting	2025-06-03T08:34:27.7790794Z ##[warning]  131:19  warning  'content' is defined but never used. Allowed unused args must match /^_/u   no-unused-vars
+test (18.x)	Run linting	2025-06-03T08:34:27.7791561Z 
+test (18.x)	Run linting	2025-06-03T08:34:27.7791882Z /home/runner/work/TheWell_Pipeline/TheWell_Pipeline/src/monitoring/CostReporter.js
+test (18.x)	Run linting	2025-06-03T08:34:27.7792899Z ##[warning]  144:38  warning  'costSummary' is defined but never used. Allowed unused args must match /^_/u  no-unused-vars
+test (18.x)	Run linting	2025-06-03T08:34:27.7793667Z 
+test (18.x)	Run linting	2025-06-03T08:34:27.7794011Z /home/runner/work/TheWell_Pipeline/TheWell_Pipeline/src/orm/models/DocumentVisibility.js
+test (18.x)	Run linting	2025-06-03T08:34:27.7794923Z ##[warning]  221:74  warning  'accessLevel' is assigned a value but never used  no-unused-vars
+test (18.x)	Run linting	2025-06-03T08:34:27.7795638Z 
+test (18.x)	Run linting	2025-06-03T08:34:27.7795921Z /home/runner/work/TheWell_Pipeline/TheWell_Pipeline/src/orm/sequelize.js
+test (18.x)	Run linting	2025-06-03T08:34:27.7796670Z ##[warning]  138:7  warning  'VisibilityRule' is assigned a value but never used  no-unused-vars
+test (18.x)	Run linting	2025-06-03T08:34:27.7798083Z ##[warning]  140:7  warning  'CostEvent' is assigned a value but never used       no-unused-vars
+test (18.x)	Run linting	2025-06-03T08:34:27.7798853Z 
+test (18.x)	Run linting	2025-06-03T08:34:27.7799139Z /home/runner/work/TheWell_Pipeline/TheWell_Pipeline/src/rag/RAGManager.js
+test (18.x)	Run linting	2025-06-03T08:34:27.7800115Z ##[warning]  137:14  warning  'querySpan' is defined but never used. Allowed unused args must match /^_/u  no-unused-vars
+test (18.x)	Run linting	2025-06-03T08:34:27.7800879Z 
+test (18.x)	Run linting	2025-06-03T08:34:27.7801243Z /home/runner/work/TheWell_Pipeline/TheWell_Pipeline/src/rag/components/DocumentRetriever.js
+test (18.x)	Run linting	2025-06-03T08:34:27.7802108Z ##[warning]  135:66  warning  'userAuth' is assigned a value but never used  no-unused-vars
+test (18.x)	Run linting	2025-06-03T08:34:27.7803237Z ##[warning]  218:64  warning  'userAuth' is assigned a value but never used  no-unused-vars
+test (18.x)	Run linting	2025-06-03T08:34:27.7804221Z 
+test (18.x)	Run linting	2025-06-03T08:34:27.7804578Z /home/runner/work/TheWell_Pipeline/TheWell_Pipeline/src/rag/components/ResponseGenerator.js
+test (18.x)	Run linting	2025-06-03T08:34:27.7805499Z ##[warning]  219:43  warning  'query' is defined but never used. Allowed unused args must match /^_/u  no-unused-vars
+test (18.x)	Run linting	2025-06-03T08:34:27.7806270Z 
+test (18.x)	Run linting	2025-06-03T08:34:27.7806634Z /home/runner/work/TheWell_Pipeline/TheWell_Pipeline/src/rag/performance/DatabaseOptimizer.js
+test (18.x)	Run linting	2025-06-03T08:34:27.7807918Z ##[warning]  342:22  warning  'value' is assigned a value but never used     no-unused-vars
+test (18.x)	Run linting	2025-06-03T08:34:27.7809078Z ##[warning]  374:30  warning  'type' is assigned a value but never used      no-unused-vars
+test (18.x)	Run linting	2025-06-03T08:34:27.7810170Z ##[warning]  556:61  warning  'userAuth' is assigned a value but never used  no-unused-vars
+test (18.x)	Run linting	2025-06-03T08:34:27.7811249Z ##[warning]  568:53  warning  'userAuth' is assigned a value but never used  no-unused-vars
+test (18.x)	Run linting	2025-06-03T08:34:27.7811915Z 
+test (18.x)	Run linting	2025-06-03T08:34:27.7812267Z /home/runner/work/TheWell_Pipeline/TheWell_Pipeline/src/rag/performance/RequestThrottler.js
+test (18.x)	Run linting	2025-06-03T08:34:27.7813043Z ##[warning]  429:17  warning  'requestId' is assigned a value but never used  no-unused-vars
+test (18.x)	Run linting	2025-06-03T08:34:27.7813726Z 
+test (18.x)	Run linting	2025-06-03T08:34:27.7814020Z /home/runner/work/TheWell_Pipeline/TheWell_Pipeline/src/tracing/RAGTracing.js
+test (18.x)	Run linting	2025-06-03T08:34:27.7814775Z ##[warning]  1:7  warning  'logger' is assigned a value but never used  no-unused-vars
+test (18.x)	Run linting	2025-06-03T08:34:27.7815703Z 
+test (18.x)	Run linting	2025-06-03T08:34:27.7816035Z /home/runner/work/TheWell_Pipeline/TheWell_Pipeline/src/tracing/TracingMiddleware.js
+test (18.x)	Run linting	2025-06-03T08:34:27.7816959Z ##[warning]  2:7  warning  'logger' is assigned a value but never used  no-unused-vars
+test (18.x)	Run linting	2025-06-03T08:34:27.7817730Z 
+test (18.x)	Run linting	2025-06-03T08:34:27.7818058Z /home/runner/work/TheWell_Pipeline/TheWell_Pipeline/src/web/middleware/errorHandler.js
+test (18.x)	Run linting	2025-06-03T08:34:27.7819094Z ##[warning]  22:40  warning  'next' is defined but never used. Allowed unused args must match /^_/u  no-unused-vars
+test (18.x)	Run linting	2025-06-03T08:34:27.7819857Z 
+test (18.x)	Run linting	2025-06-03T08:34:27.7820155Z /home/runner/work/TheWell_Pipeline/TheWell_Pipeline/src/web/public/app.js
+test (18.x)	Run linting	2025-06-03T08:34:27.7820973Z ##[warning]  1044:3   warning  Duplicate name 'showPullToRefresh'            no-dupe-class-members
+test (18.x)	Run linting	2025-06-03T08:34:27.7822145Z ##[warning]  1066:3   warning  Duplicate name 'triggerPullToRefresh'         no-dupe-class-members
+test (18.x)	Run linting	2025-06-03T08:34:27.7823363Z ##[warning]  1074:3   warning  Duplicate name 'hidePullToRefresh'            no-dupe-class-members
+test (18.x)	Run linting	2025-06-03T08:34:27.7824521Z ##[warning]  1196:3   warning  Duplicate name 'setLoadingState'              no-dupe-class-members
+test (18.x)	Run linting	2025-06-03T08:34:27.7825766Z ##[warning]  1213:3   warning  Duplicate name 'showToast'                    no-dupe-class-members
+test (18.x)	Run linting	2025-06-03T08:34:27.7827105Z ##[warning]  1240:25  warning  'bootstrap' is not defined                    no-undef
+test (18.x)	Run linting	2025-06-03T08:34:27.7829394Z ##[error]  1404:1   error    Expected indentation of 4 spaces but found 6  indent
+test (18.x)	Run linting	2025-06-03T08:34:27.7830622Z ##[error]  1405:1   error    Expected indentation of 6 spaces but found 8  indent
+test (18.x)	Run linting	2025-06-03T08:34:27.7831727Z ##[error]  1416:1   error    Expected indentation of 4 spaces but found 6  indent
+test (18.x)	Run linting	2025-06-03T08:34:27.7832790Z ##[error]  1417:1   error    Expected indentation of 6 spaces but found 8  indent
+test (18.x)	Run linting	2025-06-03T08:34:27.7833832Z ##[error]  1422:1   error    Expected indentation of 4 spaces but found 6  indent
+test (18.x)	Run linting	2025-06-03T08:34:27.7834892Z ##[error]  1423:1   error    Expected indentation of 6 spaces but found 8  indent
+test (18.x)	Run linting	2025-06-03T08:34:27.7835984Z ##[error]  1428:1   error    Expected indentation of 4 spaces but found 6  indent
+test (18.x)	Run linting	2025-06-03T08:34:27.7837356Z ##[error]  1429:1   error    Expected indentation of 6 spaces but found 8  indent
+test (18.x)	Run linting	2025-06-03T08:34:27.7838474Z ##[error]  1532:1   error    Expected indentation of 4 spaces but found 6  indent
+test (18.x)	Run linting	2025-06-03T08:34:27.7839546Z ##[error]  1533:1   error    Expected indentation of 6 spaces but found 8  indent
+test (18.x)	Run linting	2025-06-03T08:34:27.7840613Z ##[error]  1534:1   error    Expected indentation of 4 spaces but found 6  indent
+test (18.x)	Run linting	2025-06-03T08:34:27.7842055Z ##[error]  1535:1   error    Expected indentation of 6 spaces but found 8  indent
+test (18.x)	Run linting	2025-06-03T08:34:27.7843158Z ##[error]  1536:1   error    Expected indentation of 4 spaces but found 6  indent
+test (18.x)	Run linting	2025-06-03T08:34:27.7844223Z ##[error]  1537:1   error    Expected indentation of 6 spaces but found 8  indent
+test (18.x)	Run linting	2025-06-03T08:34:27.7845396Z ##[warning]  1865:3   warning  Duplicate name 'searchCurationContent'        no-dupe-class-members
+test (18.x)	Run linting	2025-06-03T08:34:27.7846580Z ##[warning]  1956:25  warning  'bootstrap' is not defined                    no-undef
+test (18.x)	Run linting	2025-06-03T08:34:27.7848102Z ##[error]  1996:2   error    Unnecessary semicolon                         no-extra-semi
+test (18.x)	Run linting	2025-06-03T08:34:27.7848870Z 
+test (18.x)	Run linting	2025-06-03T08:34:27.7849176Z /home/runner/work/TheWell_Pipeline/TheWell_Pipeline/src/web/routes/feedback.js
+test (18.x)	Run linting	2025-06-03T08:34:27.7850088Z ##[warning]  2:7  warning  'FeedbackDAO' is assigned a value but never used  no-unused-vars
+test (18.x)	Run linting	2025-06-03T08:34:27.7850853Z 
+test (18.x)	Run linting	2025-06-03T08:34:27.7851142Z /home/runner/work/TheWell_Pipeline/TheWell_Pipeline/src/web/routes/review.js
+test (18.x)	Run linting	2025-06-03T08:34:27.7851857Z ##[warning]  209:7   warning  'result' is assigned a value but never used  no-unused-vars
+test (18.x)	Run linting	2025-06-03T08:34:27.7853009Z ##[warning]  295:7   warning  'result' is assigned a value but never used  no-unused-vars
+test (18.x)	Run linting	2025-06-03T08:34:27.7854140Z ##[warning]  382:7   warning  'result' is assigned a value but never used  no-unused-vars
+test (18.x)	Run linting	2025-06-03T08:34:27.7855520Z ##[warning]  463:13  warning  'since' is assigned a value but never used   no-unused-vars
+test (18.x)	Run linting	2025-06-03T08:34:27.7856655Z ##[warning]  896:11  warning  'since' is assigned a value but never used   no-unused-vars
+test (18.x)	Run linting	2025-06-03T08:34:27.7857654Z 
+test (18.x)	Run linting	2025-06-03T08:34:27.7857929Z /home/runner/work/TheWell_Pipeline/TheWell_Pipeline/src/web/server.js
+test (18.x)	Run linting	2025-06-03T08:34:27.7858773Z ##[warning]  145:39  warning  'next' is defined but never used. Allowed unused args must match /^_/u  no-unused-vars
+test (18.x)	Run linting	2025-06-03T08:34:27.7860062Z ##[warning]  199:7   warning  Unreachable code                                                        no-unreachable
+test (18.x)	Run linting	2025-06-03T08:34:27.7860828Z 
+test (18.x)	Run linting	2025-06-03T08:34:27.7861083Z /home/runner/work/TheWell_Pipeline/TheWell_Pipeline/src/web/start.js
+test (18.x)	Run linting	2025-06-03T08:34:27.7861769Z ##[warning]    7:7   warning  'path' is assigned a value but never used     no-unused-vars
+test (18.x)	Run linting	2025-06-03T08:34:27.7862909Z ##[warning]   24:17  warning  'options' is assigned a value but never used  no-unused-vars
+test (18.x)	Run linting	2025-06-03T08:34:27.7864055Z ##[warning]  288:32  warning  'options' is assigned a value but never used  no-unused-vars
+test (18.x)	Run linting	2025-06-03T08:34:27.7865182Z ##[warning]  296:28  warning  'options' is assigned a value but never used  no-unused-vars
+test (18.x)	Run linting	2025-06-03T08:34:27.7865916Z 
+test (18.x)	Run linting	2025-06-03T08:34:27.7866311Z ✖ 59 problems (15 errors, 44 warnings)
+test (18.x)	Run linting	2025-06-03T08:34:27.7866709Z   15 errors and 0 warnings potentially fixable with the `--fix` option.
+test (18.x)	Run linting	2025-06-03T08:34:27.7867189Z 
+test (18.x)	Run linting	2025-06-03T08:34:27.8121539Z ##[error]Process completed with exit code 1.
+test (18.x)	Upload test results	﻿2025-06-03T08:34:27.8217950Z ##[group]Run actions/upload-artifact@v4
+test (18.x)	Upload test results	2025-06-03T08:34:27.8218239Z with:
+test (18.x)	Upload test results	2025-06-03T08:34:27.8218418Z   name: test-results-18.x
+test (18.x)	Upload test results	2025-06-03T08:34:27.8218649Z   path: coverage/
+test (18.x)	Upload test results	test-results/
+test (18.x)	Upload test results	
+test (18.x)	Upload test results	2025-06-03T08:34:27.8218885Z   if-no-files-found: warn
+test (18.x)	Upload test results	2025-06-03T08:34:27.8219097Z   compression-level: 6
+test (18.x)	Upload test results	2025-06-03T08:34:27.8219291Z   overwrite: false
+test (18.x)	Upload test results	2025-06-03T08:34:27.8219483Z   include-hidden-files: false
+test (18.x)	Upload test results	2025-06-03T08:34:27.8219750Z env:
+test (18.x)	Upload test results	2025-06-03T08:34:27.8220208Z   DATABASE_URL: ***localhost:5432/thewell_pipeline_test
+test (18.x)	Upload test results	2025-06-03T08:34:27.8220522Z   REDIS_URL: redis://localhost:6379
+test (18.x)	Upload test results	2025-06-03T08:34:27.8220762Z   NODE_ENV: test
+test (18.x)	Upload test results	2025-06-03T08:34:27.8220940Z   WEB_PORT: 0
+test (18.x)	Upload test results	2025-06-03T08:34:27.8221115Z ##[endgroup]
+test (18.x)	Upload test results	2025-06-03T08:34:28.0539335Z Multiple search paths detected. Calculating the least common ancestor of all paths
+test (18.x)	Upload test results	2025-06-03T08:34:28.0543880Z The least common ancestor is /home/runner/work/TheWell_Pipeline/TheWell_Pipeline. This will be the root directory of the artifact
+test (18.x)	Upload test results	2025-06-03T08:34:28.0560519Z ##[warning]No files were found with the provided path: coverage/
+test (18.x)	Upload test results	test-results/. No artifacts will be uploaded.
+test (18.x)	Post Run actions/checkout@v4	﻿2025-06-03T08:34:28.0678806Z Post job cleanup.
+test (18.x)	Post Run actions/checkout@v4	2025-06-03T08:34:28.1697032Z [command]/usr/bin/git version
+test (18.x)	Post Run actions/checkout@v4	2025-06-03T08:34:28.1737722Z git version 2.49.0
+test (18.x)	Post Run actions/checkout@v4	2025-06-03T08:34:28.1783373Z Temporarily overriding HOME='/home/runner/work/_temp/96ad97ed-4582-4f92-8373-7bb1bfa6212b' before making global git config changes
+test (18.x)	Post Run actions/checkout@v4	2025-06-03T08:34:28.1785079Z Adding repository directory to the temporary git global config as a safe directory
+test (18.x)	Post Run actions/checkout@v4	2025-06-03T08:34:28.1798007Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/TheWell_Pipeline/TheWell_Pipeline
+test (18.x)	Post Run actions/checkout@v4	2025-06-03T08:34:28.1840621Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+test (18.x)	Post Run actions/checkout@v4	2025-06-03T08:34:28.1881517Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+test (18.x)	Post Run actions/checkout@v4	2025-06-03T08:34:28.2155567Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+test (18.x)	Post Run actions/checkout@v4	2025-06-03T08:34:28.2183515Z http.https://github.com/.extraheader
+test (18.x)	Post Run actions/checkout@v4	2025-06-03T08:34:28.2199607Z [command]/usr/bin/git config --local --unset-all http.https://github.com/.extraheader
+test (18.x)	Post Run actions/checkout@v4	2025-06-03T08:34:28.2234216Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+test (18.x)	Stop containers	﻿2025-06-03T08:34:28.2599925Z Print service container logs: c03ce44f6b4f4c24beaf5d329ace7e7e_pgvectorpgvectorpg15_fff198
+test (18.x)	Stop containers	2025-06-03T08:34:28.2604506Z ##[command]/usr/bin/docker logs --details f4b6b5c012b32588d9dea6690c990b7e87f76cfc9d056b9050e03d5813398a4e
+test (18.x)	Stop containers	2025-06-03T08:34:28.2732570Z  The files belonging to this database system will be owned by user "postgres".
+test (18.x)	Stop containers	2025-06-03T08:34:28.2734028Z  This user must also own the server process.
+test (18.x)	Stop containers	2025-06-03T08:34:28.2734448Z  
+test (18.x)	Stop containers	2025-06-03T08:34:28.2734855Z  The database cluster will be initialized with locale "en_US.utf8".
+test (18.x)	Stop containers	2025-06-03T08:34:28.2735537Z  The default database encoding has accordingly been set to "UTF8".
+test (18.x)	Stop containers	2025-06-03T08:34:28.2736184Z  The default text search configuration will be set to "english".
+test (18.x)	Stop containers	2025-06-03T08:34:28.2736673Z  
+test (18.x)	Stop containers	2025-06-03T08:34:28.2737162Z  Data page checksums are disabled.
+test (18.x)	Stop containers	2025-06-03T08:34:28.2737530Z  
+test (18.x)	Stop containers	2025-06-03T08:34:28.2737967Z  fixing permissions on existing directory /var/lib/postgresql/data ... ok
+test (18.x)	Stop containers	2025-06-03T08:34:28.2738587Z  creating subdirectories ... ok
+test (18.x)	Stop containers	2025-06-03T08:34:28.2739108Z  selecting dynamic shared memory implementation ... posix
+test (18.x)	Stop containers	2025-06-03T08:34:28.2739624Z  selecting default max_connections ... 100
+test (18.x)	Stop containers	2025-06-03T08:34:28.2740068Z  selecting default shared_buffers ... 128MB
+test (18.x)	Stop containers	2025-06-03T08:34:28.2740499Z  selecting default time zone ... Etc/UTC
+test (18.x)	Stop containers	2025-06-03T08:34:28.2740911Z  creating configuration files ... ok
+test (18.x)	Stop containers	2025-06-03T08:34:28.2741311Z  running bootstrap script ... ok
+test (18.x)	Stop containers	2025-06-03T08:34:28.2741744Z  performing post-bootstrap initialization ... ok
+test (18.x)	Stop containers	2025-06-03T08:34:28.2742193Z  syncing data to disk ... ok
+test (18.x)	Stop containers	2025-06-03T08:34:28.2742512Z  
+test (18.x)	Stop containers	2025-06-03T08:34:28.2742740Z  
+test (18.x)	Stop containers	2025-06-03T08:34:28.2743058Z  Success. You can now start the database server using:
+test (18.x)	Stop containers	2025-06-03T08:34:28.2743491Z  
+test (18.x)	Stop containers	2025-06-03T08:34:28.2743825Z      pg_ctl -D /var/lib/postgresql/data -l logfile start
+test (18.x)	Stop containers	2025-06-03T08:34:28.2744263Z  
+test (18.x)	Stop containers	2025-06-03T08:34:28.2745200Z  waiting for server to start....2025-06-03 08:29:07.071 UTC [48] LOG:  starting PostgreSQL 15.12 (Debian 15.12-1.pgdg120+1) on x86_64-pc-linux-gnu, compiled by gcc (Debian 12.2.0-14) 12.2.0, 64-bit
+test (18.x)	Stop containers	2025-06-03T08:34:28.2746421Z  2025-06-03 08:29:07.072 UTC [48] LOG:  listening on Unix socket "/var/run/postgresql/.s.PGSQL.5432"
+test (18.x)	Stop containers	2025-06-03T08:34:28.2747368Z  2025-06-03 08:29:07.075 UTC [51] LOG:  database system was shut down at 2025-06-03 08:29:06 UTC
+test (18.x)	Stop containers	2025-06-03T08:34:28.2748101Z  2025-06-03 08:29:07.080 UTC [48] LOG:  database system is ready to accept connections
+test (18.x)	Stop containers	2025-06-03T08:34:28.2748621Z   done
+test (18.x)	Stop containers	2025-06-03T08:34:28.2748868Z  server started
+test (18.x)	Stop containers	2025-06-03T08:34:28.2749139Z  CREATE DATABASE
+test (18.x)	Stop containers	2025-06-03T08:34:28.2749399Z  
+test (18.x)	Stop containers	2025-06-03T08:34:28.2749622Z  
+test (18.x)	Stop containers	2025-06-03T08:34:28.2750072Z  /usr/local/bin/docker-entrypoint.sh: ignoring /docker-entrypoint-initdb.d/*
+test (18.x)	Stop containers	2025-06-03T08:34:28.2750642Z  
+test (18.x)	Stop containers	2025-06-03T08:34:28.2751127Z  waiting for server to shut down...2025-06-03 08:29:07.269 UTC [48] LOG:  received fast shutdown request
+test (18.x)	Stop containers	2025-06-03T08:34:28.2751891Z  .2025-06-03 08:29:07.269 UTC [48] LOG:  aborting any active transactions
+test (18.x)	Stop containers	2025-06-03T08:34:28.2752750Z  2025-06-03 08:29:07.271 UTC [48] LOG:  background worker "logical replication launcher" (PID 54) exited with exit code 1
+test (18.x)	Stop containers	2025-06-03T08:34:28.2753538Z  2025-06-03 08:29:07.272 UTC [49] LOG:  shutting down
+test (18.x)	Stop containers	2025-06-03T08:34:28.2754092Z  2025-06-03 08:29:07.272 UTC [49] LOG:  checkpoint starting: shutdown immediate
+test (18.x)	Stop containers	2025-06-03T08:34:28.2756013Z  2025-06-03 08:29:07.295 UTC [49] LOG:  checkpoint complete: wrote 918 buffers (5.6%); 0 WAL file(s) added, 0 removed, 0 recycled; write=0.016 s, sync=0.006 s, total=0.024 s; sync files=301, longest=0.004 s, average=0.001 s; distance=4222 kB, estimate=4222 kB
+test (18.x)	Stop containers	2025-06-03T08:34:28.2757585Z  2025-06-03 08:29:07.302 UTC [48] LOG:  database system is shut down
+test (18.x)	Stop containers	2025-06-03T08:34:28.2757938Z   done
+test (18.x)	Stop containers	2025-06-03T08:34:28.2758097Z  server stopped
+test (18.x)	Stop containers	2025-06-03T08:34:28.2758270Z  
+test (18.x)	Stop containers	2025-06-03T08:34:28.2758486Z  PostgreSQL init process complete; ready for start up.
+test (18.x)	Stop containers	2025-06-03T08:34:28.2759038Z  
+test (18.x)	Stop containers	2025-06-03T08:34:28.2760674Z  initdb: warning: enabling "trust" authentication for local connections
+test (18.x)	Stop containers	2025-06-03T08:34:28.2761601Z  initdb: hint: You can change this by editing pg_hba.conf or using the option -A, or --auth-local and --auth-host, the next time you run initdb.
+test (18.x)	Stop containers	2025-06-03T08:34:28.2762417Z  2025-06-03 08:29:07.392 UTC [1] LOG:  starting PostgreSQL 15.12 (Debian 15.12-1.pgdg120+1) on x86_64-pc-linux-gnu, compiled by gcc (Debian 12.2.0-14) 12.2.0, 64-bit
+test (18.x)	Stop containers	2025-06-03T08:34:28.2763040Z  2025-06-03 08:29:07.392 UTC [1] LOG:  listening on IPv4 address "0.0.0.0", port 5432
+test (18.x)	Stop containers	2025-06-03T08:34:28.2763449Z  2025-06-03 08:29:07.392 UTC [1] LOG:  listening on IPv6 address "::", port 5432
+test (18.x)	Stop containers	2025-06-03T08:34:28.2763890Z  2025-06-03 08:29:07.393 UTC [1] LOG:  listening on Unix socket "/var/run/postgresql/.s.PGSQL.5432"
+test (18.x)	Stop containers	2025-06-03T08:34:28.2764365Z  2025-06-03 08:29:07.396 UTC [64] LOG:  database system was shut down at 2025-06-03 08:29:07 UTC
+test (18.x)	Stop containers	2025-06-03T08:34:28.2764799Z  2025-06-03 08:29:07.401 UTC [1] LOG:  database system is ready to accept connections
+test (18.x)	Stop containers	2025-06-03T08:34:28.2765186Z  2025-06-03 08:29:16.422 UTC [75] FATAL:  role "root" does not exist
+test (18.x)	Stop containers	2025-06-03T08:34:28.2765521Z  2025-06-03 08:29:26.498 UTC [83] FATAL:  role "root" does not exist
+test (18.x)	Stop containers	2025-06-03T08:34:28.2765841Z  2025-06-03 08:29:36.596 UTC [91] FATAL:  role "root" does not exist
+test (18.x)	Stop containers	2025-06-03T08:34:28.2766165Z  2025-06-03 08:29:46.667 UTC [100] FATAL:  role "root" does not exist
+test (18.x)	Stop containers	2025-06-03T08:34:28.2766499Z  2025-06-03 08:29:56.734 UTC [108] FATAL:  role "root" does not exist
+test (18.x)	Stop containers	2025-06-03T08:34:28.2767116Z  2025-06-03 08:30:06.814 UTC [116] FATAL:  role "root" does not exist
+test (18.x)	Stop containers	2025-06-03T08:34:28.2767463Z  2025-06-03 08:30:16.890 UTC [125] FATAL:  role "root" does not exist
+test (18.x)	Stop containers	2025-06-03T08:34:28.2767784Z  2025-06-03 08:30:26.966 UTC [133] FATAL:  role "root" does not exist
+test (18.x)	Stop containers	2025-06-03T08:34:28.2768112Z  2025-06-03 08:30:37.047 UTC [141] FATAL:  role "root" does not exist
+test (18.x)	Stop containers	2025-06-03T08:34:28.2768435Z  2025-06-03 08:30:47.121 UTC [150] FATAL:  role "root" does not exist
+test (18.x)	Stop containers	2025-06-03T08:34:28.2768766Z  2025-06-03 08:30:57.195 UTC [158] FATAL:  role "root" does not exist
+test (18.x)	Stop containers	2025-06-03T08:34:28.2769094Z  2025-06-03 08:31:07.273 UTC [166] FATAL:  role "root" does not exist
+test (18.x)	Stop containers	2025-06-03T08:34:28.2769413Z  2025-06-03 08:31:17.342 UTC [175] FATAL:  role "root" does not exist
+test (18.x)	Stop containers	2025-06-03T08:34:28.2769738Z  2025-06-03 08:31:27.412 UTC [183] FATAL:  role "root" does not exist
+test (18.x)	Stop containers	2025-06-03T08:34:28.2770063Z  2025-06-03 08:31:37.552 UTC [192] FATAL:  role "root" does not exist
+test (18.x)	Stop containers	2025-06-03T08:34:28.2770387Z  2025-06-03 08:31:47.657 UTC [200] FATAL:  role "root" does not exist
+test (18.x)	Stop containers	2025-06-03T08:34:28.2770706Z  2025-06-03 08:31:57.729 UTC [208] FATAL:  role "root" does not exist
+test (18.x)	Stop containers	2025-06-03T08:34:28.2771029Z  2025-06-03 08:32:07.797 UTC [217] FATAL:  role "root" does not exist
+test (18.x)	Stop containers	2025-06-03T08:34:28.2771352Z  2025-06-03 08:32:17.865 UTC [225] FATAL:  role "root" does not exist
+test (18.x)	Stop containers	2025-06-03T08:34:28.2771678Z  2025-06-03 08:32:27.935 UTC [233] FATAL:  role "root" does not exist
+test (18.x)	Stop containers	2025-06-03T08:34:28.2772005Z  2025-06-03 08:32:38.005 UTC [242] FATAL:  role "root" does not exist
+test (18.x)	Stop containers	2025-06-03T08:34:28.2772332Z  2025-06-03 08:32:48.074 UTC [250] FATAL:  role "root" does not exist
+test (18.x)	Stop containers	2025-06-03T08:34:28.2772671Z  2025-06-03 08:32:58.144 UTC [258] FATAL:  role "root" does not exist
+test (18.x)	Stop containers	2025-06-03T08:34:28.2772997Z  2025-06-03 08:33:08.214 UTC [267] FATAL:  role "root" does not exist
+test (18.x)	Stop containers	2025-06-03T08:34:28.2773323Z  2025-06-03 08:33:18.284 UTC [275] FATAL:  role "root" does not exist
+test (18.x)	Stop containers	2025-06-03T08:34:28.2773645Z  2025-06-03 08:33:28.353 UTC [283] FATAL:  role "root" does not exist
+test (18.x)	Stop containers	2025-06-03T08:34:28.2773974Z  2025-06-03 08:33:38.420 UTC [292] FATAL:  role "root" does not exist
+test (18.x)	Stop containers	2025-06-03T08:34:28.2774299Z  2025-06-03 08:33:48.492 UTC [300] FATAL:  role "root" does not exist
+test (18.x)	Stop containers	2025-06-03T08:34:28.2774626Z  2025-06-03 08:33:58.562 UTC [308] FATAL:  role "root" does not exist
+test (18.x)	Stop containers	2025-06-03T08:34:28.2774959Z  2025-06-03 08:34:07.455 UTC [62] LOG:  checkpoint starting: time
+test (18.x)	Stop containers	2025-06-03T08:34:28.2775453Z  2025-06-03 08:34:08.638 UTC [317] FATAL:  role "root" does not exist
+test (18.x)	Stop containers	2025-06-03T08:34:28.2776206Z  2025-06-03 08:34:11.570 UTC [62] LOG:  checkpoint complete: wrote 44 buffers (0.3%); 0 WAL file(s) added, 0 removed, 0 recycled; write=4.111 s, sync=0.002 s, total=4.115 s; sync files=12, longest=0.001 s, average=0.001 s; distance=252 kB, estimate=252 kB
+test (18.x)	Stop containers	2025-06-03T08:34:28.2777211Z  2025-06-03 08:34:18.708 UTC [325] FATAL:  role "root" does not exist
+test (18.x)	Stop containers	2025-06-03T08:34:28.2783642Z Stop and remove container: c03ce44f6b4f4c24beaf5d329ace7e7e_pgvectorpgvectorpg15_fff198
+test (18.x)	Stop containers	2025-06-03T08:34:28.2789007Z ##[command]/usr/bin/docker rm --force f4b6b5c012b32588d9dea6690c990b7e87f76cfc9d056b9050e03d5813398a4e
+test (18.x)	Stop containers	2025-06-03T08:34:28.4271072Z f4b6b5c012b32588d9dea6690c990b7e87f76cfc9d056b9050e03d5813398a4e
+test (18.x)	Stop containers	2025-06-03T08:34:28.4293884Z Print service container logs: d58c4d8715934746b0e866bbc3ff9005_redis7alpine_834721
+test (18.x)	Stop containers	2025-06-03T08:34:28.4295028Z ##[command]/usr/bin/docker logs --details 105a6ec964b40c5ad414fe1cc9c9a0e71ea294469d514fff89c3492527037a1e
+test (18.x)	Stop containers	2025-06-03T08:34:28.4422098Z  1:C 03 Jun 2025 08:29:08.660 # WARNING Memory overcommit must be enabled! Without it, a background save or replication may fail under low memory condition. Being disabled, it can also cause failures without low memory condition, see https://github.com/jemalloc/jemalloc/issues/1328. To fix this issue add 'vm.overcommit_memory = 1' to /etc/sysctl.conf and then reboot or run the command 'sysctl vm.overcommit_memory=1' for this to take effect.
+test (18.x)	Stop containers	2025-06-03T08:34:28.4424763Z  1:C 03 Jun 2025 08:29:08.660 * oO0OoO0OoO0Oo Redis is starting oO0OoO0OoO0Oo
+test (18.x)	Stop containers	2025-06-03T08:34:28.4425528Z  1:C 03 Jun 2025 08:29:08.660 * Redis version=7.4.4, bits=64, commit=00000000, modified=0, pid=1, just started
+test (18.x)	Stop containers	2025-06-03T08:34:28.4426683Z  1:C 03 Jun 2025 08:29:08.660 # Warning: no config file specified, using the default config. In order to specify a config file use redis-server /path/to/redis.conf
+test (18.x)	Stop containers	2025-06-03T08:34:28.4427920Z  1:M 03 Jun 2025 08:29:08.661 * monotonic clock: POSIX clock_gettime
+test (18.x)	Stop containers	2025-06-03T08:34:28.4428526Z  1:M 03 Jun 2025 08:29:08.661 * Running mode=standalone, port=6379.
+test (18.x)	Stop containers	2025-06-03T08:34:28.4429028Z  1:M 03 Jun 2025 08:29:08.661 * Server initialized
+test (18.x)	Stop containers	2025-06-03T08:34:28.4429497Z  1:M 03 Jun 2025 08:29:08.661 * Ready to accept connections tcp
+test (18.x)	Stop containers	2025-06-03T08:34:28.4439108Z Stop and remove container: d58c4d8715934746b0e866bbc3ff9005_redis7alpine_834721
+test (18.x)	Stop containers	2025-06-03T08:34:28.4439847Z ##[command]/usr/bin/docker rm --force 105a6ec964b40c5ad414fe1cc9c9a0e71ea294469d514fff89c3492527037a1e
+test (18.x)	Stop containers	2025-06-03T08:34:28.5811336Z 105a6ec964b40c5ad414fe1cc9c9a0e71ea294469d514fff89c3492527037a1e
+test (18.x)	Stop containers	2025-06-03T08:34:28.5851104Z Remove container network: github_network_1550fd58a3274057a2da8e8f3c285337
+test (18.x)	Stop containers	2025-06-03T08:34:28.5857312Z ##[command]/usr/bin/docker network rm github_network_1550fd58a3274057a2da8e8f3c285337
+test (18.x)	Stop containers	2025-06-03T08:34:28.7106910Z github_network_1550fd58a3274057a2da8e8f3c285337
+test (18.x)	Complete job	﻿2025-06-03T08:34:28.7168756Z Cleaning up orphan processes
+test (20.x)	Set up job	﻿2025-06-03T08:28:57.0759456Z Current runner version: '2.324.0'
+test (20.x)	Set up job	2025-06-03T08:28:57.0800185Z ##[group]Operating System
+test (20.x)	Set up job	2025-06-03T08:28:57.0801028Z Ubuntu
+test (20.x)	Set up job	2025-06-03T08:28:57.0801478Z 24.04.2
+test (20.x)	Set up job	2025-06-03T08:28:57.0802016Z LTS
+test (20.x)	Set up job	2025-06-03T08:28:57.0802484Z ##[endgroup]
+test (20.x)	Set up job	2025-06-03T08:28:57.0803000Z ##[group]Runner Image
+test (20.x)	Set up job	2025-06-03T08:28:57.0803557Z Image: ubuntu-24.04
+test (20.x)	Set up job	2025-06-03T08:28:57.0804162Z Version: 20250527.1.0
+test (20.x)	Set up job	2025-06-03T08:28:57.0805144Z Included Software: https://github.com/actions/runner-images/blob/ubuntu24/20250527.1/images/ubuntu/Ubuntu2404-Readme.md
+test (20.x)	Set up job	2025-06-03T08:28:57.0806493Z Image Release: https://github.com/actions/runner-images/releases/tag/ubuntu24%2F20250527.1
+test (20.x)	Set up job	2025-06-03T08:28:57.0807650Z ##[endgroup]
+test (20.x)	Set up job	2025-06-03T08:28:57.0808158Z ##[group]Runner Image Provisioner
+test (20.x)	Set up job	2025-06-03T08:28:57.0808759Z 2.0.437.1
+test (20.x)	Set up job	2025-06-03T08:28:57.0809272Z ##[endgroup]
+test (20.x)	Set up job	2025-06-03T08:28:57.0810297Z ##[group]GITHUB_TOKEN Permissions
+test (20.x)	Set up job	2025-06-03T08:28:57.0812570Z Contents: read
+test (20.x)	Set up job	2025-06-03T08:28:57.0813171Z Metadata: read
+test (20.x)	Set up job	2025-06-03T08:28:57.0813644Z Packages: read
+test (20.x)	Set up job	2025-06-03T08:28:57.0814449Z ##[endgroup]
+test (20.x)	Set up job	2025-06-03T08:28:57.0816711Z Secret source: Actions
+test (20.x)	Set up job	2025-06-03T08:28:57.0817906Z Prepare workflow directory
+test (20.x)	Set up job	2025-06-03T08:28:57.1305716Z Prepare all required actions
+test (20.x)	Set up job	2025-06-03T08:28:57.1343122Z Getting action download info
+test (20.x)	Set up job	2025-06-03T08:28:57.5990263Z ##[group]Download immutable action package 'actions/checkout@v4'
+test (20.x)	Set up job	2025-06-03T08:28:57.5991269Z Version: 4.2.2
+test (20.x)	Set up job	2025-06-03T08:28:57.5992265Z Digest: sha256:ccb2698953eaebd21c7bf6268a94f9c26518a7e38e27e0b83c1fe1ad049819b1
+test (20.x)	Set up job	2025-06-03T08:28:57.5993516Z Source commit SHA: 11bd71901bbe5b1630ceea73d27597364c9af683
+test (20.x)	Set up job	2025-06-03T08:28:57.5994211Z ##[endgroup]
+test (20.x)	Set up job	2025-06-03T08:28:57.7177200Z ##[group]Download immutable action package 'actions/setup-node@v4'
+test (20.x)	Set up job	2025-06-03T08:28:57.7178288Z Version: 4.4.0
+test (20.x)	Set up job	2025-06-03T08:28:57.7179112Z Digest: sha256:9427cefe82346e992fb5b949e3569b39d537ae41aa3086483b14eceebfc16bc1
+test (20.x)	Set up job	2025-06-03T08:28:57.7180050Z Source commit SHA: 49933ea5288caeca8642d1e84afbd3f7d6820020
+test (20.x)	Set up job	2025-06-03T08:28:57.7180759Z ##[endgroup]
+test (20.x)	Set up job	2025-06-03T08:28:57.8105623Z Download action repository 'codecov/codecov-action@v3' (SHA:ab904c41d6ece82784817410c45d8b8c02684457)
+test (20.x)	Set up job	2025-06-03T08:28:58.4192989Z ##[group]Download immutable action package 'actions/upload-artifact@v4'
+test (20.x)	Set up job	2025-06-03T08:28:58.4194000Z Version: 4.6.2
+test (20.x)	Set up job	2025-06-03T08:28:58.4194787Z Digest: sha256:290722aa3281d5caf23d0acdc3dbeb3424786a1a01a9cc97e72f147225e37c38
+test (20.x)	Set up job	2025-06-03T08:28:58.4195852Z Source commit SHA: ea165f8d65b6e75b540449e92b4886f43607fa02
+test (20.x)	Set up job	2025-06-03T08:28:58.4196591Z ##[endgroup]
+test (20.x)	Set up job	2025-06-03T08:28:58.6436082Z Complete job name: test (20.x)
+test (20.x)	Initialize containers	﻿2025-06-03T08:28:58.6912393Z ##[group]Checking docker version
+test (20.x)	Initialize containers	2025-06-03T08:28:58.6925398Z ##[command]/usr/bin/docker version --format '{{.Server.APIVersion}}'
+test (20.x)	Initialize containers	2025-06-03T08:28:58.8184397Z '1.48'
+test (20.x)	Initialize containers	2025-06-03T08:28:58.8197205Z Docker daemon API version: '1.48'
+test (20.x)	Initialize containers	2025-06-03T08:28:58.8198432Z ##[command]/usr/bin/docker version --format '{{.Client.APIVersion}}'
+test (20.x)	Initialize containers	2025-06-03T08:28:58.8357918Z '1.48'
+test (20.x)	Initialize containers	2025-06-03T08:28:58.8372307Z Docker client API version: '1.48'
+test (20.x)	Initialize containers	2025-06-03T08:28:58.8377943Z ##[endgroup]
+test (20.x)	Initialize containers	2025-06-03T08:28:58.8381605Z ##[group]Clean up resources from previous jobs
+test (20.x)	Initialize containers	2025-06-03T08:28:58.8388251Z ##[command]/usr/bin/docker ps --all --quiet --no-trunc --filter "label=38a0ca"
+test (20.x)	Initialize containers	2025-06-03T08:28:58.8526067Z ##[command]/usr/bin/docker network prune --force --filter "label=38a0ca"
+test (20.x)	Initialize containers	2025-06-03T08:28:58.8659004Z ##[endgroup]
+test (20.x)	Initialize containers	2025-06-03T08:28:58.8659622Z ##[group]Create local container network
+test (20.x)	Initialize containers	2025-06-03T08:28:58.8669873Z ##[command]/usr/bin/docker network create --label 38a0ca github_network_1e8194893d3c48f9ae0ffbc0e51d6063
+test (20.x)	Initialize containers	2025-06-03T08:28:58.9231276Z ad0cf9e483453765b176292df391e611744eab1db3af80c13cfbb044f5899cf9
+test (20.x)	Initialize containers	2025-06-03T08:28:58.9250836Z ##[endgroup]
+test (20.x)	Initialize containers	2025-06-03T08:28:58.9278848Z ##[group]Starting postgres service container
+test (20.x)	Initialize containers	2025-06-03T08:28:58.9301580Z ##[command]/usr/bin/docker pull pgvector/pgvector:pg15
+test (20.x)	Initialize containers	2025-06-03T08:28:59.9584748Z pg15: Pulling from pgvector/pgvector
+test (20.x)	Initialize containers	2025-06-03T08:29:00.2114145Z 7cf63256a31a: Pulling fs layer
+test (20.x)	Initialize containers	2025-06-03T08:29:00.2115830Z edfaf7a52bcf: Pulling fs layer
+test (20.x)	Initialize containers	2025-06-03T08:29:00.2116538Z 0746858db57e: Pulling fs layer
+test (20.x)	Initialize containers	2025-06-03T08:29:00.2117519Z ef78128b1396: Pulling fs layer
+test (20.x)	Initialize containers	2025-06-03T08:29:00.2118273Z 8719220a2756: Pulling fs layer
+test (20.x)	Initialize containers	2025-06-03T08:29:00.2118980Z 40f1e01322c4: Pulling fs layer
+test (20.x)	Initialize containers	2025-06-03T08:29:00.2119673Z c503a22414ac: Pulling fs layer
+test (20.x)	Initialize containers	2025-06-03T08:29:00.2120348Z 4b27853477e4: Pulling fs layer
+test (20.x)	Initialize containers	2025-06-03T08:29:00.2121005Z 67a3fb353e87: Pulling fs layer
+test (20.x)	Initialize containers	2025-06-03T08:29:00.2121679Z 998e67044cbc: Pulling fs layer
+test (20.x)	Initialize containers	2025-06-03T08:29:00.2122405Z ad88e09b12b7: Pulling fs layer
+test (20.x)	Initialize containers	2025-06-03T08:29:00.2123150Z 2862e1b17ae5: Pulling fs layer
+test (20.x)	Initialize containers	2025-06-03T08:29:00.2123862Z 61f047619781: Pulling fs layer
+test (20.x)	Initialize containers	2025-06-03T08:29:00.2124695Z 02efa678ec06: Pulling fs layer
+test (20.x)	Initialize containers	2025-06-03T08:29:00.2125471Z 6811f9b51c40: Pulling fs layer
+test (20.x)	Initialize containers	2025-06-03T08:29:00.2126232Z 69de7f33821b: Pulling fs layer
+test (20.x)	Initialize containers	2025-06-03T08:29:00.2126954Z ef78128b1396: Waiting
+test (20.x)	Initialize containers	2025-06-03T08:29:00.2127724Z 8719220a2756: Waiting
+test (20.x)	Initialize containers	2025-06-03T08:29:00.2128360Z 40f1e01322c4: Waiting
+test (20.x)	Initialize containers	2025-06-03T08:29:00.2129028Z c503a22414ac: Waiting
+test (20.x)	Initialize containers	2025-06-03T08:29:00.2129688Z 4b27853477e4: Waiting
+test (20.x)	Initialize containers	2025-06-03T08:29:00.2130359Z 67a3fb353e87: Waiting
+test (20.x)	Initialize containers	2025-06-03T08:29:00.2131031Z 998e67044cbc: Waiting
+test (20.x)	Initialize containers	2025-06-03T08:29:00.2131727Z ad88e09b12b7: Waiting
+test (20.x)	Initialize containers	2025-06-03T08:29:00.2132638Z 2862e1b17ae5: Waiting
+test (20.x)	Initialize containers	2025-06-03T08:29:00.2133544Z 61f047619781: Waiting
+test (20.x)	Initialize containers	2025-06-03T08:29:00.2134450Z 02efa678ec06: Waiting
+test (20.x)	Initialize containers	2025-06-03T08:29:00.2135405Z 69de7f33821b: Waiting
+test (20.x)	Initialize containers	2025-06-03T08:29:00.4589444Z edfaf7a52bcf: Verifying Checksum
+test (20.x)	Initialize containers	2025-06-03T08:29:00.4592713Z edfaf7a52bcf: Download complete
+test (20.x)	Initialize containers	2025-06-03T08:29:00.4733311Z 0746858db57e: Download complete
+test (20.x)	Initialize containers	2025-06-03T08:29:00.6135478Z 7cf63256a31a: Verifying Checksum
+test (20.x)	Initialize containers	2025-06-03T08:29:00.6137983Z 7cf63256a31a: Download complete
+test (20.x)	Initialize containers	2025-06-03T08:29:00.7055013Z ef78128b1396: Download complete
+test (20.x)	Initialize containers	2025-06-03T08:29:00.7431921Z 8719220a2756: Verifying Checksum
+test (20.x)	Initialize containers	2025-06-03T08:29:00.7436676Z 8719220a2756: Download complete
+test (20.x)	Initialize containers	2025-06-03T08:29:00.8651390Z 40f1e01322c4: Verifying Checksum
+test (20.x)	Initialize containers	2025-06-03T08:29:00.8654048Z 40f1e01322c4: Download complete
+test (20.x)	Initialize containers	2025-06-03T08:29:00.9499664Z c503a22414ac: Verifying Checksum
+test (20.x)	Initialize containers	2025-06-03T08:29:00.9501049Z c503a22414ac: Download complete
+test (20.x)	Initialize containers	2025-06-03T08:29:00.9900660Z 4b27853477e4: Verifying Checksum
+test (20.x)	Initialize containers	2025-06-03T08:29:00.9901499Z 4b27853477e4: Download complete
+test (20.x)	Initialize containers	2025-06-03T08:29:01.1941689Z 998e67044cbc: Download complete
+test (20.x)	Initialize containers	2025-06-03T08:29:01.2753893Z ad88e09b12b7: Download complete
+test (20.x)	Initialize containers	2025-06-03T08:29:01.4461304Z 2862e1b17ae5: Verifying Checksum
+test (20.x)	Initialize containers	2025-06-03T08:29:01.4462897Z 2862e1b17ae5: Download complete
+test (20.x)	Initialize containers	2025-06-03T08:29:01.5509391Z 61f047619781: Download complete
+test (20.x)	Initialize containers	2025-06-03T08:29:01.5772146Z 67a3fb353e87: Verifying Checksum
+test (20.x)	Initialize containers	2025-06-03T08:29:01.5772689Z 67a3fb353e87: Download complete
+test (20.x)	Initialize containers	2025-06-03T08:29:01.7338225Z 02efa678ec06: Verifying Checksum
+test (20.x)	Initialize containers	2025-06-03T08:29:01.7338759Z 02efa678ec06: Download complete
+test (20.x)	Initialize containers	2025-06-03T08:29:01.8083825Z 6811f9b51c40: Download complete
+test (20.x)	Initialize containers	2025-06-03T08:29:01.8092018Z 7cf63256a31a: Pull complete
+test (20.x)	Initialize containers	2025-06-03T08:29:01.8186808Z 69de7f33821b: Download complete
+test (20.x)	Initialize containers	2025-06-03T08:29:02.1050666Z edfaf7a52bcf: Pull complete
+test (20.x)	Initialize containers	2025-06-03T08:29:02.2536252Z 0746858db57e: Pull complete
+test (20.x)	Initialize containers	2025-06-03T08:29:02.3050879Z ef78128b1396: Pull complete
+test (20.x)	Initialize containers	2025-06-03T08:29:02.6251332Z 8719220a2756: Pull complete
+test (20.x)	Initialize containers	2025-06-03T08:29:02.7139393Z 40f1e01322c4: Pull complete
+test (20.x)	Initialize containers	2025-06-03T08:29:02.7349947Z c503a22414ac: Pull complete
+test (20.x)	Initialize containers	2025-06-03T08:29:02.7471090Z 4b27853477e4: Pull complete
+test (20.x)	Initialize containers	2025-06-03T08:29:05.6076785Z 67a3fb353e87: Pull complete
+test (20.x)	Initialize containers	2025-06-03T08:29:05.6355641Z 998e67044cbc: Pull complete
+test (20.x)	Initialize containers	2025-06-03T08:29:05.6463310Z ad88e09b12b7: Pull complete
+test (20.x)	Initialize containers	2025-06-03T08:29:05.6578750Z 2862e1b17ae5: Pull complete
+test (20.x)	Initialize containers	2025-06-03T08:29:05.6690276Z 61f047619781: Pull complete
+test (20.x)	Initialize containers	2025-06-03T08:29:05.6815391Z 02efa678ec06: Pull complete
+test (20.x)	Initialize containers	2025-06-03T08:29:05.7554459Z 6811f9b51c40: Pull complete
+test (20.x)	Initialize containers	2025-06-03T08:29:05.8304562Z 69de7f33821b: Pull complete
+test (20.x)	Initialize containers	2025-06-03T08:29:05.8346005Z Digest: sha256:240c5c37437a379123d79e48e3635c7a1d960fba20e8fbae68a94243eb81fab3
+test (20.x)	Initialize containers	2025-06-03T08:29:05.8361439Z Status: Downloaded newer image for pgvector/pgvector:pg15
+test (20.x)	Initialize containers	2025-06-03T08:29:05.8375484Z docker.io/pgvector/pgvector:pg15
+test (20.x)	Initialize containers	2025-06-03T08:29:05.8441803Z ##[command]/usr/bin/docker create --name f42ff45d654e46d5a2ea4490897403c5_pgvectorpgvectorpg15_10ed6f --label 38a0ca --network github_network_1e8194893d3c48f9ae0ffbc0e51d6063 --network-alias postgres -p 5432:5432 --health-cmd pg_isready --health-interval 10s --health-timeout 5s --health-retries 5 -e "POSTGRES_PASSWORD=postgres" -e "POSTGRES_USER=postgres" -e "POSTGRES_DB=thewell_pipeline_test" -e GITHUB_ACTIONS=true -e CI=true pgvector/pgvector:pg15
+test (20.x)	Initialize containers	2025-06-03T08:29:05.8721388Z 1fcd1eeb48e76c7bb7f202f86f416ae1303f37706c16c3f7f6a360a03fd22b5c
+test (20.x)	Initialize containers	2025-06-03T08:29:05.8745302Z ##[command]/usr/bin/docker start 1fcd1eeb48e76c7bb7f202f86f416ae1303f37706c16c3f7f6a360a03fd22b5c
+test (20.x)	Initialize containers	2025-06-03T08:29:06.0990513Z 1fcd1eeb48e76c7bb7f202f86f416ae1303f37706c16c3f7f6a360a03fd22b5c
+test (20.x)	Initialize containers	2025-06-03T08:29:06.1018437Z ##[command]/usr/bin/docker ps --all --filter id=1fcd1eeb48e76c7bb7f202f86f416ae1303f37706c16c3f7f6a360a03fd22b5c --filter status=running --no-trunc --format "{{.ID}} {{.Status}}"
+test (20.x)	Initialize containers	2025-06-03T08:29:06.1174297Z 1fcd1eeb48e76c7bb7f202f86f416ae1303f37706c16c3f7f6a360a03fd22b5c Up Less than a second (health: starting)
+test (20.x)	Initialize containers	2025-06-03T08:29:06.1195518Z ##[command]/usr/bin/docker port 1fcd1eeb48e76c7bb7f202f86f416ae1303f37706c16c3f7f6a360a03fd22b5c
+test (20.x)	Initialize containers	2025-06-03T08:29:06.1330862Z 5432/tcp -> 0.0.0.0:5432
+test (20.x)	Initialize containers	2025-06-03T08:29:06.1331942Z 5432/tcp -> [::]:5432
+test (20.x)	Initialize containers	2025-06-03T08:29:06.1378684Z ##[endgroup]
+test (20.x)	Initialize containers	2025-06-03T08:29:06.1379848Z ##[group]Starting redis service container
+test (20.x)	Initialize containers	2025-06-03T08:29:06.1381196Z ##[command]/usr/bin/docker pull redis:7-alpine
+test (20.x)	Initialize containers	2025-06-03T08:29:07.0859209Z 7-alpine: Pulling from library/redis
+test (20.x)	Initialize containers	2025-06-03T08:29:07.3523616Z f18232174bc9: Pulling fs layer
+test (20.x)	Initialize containers	2025-06-03T08:29:07.3524417Z 43d45750a845: Pulling fs layer
+test (20.x)	Initialize containers	2025-06-03T08:29:07.3524930Z e5c719682459: Pulling fs layer
+test (20.x)	Initialize containers	2025-06-03T08:29:07.3525314Z 890691a58c5f: Pulling fs layer
+test (20.x)	Initialize containers	2025-06-03T08:29:07.3525683Z 12a814a1432a: Pulling fs layer
+test (20.x)	Initialize containers	2025-06-03T08:29:07.3526061Z 249de296e9ec: Pulling fs layer
+test (20.x)	Initialize containers	2025-06-03T08:29:07.3526401Z 4f4fb700ef54: Pulling fs layer
+test (20.x)	Initialize containers	2025-06-03T08:29:07.3526749Z 235a05f8b97c: Pulling fs layer
+test (20.x)	Initialize containers	2025-06-03T08:29:07.3527588Z 249de296e9ec: Waiting
+test (20.x)	Initialize containers	2025-06-03T08:29:07.3527918Z 4f4fb700ef54: Waiting
+test (20.x)	Initialize containers	2025-06-03T08:29:07.3528208Z 235a05f8b97c: Waiting
+test (20.x)	Initialize containers	2025-06-03T08:29:07.3528500Z 890691a58c5f: Waiting
+test (20.x)	Initialize containers	2025-06-03T08:29:07.3528779Z 12a814a1432a: Waiting
+test (20.x)	Initialize containers	2025-06-03T08:29:07.6000415Z e5c719682459: Verifying Checksum
+test (20.x)	Initialize containers	2025-06-03T08:29:07.6001844Z e5c719682459: Download complete
+test (20.x)	Initialize containers	2025-06-03T08:29:07.6005485Z 43d45750a845: Download complete
+test (20.x)	Initialize containers	2025-06-03T08:29:07.7358173Z f18232174bc9: Verifying Checksum
+test (20.x)	Initialize containers	2025-06-03T08:29:07.7359590Z f18232174bc9: Download complete
+test (20.x)	Initialize containers	2025-06-03T08:29:07.8428277Z f18232174bc9: Pull complete
+test (20.x)	Initialize containers	2025-06-03T08:29:07.8535242Z 890691a58c5f: Verifying Checksum
+test (20.x)	Initialize containers	2025-06-03T08:29:07.8535728Z 890691a58c5f: Download complete
+test (20.x)	Initialize containers	2025-06-03T08:29:07.8795349Z 43d45750a845: Pull complete
+test (20.x)	Initialize containers	2025-06-03T08:29:07.8891526Z 12a814a1432a: Verifying Checksum
+test (20.x)	Initialize containers	2025-06-03T08:29:07.8891988Z 12a814a1432a: Download complete
+test (20.x)	Initialize containers	2025-06-03T08:29:07.9785792Z 249de296e9ec: Verifying Checksum
+test (20.x)	Initialize containers	2025-06-03T08:29:07.9786529Z 249de296e9ec: Download complete
+test (20.x)	Initialize containers	2025-06-03T08:29:08.0245621Z e5c719682459: Pull complete
+test (20.x)	Initialize containers	2025-06-03T08:29:08.0540240Z 890691a58c5f: Pull complete
+test (20.x)	Initialize containers	2025-06-03T08:29:08.1068021Z 4f4fb700ef54: Verifying Checksum
+test (20.x)	Initialize containers	2025-06-03T08:29:08.1068502Z 4f4fb700ef54: Download complete
+test (20.x)	Initialize containers	2025-06-03T08:29:08.1244815Z 235a05f8b97c: Verifying Checksum
+test (20.x)	Initialize containers	2025-06-03T08:29:08.1245226Z 235a05f8b97c: Download complete
+test (20.x)	Initialize containers	2025-06-03T08:29:08.2592520Z 12a814a1432a: Pull complete
+test (20.x)	Initialize containers	2025-06-03T08:29:08.2701479Z 249de296e9ec: Pull complete
+test (20.x)	Initialize containers	2025-06-03T08:29:08.2791359Z 4f4fb700ef54: Pull complete
+test (20.x)	Initialize containers	2025-06-03T08:29:08.2913609Z 235a05f8b97c: Pull complete
+test (20.x)	Initialize containers	2025-06-03T08:29:08.2951913Z Digest: sha256:ee9e8748ace004102a267f7b8265dab2c618317df22507b89d16a8add7154273
+test (20.x)	Initialize containers	2025-06-03T08:29:08.2968925Z Status: Downloaded newer image for redis:7-alpine
+test (20.x)	Initialize containers	2025-06-03T08:29:08.2978833Z docker.io/library/redis:7-alpine
+test (20.x)	Initialize containers	2025-06-03T08:29:08.2995825Z ##[command]/usr/bin/docker create --name 3e96e4110bb24ab88179649902de3d8b_redis7alpine_444af9 --label 38a0ca --network github_network_1e8194893d3c48f9ae0ffbc0e51d6063 --network-alias redis -p 6379:6379 --health-cmd "redis-cli ping" --health-interval 10s --health-timeout 5s --health-retries 5 -e GITHUB_ACTIONS=true -e CI=true redis:7-alpine
+test (20.x)	Initialize containers	2025-06-03T08:29:08.3249196Z ab722a2a99f21394abbc43f42abc5d4841d41e2326cd1234268f2cb7e724dd0b
+test (20.x)	Initialize containers	2025-06-03T08:29:08.3265084Z ##[command]/usr/bin/docker start ab722a2a99f21394abbc43f42abc5d4841d41e2326cd1234268f2cb7e724dd0b
+test (20.x)	Initialize containers	2025-06-03T08:29:08.4639127Z ab722a2a99f21394abbc43f42abc5d4841d41e2326cd1234268f2cb7e724dd0b
+test (20.x)	Initialize containers	2025-06-03T08:29:08.4657774Z ##[command]/usr/bin/docker ps --all --filter id=ab722a2a99f21394abbc43f42abc5d4841d41e2326cd1234268f2cb7e724dd0b --filter status=running --no-trunc --format "{{.ID}} {{.Status}}"
+test (20.x)	Initialize containers	2025-06-03T08:29:08.4835800Z ab722a2a99f21394abbc43f42abc5d4841d41e2326cd1234268f2cb7e724dd0b Up Less than a second (health: starting)
+test (20.x)	Initialize containers	2025-06-03T08:29:08.4839807Z ##[command]/usr/bin/docker port ab722a2a99f21394abbc43f42abc5d4841d41e2326cd1234268f2cb7e724dd0b
+test (20.x)	Initialize containers	2025-06-03T08:29:08.4954209Z 6379/tcp -> 0.0.0.0:6379
+test (20.x)	Initialize containers	2025-06-03T08:29:08.4954590Z 6379/tcp -> [::]:6379
+test (20.x)	Initialize containers	2025-06-03T08:29:08.4968522Z ##[endgroup]
+test (20.x)	Initialize containers	2025-06-03T08:29:08.4978304Z ##[group]Waiting for all services to be ready
+test (20.x)	Initialize containers	2025-06-03T08:29:08.4991556Z ##[command]/usr/bin/docker inspect --format="{{if .Config.Healthcheck}}{{print .State.Health.Status}}{{end}}" 1fcd1eeb48e76c7bb7f202f86f416ae1303f37706c16c3f7f6a360a03fd22b5c
+test (20.x)	Initialize containers	2025-06-03T08:29:08.5108160Z starting
+test (20.x)	Initialize containers	2025-06-03T08:29:08.5128110Z postgres service is starting, waiting 2 seconds before checking again.
+test (20.x)	Initialize containers	2025-06-03T08:29:10.5132511Z ##[command]/usr/bin/docker inspect --format="{{if .Config.Healthcheck}}{{print .State.Health.Status}}{{end}}" 1fcd1eeb48e76c7bb7f202f86f416ae1303f37706c16c3f7f6a360a03fd22b5c
+test (20.x)	Initialize containers	2025-06-03T08:29:10.5260417Z starting
+test (20.x)	Initialize containers	2025-06-03T08:29:10.5274017Z postgres service is starting, waiting 4 seconds before checking again.
+test (20.x)	Initialize containers	2025-06-03T08:29:14.7801853Z ##[command]/usr/bin/docker inspect --format="{{if .Config.Healthcheck}}{{print .State.Health.Status}}{{end}}" 1fcd1eeb48e76c7bb7f202f86f416ae1303f37706c16c3f7f6a360a03fd22b5c
+test (20.x)	Initialize containers	2025-06-03T08:29:14.7923311Z starting
+test (20.x)	Initialize containers	2025-06-03T08:29:14.7937801Z postgres service is starting, waiting 7 seconds before checking again.
+test (20.x)	Initialize containers	2025-06-03T08:29:22.7464323Z ##[command]/usr/bin/docker inspect --format="{{if .Config.Healthcheck}}{{print .State.Health.Status}}{{end}}" 1fcd1eeb48e76c7bb7f202f86f416ae1303f37706c16c3f7f6a360a03fd22b5c
+test (20.x)	Initialize containers	2025-06-03T08:29:22.7585023Z healthy
+test (20.x)	Initialize containers	2025-06-03T08:29:22.7605903Z postgres service is healthy.
+test (20.x)	Initialize containers	2025-06-03T08:29:22.7606703Z ##[command]/usr/bin/docker inspect --format="{{if .Config.Healthcheck}}{{print .State.Health.Status}}{{end}}" ab722a2a99f21394abbc43f42abc5d4841d41e2326cd1234268f2cb7e724dd0b
+test (20.x)	Initialize containers	2025-06-03T08:29:22.7723203Z healthy
+test (20.x)	Initialize containers	2025-06-03T08:29:22.7737648Z redis service is healthy.
+test (20.x)	Initialize containers	2025-06-03T08:29:22.7738306Z ##[endgroup]
+test (20.x)	Run actions/checkout@v4	﻿2025-06-03T08:29:22.7970340Z ##[group]Run actions/checkout@v4
+test (20.x)	Run actions/checkout@v4	2025-06-03T08:29:22.7970853Z with:
+test (20.x)	Run actions/checkout@v4	2025-06-03T08:29:22.7971052Z   repository: mirqtio/TheWell_Pipeline
+test (20.x)	Run actions/checkout@v4	2025-06-03T08:29:22.7971421Z   token: ***
+test (20.x)	Run actions/checkout@v4	2025-06-03T08:29:22.7971593Z   ssh-strict: true
+test (20.x)	Run actions/checkout@v4	2025-06-03T08:29:22.7971764Z   ssh-user: git
+test (20.x)	Run actions/checkout@v4	2025-06-03T08:29:22.7971944Z   persist-credentials: true
+test (20.x)	Run actions/checkout@v4	2025-06-03T08:29:22.7972151Z   clean: true
+test (20.x)	Run actions/checkout@v4	2025-06-03T08:29:22.7972329Z   sparse-checkout-cone-mode: true
+test (20.x)	Run actions/checkout@v4	2025-06-03T08:29:22.7972551Z   fetch-depth: 1
+test (20.x)	Run actions/checkout@v4	2025-06-03T08:29:22.7972717Z   fetch-tags: false
+test (20.x)	Run actions/checkout@v4	2025-06-03T08:29:22.7972893Z   show-progress: true
+test (20.x)	Run actions/checkout@v4	2025-06-03T08:29:22.7973063Z   lfs: false
+test (20.x)	Run actions/checkout@v4	2025-06-03T08:29:22.7973223Z   submodules: false
+test (20.x)	Run actions/checkout@v4	2025-06-03T08:29:22.7973398Z   set-safe-directory: true
+test (20.x)	Run actions/checkout@v4	2025-06-03T08:29:22.7973772Z ##[endgroup]
+test (20.x)	Run actions/checkout@v4	2025-06-03T08:29:23.0567664Z Syncing repository: mirqtio/TheWell_Pipeline
+test (20.x)	Run actions/checkout@v4	2025-06-03T08:29:23.0569229Z ##[group]Getting Git version info
+test (20.x)	Run actions/checkout@v4	2025-06-03T08:29:23.0569908Z Working directory is '/home/runner/work/TheWell_Pipeline/TheWell_Pipeline'
+test (20.x)	Run actions/checkout@v4	2025-06-03T08:29:23.0571075Z [command]/usr/bin/git version
+test (20.x)	Run actions/checkout@v4	2025-06-03T08:29:23.0660036Z git version 2.49.0
+test (20.x)	Run actions/checkout@v4	2025-06-03T08:29:23.0691414Z ##[endgroup]
+test (20.x)	Run actions/checkout@v4	2025-06-03T08:29:23.0707127Z Temporarily overriding HOME='/home/runner/work/_temp/215959c0-b375-4d09-bac8-80c6aaaf8920' before making global git config changes
+test (20.x)	Run actions/checkout@v4	2025-06-03T08:29:23.0708616Z Adding repository directory to the temporary git global config as a safe directory
+test (20.x)	Run actions/checkout@v4	2025-06-03T08:29:23.0720794Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/TheWell_Pipeline/TheWell_Pipeline
+test (20.x)	Run actions/checkout@v4	2025-06-03T08:29:23.0760630Z Deleting the contents of '/home/runner/work/TheWell_Pipeline/TheWell_Pipeline'
+test (20.x)	Run actions/checkout@v4	2025-06-03T08:29:23.0764385Z ##[group]Initializing the repository
+test (20.x)	Run actions/checkout@v4	2025-06-03T08:29:23.0769314Z [command]/usr/bin/git init /home/runner/work/TheWell_Pipeline/TheWell_Pipeline
+test (20.x)	Run actions/checkout@v4	2025-06-03T08:29:23.0873751Z hint: Using 'master' as the name for the initial branch. This default branch name
+test (20.x)	Run actions/checkout@v4	2025-06-03T08:29:23.0874666Z hint: is subject to change. To configure the initial branch name to use in all
+test (20.x)	Run actions/checkout@v4	2025-06-03T08:29:23.0875280Z hint: of your new repositories, which will suppress this warning, call:
+test (20.x)	Run actions/checkout@v4	2025-06-03T08:29:23.0875615Z hint:
+test (20.x)	Run actions/checkout@v4	2025-06-03T08:29:23.0875879Z hint: 	git config --global init.defaultBranch <name>
+test (20.x)	Run actions/checkout@v4	2025-06-03T08:29:23.0876159Z hint:
+test (20.x)	Run actions/checkout@v4	2025-06-03T08:29:23.0876425Z hint: Names commonly chosen instead of 'master' are 'main', 'trunk' and
+test (20.x)	Run actions/checkout@v4	2025-06-03T08:29:23.0876867Z hint: 'development'. The just-created branch can be renamed via this command:
+test (20.x)	Run actions/checkout@v4	2025-06-03T08:29:23.0877201Z hint:
+test (20.x)	Run actions/checkout@v4	2025-06-03T08:29:23.0877595Z hint: 	git branch -m <name>
+test (20.x)	Run actions/checkout@v4	2025-06-03T08:29:23.0882651Z Initialized empty Git repository in /home/runner/work/TheWell_Pipeline/TheWell_Pipeline/.git/
+test (20.x)	Run actions/checkout@v4	2025-06-03T08:29:23.0894346Z [command]/usr/bin/git remote add origin https://github.com/mirqtio/TheWell_Pipeline
+test (20.x)	Run actions/checkout@v4	2025-06-03T08:29:23.0930096Z ##[endgroup]
+test (20.x)	Run actions/checkout@v4	2025-06-03T08:29:23.0930691Z ##[group]Disabling automatic garbage collection
+test (20.x)	Run actions/checkout@v4	2025-06-03T08:29:23.0935230Z [command]/usr/bin/git config --local gc.auto 0
+test (20.x)	Run actions/checkout@v4	2025-06-03T08:29:23.0965492Z ##[endgroup]
+test (20.x)	Run actions/checkout@v4	2025-06-03T08:29:23.0966068Z ##[group]Setting up auth
+test (20.x)	Run actions/checkout@v4	2025-06-03T08:29:23.0972953Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+test (20.x)	Run actions/checkout@v4	2025-06-03T08:29:23.1002994Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+test (20.x)	Run actions/checkout@v4	2025-06-03T08:29:23.1352189Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+test (20.x)	Run actions/checkout@v4	2025-06-03T08:29:23.1381181Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+test (20.x)	Run actions/checkout@v4	2025-06-03T08:29:23.1608214Z [command]/usr/bin/git config --local http.https://github.com/.extraheader AUTHORIZATION: basic ***
+test (20.x)	Run actions/checkout@v4	2025-06-03T08:29:23.1644526Z ##[endgroup]
+test (20.x)	Run actions/checkout@v4	2025-06-03T08:29:23.1645089Z ##[group]Fetching the repository
+test (20.x)	Run actions/checkout@v4	2025-06-03T08:29:23.1653226Z [command]/usr/bin/git -c protocol.version=2 fetch --no-tags --prune --no-recurse-submodules --depth=1 origin +8d7c33bdae707d715c0b8e514be276a1b3be6efc:refs/remotes/origin/main
+test (20.x)	Run actions/checkout@v4	2025-06-03T08:29:25.2638116Z From https://github.com/mirqtio/TheWell_Pipeline
+test (20.x)	Run actions/checkout@v4	2025-06-03T08:29:25.2638914Z  * [new ref]           8d7c33bdae707d715c0b8e514be276a1b3be6efc -> origin/main
+test (20.x)	Run actions/checkout@v4	2025-06-03T08:29:25.2669735Z ##[endgroup]
+test (20.x)	Run actions/checkout@v4	2025-06-03T08:29:25.2670293Z ##[group]Determining the checkout info
+test (20.x)	Run actions/checkout@v4	2025-06-03T08:29:25.2672750Z ##[endgroup]
+test (20.x)	Run actions/checkout@v4	2025-06-03T08:29:25.2680088Z [command]/usr/bin/git sparse-checkout disable
+test (20.x)	Run actions/checkout@v4	2025-06-03T08:29:25.2723096Z [command]/usr/bin/git config --local --unset-all extensions.worktreeConfig
+test (20.x)	Run actions/checkout@v4	2025-06-03T08:29:25.2749121Z ##[group]Checking out the ref
+test (20.x)	Run actions/checkout@v4	2025-06-03T08:29:25.2753087Z [command]/usr/bin/git checkout --progress --force -B main refs/remotes/origin/main
+test (20.x)	Run actions/checkout@v4	2025-06-03T08:29:26.3006363Z Updating files:  70% (16926/23944)
+test (20.x)	Run actions/checkout@v4	2025-06-03T08:29:26.3112685Z Updating files:  71% (17001/23944)
+test (20.x)	Run actions/checkout@v4	2025-06-03T08:29:26.3229536Z Updating files:  72% (17240/23944)
+test (20.x)	Run actions/checkout@v4	2025-06-03T08:29:26.3369160Z Updating files:  73% (17480/23944)
+test (20.x)	Run actions/checkout@v4	2025-06-03T08:29:26.3463831Z Updating files:  74% (17719/23944)
+test (20.x)	Run actions/checkout@v4	2025-06-03T08:29:26.3553757Z Updating files:  75% (17958/23944)
+test (20.x)	Run actions/checkout@v4	2025-06-03T08:29:26.3645494Z Updating files:  76% (18198/23944)
+test (20.x)	Run actions/checkout@v4	2025-06-03T08:29:26.3720627Z Updating files:  77% (18437/23944)
+test (20.x)	Run actions/checkout@v4	2025-06-03T08:29:26.3800072Z Updating files:  78% (18677/23944)
+test (20.x)	Run actions/checkout@v4	2025-06-03T08:29:26.3884285Z Updating files:  79% (18916/23944)
+test (20.x)	Run actions/checkout@v4	2025-06-03T08:29:26.3976836Z Updating files:  80% (19156/23944)
+test (20.x)	Run actions/checkout@v4	2025-06-03T08:29:26.4080441Z Updating files:  81% (19395/23944)
+test (20.x)	Run actions/checkout@v4	2025-06-03T08:29:26.4189121Z Updating files:  82% (19635/23944)
+test (20.x)	Run actions/checkout@v4	2025-06-03T08:29:26.4331600Z Updating files:  83% (19874/23944)
+test (20.x)	Run actions/checkout@v4	2025-06-03T08:29:26.4471677Z Updating files:  84% (20113/23944)
+test (20.x)	Run actions/checkout@v4	2025-06-03T08:29:26.4635083Z Updating files:  85% (20353/23944)
+test (20.x)	Run actions/checkout@v4	2025-06-03T08:29:26.4723176Z Updating files:  86% (20592/23944)
+test (20.x)	Run actions/checkout@v4	2025-06-03T08:29:26.4838757Z Updating files:  87% (20832/23944)
+test (20.x)	Run actions/checkout@v4	2025-06-03T08:29:26.4943672Z Updating files:  88% (21071/23944)
+test (20.x)	Run actions/checkout@v4	2025-06-03T08:29:26.5037930Z Updating files:  89% (21311/23944)
+test (20.x)	Run actions/checkout@v4	2025-06-03T08:29:26.5165214Z Updating files:  90% (21550/23944)
+test (20.x)	Run actions/checkout@v4	2025-06-03T08:29:26.5246187Z Updating files:  91% (21790/23944)
+test (20.x)	Run actions/checkout@v4	2025-06-03T08:29:26.5476114Z Updating files:  92% (22029/23944)
+test (20.x)	Run actions/checkout@v4	2025-06-03T08:29:26.5600012Z Updating files:  93% (22268/23944)
+test (20.x)	Run actions/checkout@v4	2025-06-03T08:29:26.5746720Z Updating files:  94% (22508/23944)
+test (20.x)	Run actions/checkout@v4	2025-06-03T08:29:26.5875702Z Updating files:  95% (22747/23944)
+test (20.x)	Run actions/checkout@v4	2025-06-03T08:29:26.6007162Z Updating files:  96% (22987/23944)
+test (20.x)	Run actions/checkout@v4	2025-06-03T08:29:26.6118852Z Updating files:  97% (23226/23944)
+test (20.x)	Run actions/checkout@v4	2025-06-03T08:29:26.6238842Z Updating files:  98% (23466/23944)
+test (20.x)	Run actions/checkout@v4	2025-06-03T08:29:26.6423497Z Updating files:  99% (23705/23944)
+test (20.x)	Run actions/checkout@v4	2025-06-03T08:29:26.6424072Z Updating files: 100% (23944/23944)
+test (20.x)	Run actions/checkout@v4	2025-06-03T08:29:26.6424572Z Updating files: 100% (23944/23944), done.
+test (20.x)	Run actions/checkout@v4	2025-06-03T08:29:26.6672205Z Switched to a new branch 'main'
+test (20.x)	Run actions/checkout@v4	2025-06-03T08:29:26.6674798Z branch 'main' set up to track 'origin/main'.
+test (20.x)	Run actions/checkout@v4	2025-06-03T08:29:26.6713194Z ##[endgroup]
+test (20.x)	Run actions/checkout@v4	2025-06-03T08:29:26.6755889Z [command]/usr/bin/git log -1 --format=%H
+test (20.x)	Run actions/checkout@v4	2025-06-03T08:29:26.6779568Z 8d7c33bdae707d715c0b8e514be276a1b3be6efc
+test (20.x)	Use Node.js 20.x	﻿2025-06-03T08:29:26.6989248Z ##[group]Run actions/setup-node@v4
+test (20.x)	Use Node.js 20.x	2025-06-03T08:29:26.6989519Z with:
+test (20.x)	Use Node.js 20.x	2025-06-03T08:29:26.6989683Z   node-version: 20.x
+test (20.x)	Use Node.js 20.x	2025-06-03T08:29:26.6989865Z   cache: npm
+test (20.x)	Use Node.js 20.x	2025-06-03T08:29:26.6990023Z   always-auth: false
+test (20.x)	Use Node.js 20.x	2025-06-03T08:29:26.6990201Z   check-latest: false
+test (20.x)	Use Node.js 20.x	2025-06-03T08:29:26.6990488Z   token: ***
+test (20.x)	Use Node.js 20.x	2025-06-03T08:29:26.6990653Z ##[endgroup]
+test (20.x)	Use Node.js 20.x	2025-06-03T08:29:26.8712992Z Found in cache @ /opt/hostedtoolcache/node/20.19.2/x64
+test (20.x)	Use Node.js 20.x	2025-06-03T08:29:26.8719848Z ##[group]Environment details
+test (20.x)	Use Node.js 20.x	2025-06-03T08:29:27.2332319Z node: v20.19.2
+test (20.x)	Use Node.js 20.x	2025-06-03T08:29:27.2332677Z npm: 10.8.2
+test (20.x)	Use Node.js 20.x	2025-06-03T08:29:27.2332942Z yarn: 1.22.22
+test (20.x)	Use Node.js 20.x	2025-06-03T08:29:27.2333760Z ##[endgroup]
+test (20.x)	Use Node.js 20.x	2025-06-03T08:29:27.2354207Z [command]/opt/hostedtoolcache/node/20.19.2/x64/bin/npm config get cache
+test (20.x)	Use Node.js 20.x	2025-06-03T08:29:27.3498670Z /home/runner/.npm
+test (20.x)	Use Node.js 20.x	2025-06-03T08:29:27.6233106Z Cache hit for: node-cache-Linux-x64-npm-b36d6fb87c3a182f965c4b1ee372388a329b2717d8629786c869301fd8989983
+test (20.x)	Use Node.js 20.x	2025-06-03T08:29:28.9135311Z Received 8388608 of 36066744 (23.3%), 8.0 MBs/sec
+test (20.x)	Use Node.js 20.x	2025-06-03T08:29:29.1199036Z Received 36066744 of 36066744 (100.0%), 28.5 MBs/sec
+test (20.x)	Use Node.js 20.x	2025-06-03T08:29:29.1199663Z Cache Size: ~34 MB (36066744 B)
+test (20.x)	Use Node.js 20.x	2025-06-03T08:29:29.1229011Z [command]/usr/bin/tar -xf /home/runner/work/_temp/33654b53-f716-4164-b481-121398834790/cache.tzst -P -C /home/runner/work/TheWell_Pipeline/TheWell_Pipeline --use-compress-program unzstd
+test (20.x)	Use Node.js 20.x	2025-06-03T08:29:29.3286901Z Cache restored successfully
+test (20.x)	Use Node.js 20.x	2025-06-03T08:29:29.3359538Z Cache restored from key: node-cache-Linux-x64-npm-b36d6fb87c3a182f965c4b1ee372388a329b2717d8629786c869301fd8989983
+test (20.x)	Install dependencies	﻿2025-06-03T08:29:29.3516094Z ##[group]Run npm ci
+test (20.x)	Install dependencies	2025-06-03T08:29:29.3516367Z [36;1mnpm ci[0m
+test (20.x)	Install dependencies	2025-06-03T08:29:29.3589363Z shell: /usr/bin/bash -e {0}
+test (20.x)	Install dependencies	2025-06-03T08:29:29.3589617Z ##[endgroup]
+test (20.x)	Install dependencies	2025-06-03T08:29:32.5614290Z npm warn deprecated inflight@1.0.6: This module is not supported, and leaks memory. Do not use it. Check out lru-cache if you want a good and tested way to coalesce async requests by a key value, which is much more comprehensive and powerful.
+test (20.x)	Install dependencies	2025-06-03T08:29:32.6025318Z npm warn deprecated lodash.get@4.4.2: This package is deprecated. Use the optional chaining (?.) operator instead.
+test (20.x)	Install dependencies	2025-06-03T08:29:32.6832274Z npm warn deprecated lodash.isequal@4.5.0: This package is deprecated. Use require('node:util').isDeepStrictEqual instead.
+test (20.x)	Install dependencies	2025-06-03T08:29:32.6994024Z npm warn deprecated @humanwhocodes/config-array@0.13.0: Use @eslint/config-array instead
+test (20.x)	Install dependencies	2025-06-03T08:29:32.7117043Z npm warn deprecated rimraf@3.0.2: Rimraf versions prior to v4 are no longer supported
+test (20.x)	Install dependencies	2025-06-03T08:29:32.8076526Z npm warn deprecated glob@7.2.3: Glob versions prior to v9 are no longer supported
+test (20.x)	Install dependencies	2025-06-03T08:29:32.8161144Z npm warn deprecated @humanwhocodes/object-schema@2.0.3: Use @eslint/object-schema instead
+test (20.x)	Install dependencies	2025-06-03T08:29:32.8436998Z npm warn deprecated glob@7.1.6: Glob versions prior to v9 are no longer supported
+test (20.x)	Install dependencies	2025-06-03T08:29:32.9286214Z npm warn deprecated multer@1.4.5-lts.2: Multer 1.x is impacted by a number of vulnerabilities, which have been patched in 2.x. You should upgrade to the latest 2.x version.
+test (20.x)	Install dependencies	2025-06-03T08:29:33.2769718Z npm warn deprecated node-domexception@1.0.0: Use your platform's native DOMException instead
+test (20.x)	Install dependencies	2025-06-03T08:29:33.4197111Z npm warn deprecated superagent@8.1.2: Please upgrade to v9.0.0+ as we have fixed a public vulnerability with formidable dependency. Note that v9.0.0+ requires Node.js v14.18.0+. See https://github.com/ladjs/superagent/pull/1800 for insight. This project is supported and maintained by the team at Forward Email @ https://forwardemail.net
+test (20.x)	Install dependencies	2025-06-03T08:29:33.5947924Z npm warn deprecated puppeteer@21.11.0: < 22.8.2 is no longer supported
+test (20.x)	Install dependencies	2025-06-03T08:29:34.7468343Z npm warn deprecated eslint@8.57.1: This version is no longer supported. Please see https://eslint.org/version-support for other options.
+test (20.x)	Install dependencies	2025-06-03T08:34:21.9977578Z 
+test (20.x)	Install dependencies	2025-06-03T08:34:21.9978297Z added 931 packages, and audited 932 packages in 5m
+test (20.x)	Install dependencies	2025-06-03T08:34:21.9978709Z 
+test (20.x)	Install dependencies	2025-06-03T08:34:21.9981027Z 154 packages are looking for funding
+test (20.x)	Install dependencies	2025-06-03T08:34:21.9981364Z   run `npm fund` for details
+test (20.x)	Install dependencies	2025-06-03T08:34:22.0162728Z 
+test (20.x)	Install dependencies	2025-06-03T08:34:22.0163604Z 5 high severity vulnerabilities
+test (20.x)	Install dependencies	2025-06-03T08:34:22.0163999Z 
+test (20.x)	Install dependencies	2025-06-03T08:34:22.0164408Z To address all issues (including breaking changes), run:
+test (20.x)	Install dependencies	2025-06-03T08:34:22.0165012Z   npm audit fix --force
+test (20.x)	Install dependencies	2025-06-03T08:34:22.0165256Z 
+test (20.x)	Install dependencies	2025-06-03T08:34:22.0165482Z Run `npm audit` for details.
+test (20.x)	Set up environment variables	﻿2025-06-03T08:34:22.0345887Z ##[group]Run echo "DATABASE_URL=***localhost:5432/thewell_pipeline_test" >> $GITHUB_ENV
+test (20.x)	Set up environment variables	2025-06-03T08:34:22.0346759Z [36;1mecho "DATABASE_URL=***localhost:5432/thewell_pipeline_test" >> $GITHUB_ENV[0m
+test (20.x)	Set up environment variables	2025-06-03T08:34:22.0347217Z [36;1mecho "REDIS_URL=redis://localhost:6379" >> $GITHUB_ENV[0m
+test (20.x)	Set up environment variables	2025-06-03T08:34:22.0347867Z [36;1mecho "NODE_ENV=test" >> $GITHUB_ENV[0m
+test (20.x)	Set up environment variables	2025-06-03T08:34:22.0348142Z [36;1mecho "WEB_PORT=0" >> $GITHUB_ENV[0m
+test (20.x)	Set up environment variables	2025-06-03T08:34:22.0400101Z shell: /usr/bin/bash -e {0}
+test (20.x)	Set up environment variables	2025-06-03T08:34:22.0400335Z ##[endgroup]
+test (20.x)	Wait for PostgreSQL	﻿2025-06-03T08:34:22.0508353Z ##[group]Run until pg_isready -h localhost -p 5432 -U postgres; do
+test (20.x)	Wait for PostgreSQL	2025-06-03T08:34:22.0508821Z [36;1muntil pg_isready -h localhost -p 5432 -U postgres; do[0m
+test (20.x)	Wait for PostgreSQL	2025-06-03T08:34:22.0509157Z [36;1m  echo "Waiting for PostgreSQL..."[0m
+test (20.x)	Wait for PostgreSQL	2025-06-03T08:34:22.0509405Z [36;1m  sleep 2[0m
+test (20.x)	Wait for PostgreSQL	2025-06-03T08:34:22.0509575Z [36;1mdone[0m
+test (20.x)	Wait for PostgreSQL	2025-06-03T08:34:22.0559265Z shell: /usr/bin/bash -e {0}
+test (20.x)	Wait for PostgreSQL	2025-06-03T08:34:22.0559494Z env:
+test (20.x)	Wait for PostgreSQL	2025-06-03T08:34:22.0559993Z   DATABASE_URL: ***localhost:5432/thewell_pipeline_test
+test (20.x)	Wait for PostgreSQL	2025-06-03T08:34:22.0560296Z   REDIS_URL: redis://localhost:6379
+test (20.x)	Wait for PostgreSQL	2025-06-03T08:34:22.0560528Z   NODE_ENV: test
+test (20.x)	Wait for PostgreSQL	2025-06-03T08:34:22.0560700Z   WEB_PORT: 0
+test (20.x)	Wait for PostgreSQL	2025-06-03T08:34:22.0560864Z ##[endgroup]
+test (20.x)	Wait for PostgreSQL	2025-06-03T08:34:22.1289576Z localhost:5432 - accepting connections
+test (20.x)	Set up database schema	﻿2025-06-03T08:34:22.1323286Z ##[group]Run PGPASSWORD=postgres psql -h localhost -U postgres -d thewell_pipeline_test -f src/database/schema.sql
+test (20.x)	Set up database schema	2025-06-03T08:34:22.1324245Z [36;1mPGPASSWORD=postgres psql -h localhost -U postgres -d thewell_pipeline_test -f src/database/schema.sql[0m
+test (20.x)	Set up database schema	2025-06-03T08:34:22.1376734Z shell: /usr/bin/bash -e {0}
+test (20.x)	Set up database schema	2025-06-03T08:34:22.1376958Z env:
+test (20.x)	Set up database schema	2025-06-03T08:34:22.1377666Z   DATABASE_URL: ***localhost:5432/thewell_pipeline_test
+test (20.x)	Set up database schema	2025-06-03T08:34:22.1378001Z   REDIS_URL: redis://localhost:6379
+test (20.x)	Set up database schema	2025-06-03T08:34:22.1378241Z   NODE_ENV: test
+test (20.x)	Set up database schema	2025-06-03T08:34:22.1378413Z   WEB_PORT: 0
+test (20.x)	Set up database schema	2025-06-03T08:34:22.1378583Z ##[endgroup]
+test (20.x)	Set up database schema	2025-06-03T08:34:22.2370447Z CREATE EXTENSION
+test (20.x)	Set up database schema	2025-06-03T08:34:22.2546183Z CREATE EXTENSION
+test (20.x)	Set up database schema	2025-06-03T08:34:22.2599613Z CREATE EXTENSION
+test (20.x)	Set up database schema	2025-06-03T08:34:22.2661732Z CREATE TABLE
+test (20.x)	Set up database schema	2025-06-03T08:34:22.2718642Z CREATE TABLE
+test (20.x)	Set up database schema	2025-06-03T08:34:22.2753988Z CREATE TABLE
+test (20.x)	Set up database schema	2025-06-03T08:34:22.2785100Z CREATE TABLE
+test (20.x)	Set up database schema	2025-06-03T08:34:22.2816257Z CREATE TABLE
+test (20.x)	Set up database schema	2025-06-03T08:34:22.2889909Z CREATE TABLE
+test (20.x)	Set up database schema	2025-06-03T08:34:22.2918188Z CREATE TABLE
+test (20.x)	Set up database schema	2025-06-03T08:34:22.2950768Z CREATE TABLE
+test (20.x)	Set up database schema	2025-06-03T08:34:22.2972149Z CREATE TABLE
+test (20.x)	Set up database schema	2025-06-03T08:34:22.3014081Z CREATE TABLE
+test (20.x)	Set up database schema	2025-06-03T08:34:22.3058632Z CREATE TABLE
+test (20.x)	Set up database schema	2025-06-03T08:34:22.3092502Z CREATE TABLE
+test (20.x)	Set up database schema	2025-06-03T08:34:22.3125098Z CREATE TABLE
+test (20.x)	Set up database schema	2025-06-03T08:34:22.3154202Z CREATE TABLE
+test (20.x)	Set up database schema	2025-06-03T08:34:22.3204204Z CREATE TABLE
+test (20.x)	Set up database schema	2025-06-03T08:34:22.3230294Z CREATE TABLE
+test (20.x)	Set up database schema	2025-06-03T08:34:22.3264877Z CREATE TABLE
+test (20.x)	Set up database schema	2025-06-03T08:34:22.3288971Z CREATE TABLE
+test (20.x)	Set up database schema	2025-06-03T08:34:22.3316972Z CREATE TABLE
+test (20.x)	Set up database schema	2025-06-03T08:34:22.3347933Z CREATE TABLE
+test (20.x)	Set up database schema	2025-06-03T08:34:22.3374117Z CREATE TABLE
+test (20.x)	Set up database schema	2025-06-03T08:34:22.3413582Z CREATE TABLE
+test (20.x)	Set up database schema	2025-06-03T08:34:22.3429000Z CREATE INDEX
+test (20.x)	Set up database schema	2025-06-03T08:34:22.3440418Z CREATE INDEX
+test (20.x)	Set up database schema	2025-06-03T08:34:22.3453924Z CREATE INDEX
+test (20.x)	Set up database schema	2025-06-03T08:34:22.3460684Z CREATE INDEX
+test (20.x)	Set up database schema	2025-06-03T08:34:22.3467586Z CREATE INDEX
+test (20.x)	Set up database schema	2025-06-03T08:34:22.3553664Z psql:src/database/schema.sql:388: NOTICE:  ivfflat index created with little data
+test (20.x)	Set up database schema	2025-06-03T08:34:22.3554537Z DETAIL:  This will cause low recall.
+test (20.x)	Set up database schema	2025-06-03T08:34:22.3555174Z HINT:  Drop the index until the table has more data.
+test (20.x)	Set up database schema	2025-06-03T08:34:22.3626092Z CREATE INDEX
+test (20.x)	Set up database schema	2025-06-03T08:34:22.3639016Z CREATE INDEX
+test (20.x)	Set up database schema	2025-06-03T08:34:22.3650767Z CREATE INDEX
+test (20.x)	Set up database schema	2025-06-03T08:34:22.3662800Z CREATE INDEX
+test (20.x)	Set up database schema	2025-06-03T08:34:22.3674657Z CREATE INDEX
+test (20.x)	Set up database schema	2025-06-03T08:34:22.3686494Z CREATE INDEX
+test (20.x)	Set up database schema	2025-06-03T08:34:22.3699191Z CREATE INDEX
+test (20.x)	Set up database schema	2025-06-03T08:34:22.3711657Z CREATE INDEX
+test (20.x)	Set up database schema	2025-06-03T08:34:22.3724893Z CREATE INDEX
+test (20.x)	Set up database schema	2025-06-03T08:34:22.3736901Z CREATE INDEX
+test (20.x)	Set up database schema	2025-06-03T08:34:22.3749605Z CREATE INDEX
+test (20.x)	Set up database schema	2025-06-03T08:34:22.3760619Z CREATE INDEX
+test (20.x)	Set up database schema	2025-06-03T08:34:22.3772136Z CREATE INDEX
+test (20.x)	Set up database schema	2025-06-03T08:34:22.3786544Z CREATE INDEX
+test (20.x)	Set up database schema	2025-06-03T08:34:22.3799813Z CREATE INDEX
+test (20.x)	Set up database schema	2025-06-03T08:34:22.3811162Z CREATE INDEX
+test (20.x)	Set up database schema	2025-06-03T08:34:22.3832407Z CREATE INDEX
+test (20.x)	Set up database schema	2025-06-03T08:34:22.3849644Z CREATE INDEX
+test (20.x)	Set up database schema	2025-06-03T08:34:22.3861651Z CREATE INDEX
+test (20.x)	Set up database schema	2025-06-03T08:34:22.3872543Z CREATE INDEX
+test (20.x)	Set up database schema	2025-06-03T08:34:22.3884724Z CREATE INDEX
+test (20.x)	Set up database schema	2025-06-03T08:34:22.3899064Z CREATE INDEX
+test (20.x)	Set up database schema	2025-06-03T08:34:22.3912910Z CREATE INDEX
+test (20.x)	Set up database schema	2025-06-03T08:34:22.3925259Z CREATE INDEX
+test (20.x)	Set up database schema	2025-06-03T08:34:22.3937841Z CREATE INDEX
+test (20.x)	Set up database schema	2025-06-03T08:34:22.3951886Z CREATE INDEX
+test (20.x)	Set up database schema	2025-06-03T08:34:22.3963495Z CREATE INDEX
+test (20.x)	Set up database schema	2025-06-03T08:34:22.3997518Z CREATE INDEX
+test (20.x)	Set up database schema	2025-06-03T08:34:22.4011945Z CREATE INDEX
+test (20.x)	Set up database schema	2025-06-03T08:34:22.4025215Z CREATE INDEX
+test (20.x)	Set up database schema	2025-06-03T08:34:22.4036379Z CREATE INDEX
+test (20.x)	Set up database schema	2025-06-03T08:34:22.4047260Z CREATE INDEX
+test (20.x)	Set up database schema	2025-06-03T08:34:22.4059598Z CREATE INDEX
+test (20.x)	Set up database schema	2025-06-03T08:34:22.4071506Z CREATE INDEX
+test (20.x)	Set up database schema	2025-06-03T08:34:22.4086228Z CREATE INDEX
+test (20.x)	Set up database schema	2025-06-03T08:34:22.4098073Z CREATE INDEX
+test (20.x)	Set up database schema	2025-06-03T08:34:22.4109320Z CREATE INDEX
+test (20.x)	Set up database schema	2025-06-03T08:34:22.4120215Z CREATE INDEX
+test (20.x)	Set up database schema	2025-06-03T08:34:22.4130687Z CREATE INDEX
+test (20.x)	Set up database schema	2025-06-03T08:34:22.4141897Z CREATE INDEX
+test (20.x)	Set up database schema	2025-06-03T08:34:22.4152321Z CREATE INDEX
+test (20.x)	Set up database schema	2025-06-03T08:34:22.4165068Z CREATE INDEX
+test (20.x)	Set up database schema	2025-06-03T08:34:22.4180108Z CREATE INDEX
+test (20.x)	Set up database schema	2025-06-03T08:34:22.4193073Z CREATE INDEX
+test (20.x)	Set up database schema	2025-06-03T08:34:22.4203727Z CREATE INDEX
+test (20.x)	Set up database schema	2025-06-03T08:34:22.4215457Z CREATE INDEX
+test (20.x)	Set up database schema	2025-06-03T08:34:22.4226278Z CREATE INDEX
+test (20.x)	Set up database schema	2025-06-03T08:34:22.4237688Z CREATE INDEX
+test (20.x)	Set up database schema	2025-06-03T08:34:22.4248427Z CREATE INDEX
+test (20.x)	Set up database schema	2025-06-03T08:34:22.4262368Z CREATE INDEX
+test (20.x)	Set up database schema	2025-06-03T08:34:22.4274478Z CREATE INDEX
+test (20.x)	Set up database schema	2025-06-03T08:34:22.4284890Z CREATE INDEX
+test (20.x)	Set up database schema	2025-06-03T08:34:22.4295700Z CREATE INDEX
+test (20.x)	Set up database schema	2025-06-03T08:34:22.4315436Z CREATE INDEX
+test (20.x)	Set up database schema	2025-06-03T08:34:22.4327021Z CREATE INDEX
+test (20.x)	Set up database schema	2025-06-03T08:34:22.4337296Z CREATE INDEX
+test (20.x)	Set up database schema	2025-06-03T08:34:22.4348571Z CREATE INDEX
+test (20.x)	Set up database schema	2025-06-03T08:34:22.4360918Z CREATE INDEX
+test (20.x)	Set up database schema	2025-06-03T08:34:22.4372297Z CREATE FUNCTION
+test (20.x)	Set up database schema	2025-06-03T08:34:22.4376225Z CREATE TRIGGER
+test (20.x)	Set up database schema	2025-06-03T08:34:22.4380412Z CREATE TRIGGER
+test (20.x)	Set up database schema	2025-06-03T08:34:22.4384437Z CREATE TRIGGER
+test (20.x)	Set up database schema	2025-06-03T08:34:22.4388805Z CREATE TRIGGER
+test (20.x)	Set up database schema	2025-06-03T08:34:22.4393404Z CREATE TRIGGER
+test (20.x)	Set up database schema	2025-06-03T08:34:22.4397747Z CREATE TRIGGER
+test (20.x)	Set up database schema	2025-06-03T08:34:22.4402303Z CREATE TRIGGER
+test (20.x)	Set up database schema	2025-06-03T08:34:22.4406601Z CREATE TRIGGER
+test (20.x)	Set up database schema	2025-06-03T08:34:22.4411856Z CREATE FUNCTION
+test (20.x)	Set up database schema	2025-06-03T08:34:22.4415579Z CREATE TRIGGER
+test (20.x)	Set up database schema	2025-06-03T08:34:22.4421765Z CREATE FUNCTION
+test (20.x)	Set up database schema	2025-06-03T08:34:22.4425648Z CREATE TRIGGER
+test (20.x)	Set up database schema	2025-06-03T08:34:22.4429840Z CREATE TRIGGER
+test (20.x)	Set up database schema	2025-06-03T08:34:22.4433483Z CREATE TRIGGER
+test (20.x)	Set up database schema	2025-06-03T08:34:22.4437468Z CREATE TRIGGER
+test (20.x)	Set up database schema	2025-06-03T08:34:22.4442367Z CREATE TRIGGER
+test (20.x)	Set up database schema	2025-06-03T08:34:22.4449433Z INSERT 0 3
+test (20.x)	Set up database schema	2025-06-03T08:34:22.4455515Z INSERT 0 3
+test (20.x)	Set up database schema	2025-06-03T08:34:22.4463257Z INSERT 0 5
+test (20.x)	Set up database schema	2025-06-03T08:34:22.4472489Z INSERT 0 4
+test (20.x)	Set up database schema	2025-06-03T08:34:22.4481512Z UPDATE 1
+test (20.x)	Set up database schema	2025-06-03T08:34:22.4485535Z UPDATE 1
+test (20.x)	Run linting	﻿2025-06-03T08:34:22.4523391Z ##[group]Run npm run lint
+test (20.x)	Run linting	2025-06-03T08:34:22.4523663Z [36;1mnpm run lint[0m
+test (20.x)	Run linting	2025-06-03T08:34:22.4576091Z shell: /usr/bin/bash -e {0}
+test (20.x)	Run linting	2025-06-03T08:34:22.4576327Z env:
+test (20.x)	Run linting	2025-06-03T08:34:22.4577018Z   DATABASE_URL: ***localhost:5432/thewell_pipeline_test
+test (20.x)	Run linting	2025-06-03T08:34:22.4577532Z   REDIS_URL: redis://localhost:6379
+test (20.x)	Run linting	2025-06-03T08:34:22.4577792Z   NODE_ENV: test
+test (20.x)	Run linting	2025-06-03T08:34:22.4577960Z   WEB_PORT: 0
+test (20.x)	Run linting	2025-06-03T08:34:22.4578128Z ##[endgroup]
+test (20.x)	Run linting	2025-06-03T08:34:22.5751609Z 
+test (20.x)	Run linting	2025-06-03T08:34:22.5752141Z > thewell-pipeline@1.0.0 lint
+test (20.x)	Run linting	2025-06-03T08:34:22.5752665Z > eslint src tests
+test (20.x)	Run linting	2025-06-03T08:34:22.5752872Z 
+test (20.x)	Run linting	2025-06-03T08:34:25.8837663Z 
+test (20.x)	Run linting	2025-06-03T08:34:25.8839550Z /home/runner/work/TheWell_Pipeline/TheWell_Pipeline/src/enrichment/LLMProviderManager.js
+test (20.x)	Run linting	2025-06-03T08:34:25.8871424Z ##[warning]  110:23  warning  '_provider' is assigned a value but never used  no-unused-vars
+test (20.x)	Run linting	2025-06-03T08:34:25.8881493Z ##[warning]  461:19  warning  '_provider' is assigned a value but never used  no-unused-vars
+test (20.x)	Run linting	2025-06-03T08:34:25.8882673Z 
+test (20.x)	Run linting	2025-06-03T08:34:25.8883506Z /home/runner/work/TheWell_Pipeline/TheWell_Pipeline/src/ingestion/handlers/DynamicUnstructuredSourceHandler.js
+test (20.x)	Run linting	2025-06-03T08:34:25.8885197Z ##[warning]  553:11  warning  'content' is assigned a value but never used  no-unused-vars
+test (20.x)	Run linting	2025-06-03T08:34:25.8886288Z 
+test (20.x)	Run linting	2025-06-03T08:34:25.8886851Z /home/runner/work/TheWell_Pipeline/TheWell_Pipeline/src/ingestion/queue/JobScheduler.js
+test (20.x)	Run linting	2025-06-03T08:34:25.8888732Z ##[warning]  341:21  warning  'schedule' is defined but never used. Allowed unused args must match /^_/u  no-unused-vars
+test (20.x)	Run linting	2025-06-03T08:34:25.8889980Z 
+test (20.x)	Run linting	2025-06-03T08:34:25.8890575Z /home/runner/work/TheWell_Pipeline/TheWell_Pipeline/src/ingestion/queue/QueueManager.js
+test (20.x)	Run linting	2025-06-03T08:34:25.8891764Z ##[warning]  333:19  warning  'name' is assigned a value but never used  no-unused-vars
+test (20.x)	Run linting	2025-06-03T08:34:25.8892768Z 
+test (20.x)	Run linting	2025-06-03T08:34:25.8893278Z /home/runner/work/TheWell_Pipeline/TheWell_Pipeline/src/ingestion/types/index.js
+test (20.x)	Run linting	2025-06-03T08:34:25.8894822Z ##[warning]  105:24  warning  'config' is defined but never used. Allowed unused args must match /^_/u    no-unused-vars
+test (20.x)	Run linting	2025-06-03T08:34:25.8896966Z ##[warning]  122:17  warning  'document' is defined but never used. Allowed unused args must match /^_/u  no-unused-vars
+test (20.x)	Run linting	2025-06-03T08:34:25.8899385Z ##[warning]  131:19  warning  'content' is defined but never used. Allowed unused args must match /^_/u   no-unused-vars
+test (20.x)	Run linting	2025-06-03T08:34:25.8900600Z 
+test (20.x)	Run linting	2025-06-03T08:34:25.8901149Z /home/runner/work/TheWell_Pipeline/TheWell_Pipeline/src/monitoring/CostReporter.js
+test (20.x)	Run linting	2025-06-03T08:34:25.8903174Z ##[warning]  144:38  warning  'costSummary' is defined but never used. Allowed unused args must match /^_/u  no-unused-vars
+test (20.x)	Run linting	2025-06-03T08:34:25.8904449Z 
+test (20.x)	Run linting	2025-06-03T08:34:25.8905026Z /home/runner/work/TheWell_Pipeline/TheWell_Pipeline/src/orm/models/DocumentVisibility.js
+test (20.x)	Run linting	2025-06-03T08:34:25.8906487Z ##[warning]  221:74  warning  'accessLevel' is assigned a value but never used  no-unused-vars
+test (20.x)	Run linting	2025-06-03T08:34:25.8907877Z 
+test (20.x)	Run linting	2025-06-03T08:34:25.8908375Z /home/runner/work/TheWell_Pipeline/TheWell_Pipeline/src/orm/sequelize.js
+test (20.x)	Run linting	2025-06-03T08:34:25.8909602Z ##[warning]  138:7  warning  'VisibilityRule' is assigned a value but never used  no-unused-vars
+test (20.x)	Run linting	2025-06-03T08:34:25.8911453Z ##[warning]  140:7  warning  'CostEvent' is assigned a value but never used       no-unused-vars
+test (20.x)	Run linting	2025-06-03T08:34:25.8912655Z 
+test (20.x)	Run linting	2025-06-03T08:34:25.8913133Z /home/runner/work/TheWell_Pipeline/TheWell_Pipeline/src/rag/RAGManager.js
+test (20.x)	Run linting	2025-06-03T08:34:25.8914635Z ##[warning]  137:14  warning  'querySpan' is defined but never used. Allowed unused args must match /^_/u  no-unused-vars
+test (20.x)	Run linting	2025-06-03T08:34:25.8915488Z 
+test (20.x)	Run linting	2025-06-03T08:34:25.8915869Z /home/runner/work/TheWell_Pipeline/TheWell_Pipeline/src/rag/components/DocumentRetriever.js
+test (20.x)	Run linting	2025-06-03T08:34:25.8916779Z ##[warning]  135:66  warning  'userAuth' is assigned a value but never used  no-unused-vars
+test (20.x)	Run linting	2025-06-03T08:34:25.8918882Z ##[warning]  218:64  warning  'userAuth' is assigned a value but never used  no-unused-vars
+test (20.x)	Run linting	2025-06-03T08:34:25.8920357Z 
+test (20.x)	Run linting	2025-06-03T08:34:25.8920968Z /home/runner/work/TheWell_Pipeline/TheWell_Pipeline/src/rag/components/ResponseGenerator.js
+test (20.x)	Run linting	2025-06-03T08:34:25.8922507Z ##[warning]  219:43  warning  'query' is defined but never used. Allowed unused args must match /^_/u  no-unused-vars
+test (20.x)	Run linting	2025-06-03T08:34:25.8923803Z 
+test (20.x)	Run linting	2025-06-03T08:34:25.8924424Z /home/runner/work/TheWell_Pipeline/TheWell_Pipeline/src/rag/performance/DatabaseOptimizer.js
+test (20.x)	Run linting	2025-06-03T08:34:25.8925817Z ##[warning]  342:22  warning  'value' is assigned a value but never used     no-unused-vars
+test (20.x)	Run linting	2025-06-03T08:34:25.8927808Z ##[warning]  374:30  warning  'type' is assigned a value but never used      no-unused-vars
+test (20.x)	Run linting	2025-06-03T08:34:25.8929616Z ##[warning]  556:61  warning  'userAuth' is assigned a value but never used  no-unused-vars
+test (20.x)	Run linting	2025-06-03T08:34:25.8931331Z ##[warning]  568:53  warning  'userAuth' is assigned a value but never used  no-unused-vars
+test (20.x)	Run linting	2025-06-03T08:34:25.8932437Z 
+test (20.x)	Run linting	2025-06-03T08:34:25.8933052Z /home/runner/work/TheWell_Pipeline/TheWell_Pipeline/src/rag/performance/RequestThrottler.js
+test (20.x)	Run linting	2025-06-03T08:34:25.8934320Z ##[warning]  429:17  warning  'requestId' is assigned a value but never used  no-unused-vars
+test (20.x)	Run linting	2025-06-03T08:34:25.8935461Z 
+test (20.x)	Run linting	2025-06-03T08:34:25.8935953Z /home/runner/work/TheWell_Pipeline/TheWell_Pipeline/src/tracing/RAGTracing.js
+test (20.x)	Run linting	2025-06-03T08:34:25.8937184Z ##[warning]  1:7  warning  'logger' is assigned a value but never used  no-unused-vars
+test (20.x)	Run linting	2025-06-03T08:34:25.8938548Z 
+test (20.x)	Run linting	2025-06-03T08:34:25.8939126Z /home/runner/work/TheWell_Pipeline/TheWell_Pipeline/src/tracing/TracingMiddleware.js
+test (20.x)	Run linting	2025-06-03T08:34:25.8940306Z ##[warning]  2:7  warning  'logger' is assigned a value but never used  no-unused-vars
+test (20.x)	Run linting	2025-06-03T08:34:25.8941406Z 
+test (20.x)	Run linting	2025-06-03T08:34:25.8941757Z /home/runner/work/TheWell_Pipeline/TheWell_Pipeline/src/web/middleware/errorHandler.js
+test (20.x)	Run linting	2025-06-03T08:34:25.8942829Z ##[warning]  22:40  warning  'next' is defined but never used. Allowed unused args must match /^_/u  no-unused-vars
+test (20.x)	Run linting	2025-06-03T08:34:25.8943615Z 
+test (20.x)	Run linting	2025-06-03T08:34:25.8943912Z /home/runner/work/TheWell_Pipeline/TheWell_Pipeline/src/web/public/app.js
+test (20.x)	Run linting	2025-06-03T08:34:25.8944741Z ##[warning]  1044:3   warning  Duplicate name 'showPullToRefresh'            no-dupe-class-members
+test (20.x)	Run linting	2025-06-03T08:34:25.8946245Z ##[warning]  1066:3   warning  Duplicate name 'triggerPullToRefresh'         no-dupe-class-members
+test (20.x)	Run linting	2025-06-03T08:34:25.8948037Z ##[warning]  1074:3   warning  Duplicate name 'hidePullToRefresh'            no-dupe-class-members
+test (20.x)	Run linting	2025-06-03T08:34:25.8949627Z ##[warning]  1196:3   warning  Duplicate name 'setLoadingState'              no-dupe-class-members
+test (20.x)	Run linting	2025-06-03T08:34:25.8951918Z ##[warning]  1213:3   warning  Duplicate name 'showToast'                    no-dupe-class-members
+test (20.x)	Run linting	2025-06-03T08:34:25.8953762Z ##[warning]  1240:25  warning  'bootstrap' is not defined                    no-undef
+test (20.x)	Run linting	2025-06-03T08:34:25.8956771Z ##[error]  1404:1   error    Expected indentation of 4 spaces but found 6  indent
+test (20.x)	Run linting	2025-06-03T08:34:25.8958252Z ##[error]  1405:1   error    Expected indentation of 6 spaces but found 8  indent
+test (20.x)	Run linting	2025-06-03T08:34:25.8959600Z ##[error]  1416:1   error    Expected indentation of 4 spaces but found 6  indent
+test (20.x)	Run linting	2025-06-03T08:34:25.8961341Z ##[error]  1417:1   error    Expected indentation of 6 spaces but found 8  indent
+test (20.x)	Run linting	2025-06-03T08:34:25.8963146Z ##[error]  1422:1   error    Expected indentation of 4 spaces but found 6  indent
+test (20.x)	Run linting	2025-06-03T08:34:25.8964859Z ##[error]  1423:1   error    Expected indentation of 6 spaces but found 8  indent
+test (20.x)	Run linting	2025-06-03T08:34:25.8966551Z ##[error]  1428:1   error    Expected indentation of 4 spaces but found 6  indent
+test (20.x)	Run linting	2025-06-03T08:34:25.8968527Z ##[error]  1429:1   error    Expected indentation of 6 spaces but found 8  indent
+test (20.x)	Run linting	2025-06-03T08:34:25.8970271Z ##[error]  1532:1   error    Expected indentation of 4 spaces but found 6  indent
+test (20.x)	Run linting	2025-06-03T08:34:25.8972044Z ##[error]  1533:1   error    Expected indentation of 6 spaces but found 8  indent
+test (20.x)	Run linting	2025-06-03T08:34:25.8973837Z ##[error]  1534:1   error    Expected indentation of 4 spaces but found 6  indent
+test (20.x)	Run linting	2025-06-03T08:34:25.8975940Z ##[error]  1535:1   error    Expected indentation of 6 spaces but found 8  indent
+test (20.x)	Run linting	2025-06-03T08:34:25.8977901Z ##[error]  1536:1   error    Expected indentation of 4 spaces but found 6  indent
+test (20.x)	Run linting	2025-06-03T08:34:25.8979741Z ##[error]  1537:1   error    Expected indentation of 6 spaces but found 8  indent
+test (20.x)	Run linting	2025-06-03T08:34:25.8981709Z ##[warning]  1865:3   warning  Duplicate name 'searchCurationContent'        no-dupe-class-members
+test (20.x)	Run linting	2025-06-03T08:34:25.8983710Z ##[warning]  1956:25  warning  'bootstrap' is not defined                    no-undef
+test (20.x)	Run linting	2025-06-03T08:34:25.8985435Z ##[error]  1996:2   error    Unnecessary semicolon                         no-extra-semi
+test (20.x)	Run linting	2025-06-03T08:34:25.8986581Z 
+test (20.x)	Run linting	2025-06-03T08:34:25.8987026Z /home/runner/work/TheWell_Pipeline/TheWell_Pipeline/src/web/routes/feedback.js
+test (20.x)	Run linting	2025-06-03T08:34:25.8988597Z ##[warning]  2:7  warning  'FeedbackDAO' is assigned a value but never used  no-unused-vars
+test (20.x)	Run linting	2025-06-03T08:34:25.8989790Z 
+test (20.x)	Run linting	2025-06-03T08:34:25.8990288Z /home/runner/work/TheWell_Pipeline/TheWell_Pipeline/src/web/routes/review.js
+test (20.x)	Run linting	2025-06-03T08:34:25.8991411Z ##[warning]  209:7   warning  'result' is assigned a value but never used  no-unused-vars
+test (20.x)	Run linting	2025-06-03T08:34:25.8993226Z ##[warning]  295:7   warning  'result' is assigned a value but never used  no-unused-vars
+test (20.x)	Run linting	2025-06-03T08:34:25.8995060Z ##[warning]  382:7   warning  'result' is assigned a value but never used  no-unused-vars
+test (20.x)	Run linting	2025-06-03T08:34:25.8996823Z ##[warning]  463:13  warning  'since' is assigned a value but never used   no-unused-vars
+test (20.x)	Run linting	2025-06-03T08:34:25.8998762Z ##[warning]  896:11  warning  'since' is assigned a value but never used   no-unused-vars
+test (20.x)	Run linting	2025-06-03T08:34:25.8999915Z 
+test (20.x)	Run linting	2025-06-03T08:34:25.9000329Z /home/runner/work/TheWell_Pipeline/TheWell_Pipeline/src/web/server.js
+test (20.x)	Run linting	2025-06-03T08:34:25.9001584Z ##[warning]  145:39  warning  'next' is defined but never used. Allowed unused args must match /^_/u  no-unused-vars
+test (20.x)	Run linting	2025-06-03T08:34:25.9003599Z ##[warning]  199:7   warning  Unreachable code                                                        no-unreachable
+test (20.x)	Run linting	2025-06-03T08:34:25.9004759Z 
+test (20.x)	Run linting	2025-06-03T08:34:25.9005159Z /home/runner/work/TheWell_Pipeline/TheWell_Pipeline/src/web/start.js
+test (20.x)	Run linting	2025-06-03T08:34:25.9006178Z ##[warning]    7:7   warning  'path' is assigned a value but never used     no-unused-vars
+test (20.x)	Run linting	2025-06-03T08:34:25.9008317Z ##[warning]   24:17  warning  'options' is assigned a value but never used  no-unused-vars
+test (20.x)	Run linting	2025-06-03T08:34:25.9010407Z ##[warning]  288:32  warning  'options' is assigned a value but never used  no-unused-vars
+test (20.x)	Run linting	2025-06-03T08:34:25.9012731Z ##[warning]  296:28  warning  'options' is assigned a value but never used  no-unused-vars
+test (20.x)	Run linting	2025-06-03T08:34:25.9013987Z 
+test (20.x)	Run linting	2025-06-03T08:34:25.9014519Z ✖ 59 problems (15 errors, 44 warnings)
+test (20.x)	Run linting	2025-06-03T08:34:25.9015166Z   15 errors and 0 warnings potentially fixable with the `--fix` option.
+test (20.x)	Run linting	2025-06-03T08:34:25.9015434Z 
+test (20.x)	Run linting	2025-06-03T08:34:25.9325177Z ##[error]Process completed with exit code 1.
+test (20.x)	Upload test results	﻿2025-06-03T08:34:25.9417222Z ##[group]Run actions/upload-artifact@v4
+test (20.x)	Upload test results	2025-06-03T08:34:25.9417790Z with:
+test (20.x)	Upload test results	2025-06-03T08:34:25.9417981Z   name: test-results-20.x
+test (20.x)	Upload test results	2025-06-03T08:34:25.9418199Z   path: coverage/
+test (20.x)	Upload test results	test-results/
+test (20.x)	Upload test results	
+test (20.x)	Upload test results	2025-06-03T08:34:25.9418428Z   if-no-files-found: warn
+test (20.x)	Upload test results	2025-06-03T08:34:25.9418632Z   compression-level: 6
+test (20.x)	Upload test results	2025-06-03T08:34:25.9418817Z   overwrite: false
+test (20.x)	Upload test results	2025-06-03T08:34:25.9419003Z   include-hidden-files: false
+test (20.x)	Upload test results	2025-06-03T08:34:25.9419210Z env:
+test (20.x)	Upload test results	2025-06-03T08:34:25.9419659Z   DATABASE_URL: ***localhost:5432/thewell_pipeline_test
+test (20.x)	Upload test results	2025-06-03T08:34:25.9419973Z   REDIS_URL: redis://localhost:6379
+test (20.x)	Upload test results	2025-06-03T08:34:25.9420241Z   NODE_ENV: test
+test (20.x)	Upload test results	2025-06-03T08:34:25.9420413Z   WEB_PORT: 0
+test (20.x)	Upload test results	2025-06-03T08:34:25.9420582Z ##[endgroup]
+test (20.x)	Upload test results	2025-06-03T08:34:26.1646546Z Multiple search paths detected. Calculating the least common ancestor of all paths
+test (20.x)	Upload test results	2025-06-03T08:34:26.1649126Z The least common ancestor is /home/runner/work/TheWell_Pipeline/TheWell_Pipeline. This will be the root directory of the artifact
+test (20.x)	Upload test results	2025-06-03T08:34:26.1661286Z ##[warning]No files were found with the provided path: coverage/
+test (20.x)	Upload test results	test-results/. No artifacts will be uploaded.
+test (20.x)	Post Run actions/checkout@v4	﻿2025-06-03T08:34:26.1772868Z Post job cleanup.
+test (20.x)	Post Run actions/checkout@v4	2025-06-03T08:34:26.2736230Z [command]/usr/bin/git version
+test (20.x)	Post Run actions/checkout@v4	2025-06-03T08:34:26.2774569Z git version 2.49.0
+test (20.x)	Post Run actions/checkout@v4	2025-06-03T08:34:26.2820217Z Temporarily overriding HOME='/home/runner/work/_temp/a2c56681-ee48-414a-abda-05d877e2c03e' before making global git config changes
+test (20.x)	Post Run actions/checkout@v4	2025-06-03T08:34:26.2821721Z Adding repository directory to the temporary git global config as a safe directory
+test (20.x)	Post Run actions/checkout@v4	2025-06-03T08:34:26.2827212Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/TheWell_Pipeline/TheWell_Pipeline
+test (20.x)	Post Run actions/checkout@v4	2025-06-03T08:34:26.2874093Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+test (20.x)	Post Run actions/checkout@v4	2025-06-03T08:34:26.2910754Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+test (20.x)	Post Run actions/checkout@v4	2025-06-03T08:34:26.3180383Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+test (20.x)	Post Run actions/checkout@v4	2025-06-03T08:34:26.3205140Z http.https://github.com/.extraheader
+test (20.x)	Post Run actions/checkout@v4	2025-06-03T08:34:26.3218930Z [command]/usr/bin/git config --local --unset-all http.https://github.com/.extraheader
+test (20.x)	Post Run actions/checkout@v4	2025-06-03T08:34:26.3254726Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+test (20.x)	Stop containers	﻿2025-06-03T08:34:26.3604755Z Print service container logs: f42ff45d654e46d5a2ea4490897403c5_pgvectorpgvectorpg15_10ed6f
+test (20.x)	Stop containers	2025-06-03T08:34:26.3609852Z ##[command]/usr/bin/docker logs --details 1fcd1eeb48e76c7bb7f202f86f416ae1303f37706c16c3f7f6a360a03fd22b5c
+test (20.x)	Stop containers	2025-06-03T08:34:26.3732871Z  The files belonging to this database system will be owned by user "postgres".
+test (20.x)	Stop containers	2025-06-03T08:34:26.3733637Z  This user must also own the server process.
+test (20.x)	Stop containers	2025-06-03T08:34:26.3734074Z  
+test (20.x)	Stop containers	2025-06-03T08:34:26.3734503Z  The database cluster will be initialized with locale "en_US.utf8".
+test (20.x)	Stop containers	2025-06-03T08:34:26.3735205Z  The default database encoding has accordingly been set to "UTF8".
+test (20.x)	Stop containers	2025-06-03T08:34:26.3735930Z  The default text search configuration will be set to "english".
+test (20.x)	Stop containers	2025-06-03T08:34:26.3736463Z  
+test (20.x)	Stop containers	2025-06-03T08:34:26.3736637Z  Data page checksums are disabled.
+test (20.x)	Stop containers	2025-06-03T08:34:26.3736860Z  
+test (20.x)	Stop containers	2025-06-03T08:34:26.3737291Z  fixing permissions on existing directory /var/lib/postgresql/data ... ok
+test (20.x)	Stop containers	2025-06-03T08:34:26.3737939Z  creating subdirectories ... ok
+test (20.x)	Stop containers	2025-06-03T08:34:26.3738983Z  selecting dynamic shared memory implementation ... posix
+test (20.x)	Stop containers	2025-06-03T08:34:26.3739542Z  selecting default max_connections ... 100
+test (20.x)	Stop containers	2025-06-03T08:34:26.3740027Z  selecting default shared_buffers ... 128MB
+test (20.x)	Stop containers	2025-06-03T08:34:26.3740466Z  selecting default time zone ... Etc/UTC
+test (20.x)	Stop containers	2025-06-03T08:34:26.3740900Z  creating configuration files ... ok
+test (20.x)	Stop containers	2025-06-03T08:34:26.3741334Z  running bootstrap script ... ok
+test (20.x)	Stop containers	2025-06-03T08:34:26.3741793Z  performing post-bootstrap initialization ... ok
+test (20.x)	Stop containers	2025-06-03T08:34:26.3742263Z  syncing data to disk ... ok
+test (20.x)	Stop containers	2025-06-03T08:34:26.3744369Z  initdb: warning: enabling "trust" authentication for local connections
+test (20.x)	Stop containers	2025-06-03T08:34:26.3745447Z  initdb: hint: You can change this by editing pg_hba.conf or using the option -A, or --auth-local and --auth-host, the next time you run initdb.
+test (20.x)	Stop containers	2025-06-03T08:34:26.3746736Z  2025-06-03 08:29:07.090 UTC [1] LOG:  starting PostgreSQL 15.12 (Debian 15.12-1.pgdg120+1) on x86_64-pc-linux-gnu, compiled by gcc (Debian 12.2.0-14) 12.2.0, 64-bit
+test (20.x)	Stop containers	2025-06-03T08:34:26.3747970Z  2025-06-03 08:29:07.090 UTC [1] LOG:  listening on IPv4 address "0.0.0.0", port 5432
+test (20.x)	Stop containers	2025-06-03T08:34:26.3748654Z  2025-06-03 08:29:07.090 UTC [1] LOG:  listening on IPv6 address "::", port 5432
+test (20.x)	Stop containers	2025-06-03T08:34:26.3749388Z  2025-06-03 08:29:07.091 UTC [1] LOG:  listening on Unix socket "/var/run/postgresql/.s.PGSQL.5432"
+test (20.x)	Stop containers	2025-06-03T08:34:26.3750189Z  2025-06-03 08:29:07.094 UTC [64] LOG:  database system was shut down at 2025-06-03 08:29:06 UTC
+test (20.x)	Stop containers	2025-06-03T08:34:26.3750914Z  2025-06-03 08:29:07.098 UTC [1] LOG:  database system is ready to accept connections
+test (20.x)	Stop containers	2025-06-03T08:34:26.3751546Z  2025-06-03 08:29:16.163 UTC [75] FATAL:  role "root" does not exist
+test (20.x)	Stop containers	2025-06-03T08:34:26.3752086Z  2025-06-03 08:29:26.244 UTC [83] FATAL:  role "root" does not exist
+test (20.x)	Stop containers	2025-06-03T08:34:26.3752651Z  2025-06-03 08:29:36.385 UTC [91] FATAL:  role "root" does not exist
+test (20.x)	Stop containers	2025-06-03T08:34:26.3753229Z  2025-06-03 08:29:46.474 UTC [100] FATAL:  role "root" does not exist
+test (20.x)	Stop containers	2025-06-03T08:34:26.3753794Z  2025-06-03 08:29:56.544 UTC [108] FATAL:  role "root" does not exist
+test (20.x)	Stop containers	2025-06-03T08:34:26.3754351Z  2025-06-03 08:30:06.614 UTC [116] FATAL:  role "root" does not exist
+test (20.x)	Stop containers	2025-06-03T08:34:26.3754878Z  2025-06-03 08:30:16.689 UTC [125] FATAL:  role "root" does not exist
+test (20.x)	Stop containers	2025-06-03T08:34:26.3755414Z  2025-06-03 08:30:26.758 UTC [133] FATAL:  role "root" does not exist
+test (20.x)	Stop containers	2025-06-03T08:34:26.3755982Z  2025-06-03 08:30:36.828 UTC [141] FATAL:  role "root" does not exist
+test (20.x)	Stop containers	2025-06-03T08:34:26.3756551Z  2025-06-03 08:30:46.902 UTC [150] FATAL:  role "root" does not exist
+test (20.x)	Stop containers	2025-06-03T08:34:26.3757110Z  2025-06-03 08:30:56.971 UTC [158] FATAL:  role "root" does not exist
+test (20.x)	Stop containers	2025-06-03T08:34:26.3757825Z  2025-06-03 08:31:07.121 UTC [166] FATAL:  role "root" does not exist
+test (20.x)	Stop containers	2025-06-03T08:34:26.3758594Z  2025-06-03 08:31:17.249 UTC [175] FATAL:  role "root" does not exist
+test (20.x)	Stop containers	2025-06-03T08:34:26.3759173Z  2025-06-03 08:31:27.319 UTC [183] FATAL:  role "root" does not exist
+test (20.x)	Stop containers	2025-06-03T08:34:26.3759727Z  2025-06-03 08:31:37.387 UTC [192] FATAL:  role "root" does not exist
+test (20.x)	Stop containers	2025-06-03T08:34:26.3760516Z  2025-06-03 08:31:47.452 UTC [200] FATAL:  role "root" does not exist
+test (20.x)	Stop containers	2025-06-03T08:34:26.3760879Z  2025-06-03 08:31:57.516 UTC [208] FATAL:  role "root" does not exist
+test (20.x)	Stop containers	2025-06-03T08:34:26.3761237Z  2025-06-03 08:32:07.585 UTC [217] FATAL:  role "root" does not exist
+test (20.x)	Stop containers	2025-06-03T08:34:26.3761563Z  2025-06-03 08:32:17.654 UTC [225] FATAL:  role "root" does not exist
+test (20.x)	Stop containers	2025-06-03T08:34:26.3761887Z  2025-06-03 08:32:27.723 UTC [233] FATAL:  role "root" does not exist
+test (20.x)	Stop containers	2025-06-03T08:34:26.3762211Z  2025-06-03 08:32:37.790 UTC [242] FATAL:  role "root" does not exist
+test (20.x)	Stop containers	2025-06-03T08:34:26.3762536Z  2025-06-03 08:32:47.858 UTC [250] FATAL:  role "root" does not exist
+test (20.x)	Stop containers	2025-06-03T08:34:26.3762855Z  2025-06-03 08:32:57.926 UTC [258] FATAL:  role "root" does not exist
+test (20.x)	Stop containers	2025-06-03T08:34:26.3763176Z  2025-06-03 08:33:07.995 UTC [267] FATAL:  role "root" does not exist
+test (20.x)	Stop containers	2025-06-03T08:34:26.3763497Z  2025-06-03 08:33:18.062 UTC [275] FATAL:  role "root" does not exist
+test (20.x)	Stop containers	2025-06-03T08:34:26.3763952Z  2025-06-03 08:33:28.134 UTC [283] FATAL:  role "root" does not exist
+test (20.x)	Stop containers	2025-06-03T08:34:26.3764279Z  2025-06-03 08:33:38.200 UTC [292] FATAL:  role "root" does not exist
+test (20.x)	Stop containers	2025-06-03T08:34:26.3764599Z  2025-06-03 08:33:48.268 UTC [300] FATAL:  role "root" does not exist
+test (20.x)	Stop containers	2025-06-03T08:34:26.3764919Z  2025-06-03 08:33:58.338 UTC [308] FATAL:  role "root" does not exist
+test (20.x)	Stop containers	2025-06-03T08:34:26.3765248Z  2025-06-03 08:34:07.165 UTC [62] LOG:  checkpoint starting: time
+test (20.x)	Stop containers	2025-06-03T08:34:26.3765580Z  2025-06-03 08:34:08.406 UTC [317] FATAL:  role "root" does not exist
+test (20.x)	Stop containers	2025-06-03T08:34:26.3766346Z  2025-06-03 08:34:11.280 UTC [62] LOG:  checkpoint complete: wrote 44 buffers (0.3%); 0 WAL file(s) added, 0 removed, 0 recycled; write=4.110 s, sync=0.002 s, total=4.115 s; sync files=12, longest=0.001 s, average=0.001 s; distance=252 kB, estimate=252 kB
+test (20.x)	Stop containers	2025-06-03T08:34:26.3767136Z  2025-06-03 08:34:18.472 UTC [325] FATAL:  role "root" does not exist
+test (20.x)	Stop containers	2025-06-03T08:34:26.3767670Z  
+test (20.x)	Stop containers	2025-06-03T08:34:26.3767827Z  
+test (20.x)	Stop containers	2025-06-03T08:34:26.3768038Z  Success. You can now start the database server using:
+test (20.x)	Stop containers	2025-06-03T08:34:26.3768406Z  
+test (20.x)	Stop containers	2025-06-03T08:34:26.3768757Z      pg_ctl -D /var/lib/postgresql/data -l logfile start
+test (20.x)	Stop containers	2025-06-03T08:34:26.3769204Z  
+test (20.x)	Stop containers	2025-06-03T08:34:26.3770071Z  waiting for server to start....2025-06-03 08:29:06.778 UTC [48] LOG:  starting PostgreSQL 15.12 (Debian 15.12-1.pgdg120+1) on x86_64-pc-linux-gnu, compiled by gcc (Debian 12.2.0-14) 12.2.0, 64-bit
+test (20.x)	Stop containers	2025-06-03T08:34:26.3771250Z  2025-06-03 08:29:06.778 UTC [48] LOG:  listening on Unix socket "/var/run/postgresql/.s.PGSQL.5432"
+test (20.x)	Stop containers	2025-06-03T08:34:26.3772064Z  2025-06-03 08:29:06.781 UTC [51] LOG:  database system was shut down at 2025-06-03 08:29:06 UTC
+test (20.x)	Stop containers	2025-06-03T08:34:26.3772721Z  2025-06-03 08:29:06.785 UTC [48] LOG:  database system is ready to accept connections
+test (20.x)	Stop containers	2025-06-03T08:34:26.3773213Z   done
+test (20.x)	Stop containers	2025-06-03T08:34:26.3773449Z  server started
+test (20.x)	Stop containers	2025-06-03T08:34:26.3773715Z  CREATE DATABASE
+test (20.x)	Stop containers	2025-06-03T08:34:26.3773971Z  
+test (20.x)	Stop containers	2025-06-03T08:34:26.3774205Z  
+test (20.x)	Stop containers	2025-06-03T08:34:26.3774710Z  /usr/local/bin/docker-entrypoint.sh: ignoring /docker-entrypoint-initdb.d/*
+test (20.x)	Stop containers	2025-06-03T08:34:26.3775316Z  
+test (20.x)	Stop containers	2025-06-03T08:34:26.3775621Z  waiting for server to shut down...2025-06-03 08:29:06.967 UTC [48] LOG:  received fast shutdown request
+test (20.x)	Stop containers	2025-06-03T08:34:26.3776080Z  .2025-06-03 08:29:06.968 UTC [48] LOG:  aborting any active transactions
+test (20.x)	Stop containers	2025-06-03T08:34:26.3776568Z  2025-06-03 08:29:06.970 UTC [48] LOG:  background worker "logical replication launcher" (PID 54) exited with exit code 1
+test (20.x)	Stop containers	2025-06-03T08:34:26.3777020Z  2025-06-03 08:29:06.970 UTC [49] LOG:  shutting down
+test (20.x)	Stop containers	2025-06-03T08:34:26.3777599Z  2025-06-03 08:29:06.971 UTC [49] LOG:  checkpoint starting: shutdown immediate
+test (20.x)	Stop containers	2025-06-03T08:34:26.3778411Z  2025-06-03 08:29:06.990 UTC [49] LOG:  checkpoint complete: wrote 918 buffers (5.6%); 0 WAL file(s) added, 0 removed, 0 recycled; write=0.014 s, sync=0.005 s, total=0.020 s; sync files=301, longest=0.004 s, average=0.001 s; distance=4222 kB, estimate=4222 kB
+test (20.x)	Stop containers	2025-06-03T08:34:26.3779403Z  2025-06-03 08:29:06.997 UTC [48] LOG:  database system is shut down
+test (20.x)	Stop containers	2025-06-03T08:34:26.3779683Z   done
+test (20.x)	Stop containers	2025-06-03T08:34:26.3779843Z  server stopped
+test (20.x)	Stop containers	2025-06-03T08:34:26.3780003Z  
+test (20.x)	Stop containers	2025-06-03T08:34:26.3780210Z  PostgreSQL init process complete; ready for start up.
+test (20.x)	Stop containers	2025-06-03T08:34:26.3780475Z  
+test (20.x)	Stop containers	2025-06-03T08:34:26.3786259Z Stop and remove container: f42ff45d654e46d5a2ea4490897403c5_pgvectorpgvectorpg15_10ed6f
+test (20.x)	Stop containers	2025-06-03T08:34:26.3791653Z ##[command]/usr/bin/docker rm --force 1fcd1eeb48e76c7bb7f202f86f416ae1303f37706c16c3f7f6a360a03fd22b5c
+test (20.x)	Stop containers	2025-06-03T08:34:26.5368403Z 1fcd1eeb48e76c7bb7f202f86f416ae1303f37706c16c3f7f6a360a03fd22b5c
+test (20.x)	Stop containers	2025-06-03T08:34:26.5391233Z Print service container logs: 3e96e4110bb24ab88179649902de3d8b_redis7alpine_444af9
+test (20.x)	Stop containers	2025-06-03T08:34:26.5392507Z ##[command]/usr/bin/docker logs --details ab722a2a99f21394abbc43f42abc5d4841d41e2326cd1234268f2cb7e724dd0b
+test (20.x)	Stop containers	2025-06-03T08:34:26.5518168Z  1:C 03 Jun 2025 08:29:08.471 # WARNING Memory overcommit must be enabled! Without it, a background save or replication may fail under low memory condition. Being disabled, it can also cause failures without low memory condition, see https://github.com/jemalloc/jemalloc/issues/1328. To fix this issue add 'vm.overcommit_memory = 1' to /etc/sysctl.conf and then reboot or run the command 'sysctl vm.overcommit_memory=1' for this to take effect.
+test (20.x)	Stop containers	2025-06-03T08:34:26.5520261Z  1:C 03 Jun 2025 08:29:08.471 * oO0OoO0OoO0Oo Redis is starting oO0OoO0OoO0Oo
+test (20.x)	Stop containers	2025-06-03T08:34:26.5520757Z  1:C 03 Jun 2025 08:29:08.471 * Redis version=7.4.4, bits=64, commit=00000000, modified=0, pid=1, just started
+test (20.x)	Stop containers	2025-06-03T08:34:26.5521484Z  1:C 03 Jun 2025 08:29:08.471 # Warning: no config file specified, using the default config. In order to specify a config file use redis-server /path/to/redis.conf
+test (20.x)	Stop containers	2025-06-03T08:34:26.5522108Z  1:M 03 Jun 2025 08:29:08.471 * monotonic clock: POSIX clock_gettime
+test (20.x)	Stop containers	2025-06-03T08:34:26.5522465Z  1:M 03 Jun 2025 08:29:08.472 * Running mode=standalone, port=6379.
+test (20.x)	Stop containers	2025-06-03T08:34:26.5522790Z  1:M 03 Jun 2025 08:29:08.472 * Server initialized
+test (20.x)	Stop containers	2025-06-03T08:34:26.5523357Z  1:M 03 Jun 2025 08:29:08.472 * Ready to accept connections tcp
+test (20.x)	Stop containers	2025-06-03T08:34:26.5530654Z Stop and remove container: 3e96e4110bb24ab88179649902de3d8b_redis7alpine_444af9
+test (20.x)	Stop containers	2025-06-03T08:34:26.5531397Z ##[command]/usr/bin/docker rm --force ab722a2a99f21394abbc43f42abc5d4841d41e2326cd1234268f2cb7e724dd0b
+test (20.x)	Stop containers	2025-06-03T08:34:26.6767204Z ab722a2a99f21394abbc43f42abc5d4841d41e2326cd1234268f2cb7e724dd0b
+test (20.x)	Stop containers	2025-06-03T08:34:26.6794402Z Remove container network: github_network_1e8194893d3c48f9ae0ffbc0e51d6063
+test (20.x)	Stop containers	2025-06-03T08:34:26.6801395Z ##[command]/usr/bin/docker network rm github_network_1e8194893d3c48f9ae0ffbc0e51d6063
+test (20.x)	Stop containers	2025-06-03T08:34:26.8061477Z github_network_1e8194893d3c48f9ae0ffbc0e51d6063
+test (20.x)	Complete job	﻿2025-06-03T08:34:26.8118582Z Cleaning up orphan processes
