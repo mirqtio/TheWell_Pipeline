@@ -401,7 +401,7 @@
           "description": "Set up systems to monitor and track infrastructure and operational costs across the distributed environment, integrating with cloud billing APIs and resource usage metrics.",
           "dependencies": [],
           "details": "Configure cost tracking tools to collect data from cloud providers and internal resources. Ensure data granularity supports service-level cost attribution. Automate regular cost reporting. Testing requirements: 1) Write unit tests for cost calculation logic, 2) Create integration tests for cost tracking persistence, 3) Implement e2e tests for complete cost reporting workflows, 4) Run all tests and resolve any issues, 5) Merge to master and verify CI passes via GitHub logs.",
-          "status": "in-progress"
+          "status": "done"
         },
         {
           "id": 2,
@@ -411,7 +411,7 @@
             1
           ],
           "details": "Instrument services to emit relevant quality metrics. Set up aggregation and filtering to focus on actionable signals and reduce monitoring noise. Testing requirements: 1) Write unit tests for metric calculation and aggregation, 2) Create integration tests for metric collection, 3) Implement e2e tests for quality monitoring workflows, 4) Run all tests and resolve any issues, 5) Merge to master and verify CI passes via GitHub logs.",
-          "status": "pending"
+          "status": "done"
         },
         {
           "id": 3,
@@ -421,7 +421,7 @@
             2
           ],
           "details": "Select dashboard tools compatible with the monitoring stack. Design dashboards to highlight key metrics, trends, and anomalies. Ensure dashboards are accessible and customizable. Testing requirements: 1) Write unit tests for dashboard components, 2) Create browser-based integration tests for dashboard interactions, 3) Implement e2e tests for complete dashboard workflows, 4) Run all tests and resolve any issues, 5) Merge to master and verify CI passes via GitHub logs.",
-          "status": "pending"
+          "status": "in-progress"
         },
         {
           "id": 4,

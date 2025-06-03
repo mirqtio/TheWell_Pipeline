@@ -89,19 +89,19 @@ Create a monitoring service with the following components:
 10. CI verification through GitHub logs via MCP or CLI
 
 # Subtasks:
-## 1. Implement Cost Tracking Mechanisms [in-progress]
+## 1. Implement Cost Tracking Mechanisms [done]
 ### Dependencies: None
 ### Description: Set up systems to monitor and track infrastructure and operational costs across the distributed environment, integrating with cloud billing APIs and resource usage metrics.
 ### Details:
 Configure cost tracking tools to collect data from cloud providers and internal resources. Ensure data granularity supports service-level cost attribution. Automate regular cost reporting. Testing requirements: 1) Write unit tests for cost calculation logic, 2) Create integration tests for cost tracking persistence, 3) Implement e2e tests for complete cost reporting workflows, 4) Run all tests and resolve any issues, 5) Merge to master and verify CI passes via GitHub logs.
 
-## 2. Establish Quality Monitoring Metrics [pending]
+## 2. Establish Quality Monitoring Metrics [done]
 ### Dependencies: 5.1
 ### Description: Define and collect quality metrics such as error rates, latency, uptime, and service-level objectives (SLOs) to assess system health and user experience.
 ### Details:
 Instrument services to emit relevant quality metrics. Set up aggregation and filtering to focus on actionable signals and reduce monitoring noise. Testing requirements: 1) Write unit tests for metric calculation and aggregation, 2) Create integration tests for metric collection, 3) Implement e2e tests for quality monitoring workflows, 4) Run all tests and resolve any issues, 5) Merge to master and verify CI passes via GitHub logs.
 
-## 3. Set Up Monitoring Dashboards [pending]
+## 3. Set Up Monitoring Dashboards [in-progress]
 ### Dependencies: 5.2
 ### Description: Develop dashboards to visualize cost, quality, and operational metrics in real time for stakeholders and engineering teams.
 ### Details:

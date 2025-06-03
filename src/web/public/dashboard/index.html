@@ -1,0 +1,444 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TheWell Pipeline - Monitoring Dashboard</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #f5f7fa;
+            color: #333;
+            line-height: 1.6;
+        }
+        
+        .header {
+            background: #2c3e50;
+            color: white;
+            padding: 1rem 2rem;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .header h1 {
+            font-size: 1.5rem;
+            font-weight: 600;
+        }
+        
+        .header .subtitle {
+            opacity: 0.8;
+            font-size: 0.9rem;
+            margin-top: 0.25rem;
+        }
+        
+        .dashboard-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+        
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+        
+        .dashboard-card {
+            background: white;
+            border-radius: 8px;
+            padding: 1.5rem;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            border: 1px solid #e1e8ed;
+        }
+        
+        .card-header {
+            display: flex;
+            justify-content: between;
+            align-items: center;
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid #f1f3f4;
+        }
+        
+        .card-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #2c3e50;
+        }
+        
+        .status-indicator {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            margin-left: auto;
+        }
+        
+        .status-healthy { background: #27ae60; }
+        .status-warning { background: #f39c12; }
+        .status-error { background: #e74c3c; }
+        
+        .metric-value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #2c3e50;
+            margin-bottom: 0.5rem;
+        }
+        
+        .metric-label {
+            font-size: 0.9rem;
+            color: #7f8c8d;
+            margin-bottom: 0.25rem;
+        }
+        
+        .metric-trend {
+            font-size: 0.8rem;
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            display: inline-block;
+        }
+        
+        .trend-stable { background: #ecf0f1; color: #7f8c8d; }
+        .trend-improving { background: #d5f4e6; color: #27ae60; }
+        .trend-degrading { background: #fadbd8; color: #e74c3c; }
+        .trend-increasing { background: #fef9e7; color: #f39c12; }
+        .trend-decreasing { background: #d5f4e6; color: #27ae60; }
+        
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+        
+        .metric-item {
+            text-align: center;
+            padding: 1rem;
+            background: #f8f9fa;
+            border-radius: 6px;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 2rem;
+            color: #7f8c8d;
+        }
+        
+        .error {
+            background: #fadbd8;
+            color: #e74c3c;
+            padding: 1rem;
+            border-radius: 6px;
+            margin: 1rem 0;
+        }
+        
+        .refresh-info {
+            text-align: center;
+            color: #7f8c8d;
+            font-size: 0.8rem;
+            margin-top: 2rem;
+        }
+        
+        .chart-container {
+            height: 200px;
+            margin-top: 1rem;
+            background: #f8f9fa;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #7f8c8d;
+        }
+        
+        @media (max-width: 768px) {
+            .dashboard-container {
+                padding: 1rem;
+            }
+            
+            .dashboard-grid {
+                grid-template-columns: 1fr;
+                gap: 1rem;
+            }
+            
+            .metric-value {
+                font-size: 1.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>TheWell Pipeline Monitoring</h1>
+        <div class="subtitle">Real-time monitoring dashboard for cost, quality, and operational metrics</div>
+    </div>
+    
+    <div class="dashboard-container">
+        <div id="loading" class="loading">
+            Loading dashboard data...
+        </div>
+        
+        <div id="error" class="error" style="display: none;">
+            Failed to load dashboard data. Please check your connection and try again.
+        </div>
+        
+        <div id="dashboard" style="display: none;">
+            <!-- Overview Cards -->
+            <div class="dashboard-grid">
+                <!-- Cost Overview -->
+                <div class="dashboard-card">
+                    <div class="card-header">
+                        <div class="card-title">Cost Overview</div>
+                        <div id="cost-status" class="status-indicator status-healthy"></div>
+                    </div>
+                    <div class="metric-value" id="daily-spending">$0.00</div>
+                    <div class="metric-label">Daily Spending</div>
+                    <div class="metric-trend" id="cost-trend">Stable</div>
+                    
+                    <div class="metrics-grid">
+                        <div class="metric-item">
+                            <div class="metric-value" id="monthly-spending">$0.00</div>
+                            <div class="metric-label">Monthly</div>
+                        </div>
+                        <div class="metric-item">
+                            <div class="metric-value" id="budget-utilization">0%</div>
+                            <div class="metric-label">Budget Used</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Quality Overview -->
+                <div class="dashboard-card">
+                    <div class="card-header">
+                        <div class="card-title">Quality Metrics</div>
+                        <div id="quality-status" class="status-indicator status-healthy"></div>
+                    </div>
+                    <div class="metric-value" id="slo-compliance">99.9%</div>
+                    <div class="metric-label">SLO Compliance</div>
+                    <div class="metric-trend" id="quality-trend">Stable</div>
+                    
+                    <div class="metrics-grid">
+                        <div class="metric-item">
+                            <div class="metric-value" id="error-rate">0.1%</div>
+                            <div class="metric-label">Error Rate</div>
+                        </div>
+                        <div class="metric-item">
+                            <div class="metric-value" id="avg-response-time">150ms</div>
+                            <div class="metric-label">Avg Response</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Operational Overview -->
+                <div class="dashboard-card">
+                    <div class="card-header">
+                        <div class="card-title">System Health</div>
+                        <div id="operational-status" class="status-indicator status-healthy"></div>
+                    </div>
+                    <div class="metric-value" id="uptime">99.9%</div>
+                    <div class="metric-label">Uptime</div>
+                    <div class="metric-trend trend-stable">Healthy</div>
+                    
+                    <div class="metrics-grid">
+                        <div class="metric-item">
+                            <div class="metric-value" id="throughput">0</div>
+                            <div class="metric-label">Requests/min</div>
+                        </div>
+                        <div class="metric-item">
+                            <div class="metric-value" id="active-connections">0</div>
+                            <div class="metric-label">Connections</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Detailed Charts -->
+            <div class="dashboard-grid">
+                <div class="dashboard-card">
+                    <div class="card-header">
+                        <div class="card-title">Cost Trends (24h)</div>
+                    </div>
+                    <div class="chart-container">
+                        Chart visualization would go here
+                    </div>
+                </div>
+                
+                <div class="dashboard-card">
+                    <div class="card-header">
+                        <div class="card-title">Quality Trends (24h)</div>
+                    </div>
+                    <div class="chart-container">
+                        Chart visualization would go here
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="refresh-info">
+            Last updated: <span id="last-updated">Never</span> | Auto-refresh every 30 seconds
+        </div>
+    </div>
+    
+    <script>
+        class DashboardClient {
+            constructor() {
+                this.baseUrl = window.location.origin;
+                this.refreshInterval = 30000; // 30 seconds
+                this.refreshTimer = null;
+            }
+            
+            async initialize() {
+                try {
+                    await this.loadDashboardData();
+                    this.startAutoRefresh();
+                    this.showDashboard();
+                } catch (error) {
+                    console.error('Failed to initialize dashboard:', error);
+                    this.showError();
+                }
+            }
+            
+            async loadDashboardData() {
+                try {
+                    const response = await fetch(`${this.baseUrl}/api/dashboard/overview`);
+                    
+                    if (!response.ok) {
+                        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                    }
+                    
+                    const data = await response.json();
+                    this.updateDashboard(data);
+                    this.updateLastRefresh();
+                } catch (error) {
+                    console.error('Error loading dashboard data:', error);
+                    throw error;
+                }
+            }
+            
+            updateDashboard(data) {
+                // Update cost metrics
+                if (data.summary?.cost) {
+                    const cost = data.summary.cost;
+                    document.getElementById('daily-spending').textContent = `$${cost.dailySpending.toFixed(2)}`;
+                    document.getElementById('monthly-spending').textContent = `$${cost.monthlySpending.toFixed(2)}`;
+                    document.getElementById('budget-utilization').textContent = `${(cost.budgetUtilization * 100).toFixed(1)}%`;
+                    
+                    const costTrend = document.getElementById('cost-trend');
+                    costTrend.textContent = this.formatTrend(cost.trend);
+                    costTrend.className = `metric-trend trend-${cost.trend}`;
+                    
+                    // Update cost status indicator
+                    const costStatus = document.getElementById('cost-status');
+                    if (cost.budgetUtilization > 0.9) {
+                        costStatus.className = 'status-indicator status-error';
+                    } else if (cost.budgetUtilization > 0.7) {
+                        costStatus.className = 'status-indicator status-warning';
+                    } else {
+                        costStatus.className = 'status-indicator status-healthy';
+                    }
+                }
+                
+                // Update quality metrics
+                if (data.summary?.quality) {
+                    const quality = data.summary.quality;
+                    document.getElementById('slo-compliance').textContent = `${quality.overallHealth.toFixed(1)}%`;
+                    document.getElementById('error-rate').textContent = `${quality.errorRate.toFixed(2)}%`;
+                    document.getElementById('avg-response-time').textContent = `${quality.avgResponseTime.toFixed(0)}ms`;
+                    
+                    const qualityTrend = document.getElementById('quality-trend');
+                    qualityTrend.textContent = this.formatTrend(quality.trend);
+                    qualityTrend.className = `metric-trend trend-${quality.trend}`;
+                    
+                    // Update quality status indicator
+                    const qualityStatus = document.getElementById('quality-status');
+                    if (quality.overallHealth < 95 || quality.errorRate > 5) {
+                        qualityStatus.className = 'status-indicator status-error';
+                    } else if (quality.overallHealth < 98 || quality.errorRate > 2) {
+                        qualityStatus.className = 'status-indicator status-warning';
+                    } else {
+                        qualityStatus.className = 'status-indicator status-healthy';
+                    }
+                }
+                
+                // Update operational metrics
+                if (data.summary?.operational) {
+                    const operational = data.summary.operational;
+                    document.getElementById('uptime').textContent = `${operational.uptime.toFixed(1)}%`;
+                    document.getElementById('throughput').textContent = operational.throughput.toString();
+                    document.getElementById('active-connections').textContent = operational.activeConnections.toString();
+                    
+                    // Update operational status indicator
+                    const operationalStatus = document.getElementById('operational-status');
+                    if (operational.systemHealth === 'healthy' && operational.uptime > 99) {
+                        operationalStatus.className = 'status-indicator status-healthy';
+                    } else if (operational.uptime > 95) {
+                        operationalStatus.className = 'status-indicator status-warning';
+                    } else {
+                        operationalStatus.className = 'status-indicator status-error';
+                    }
+                }
+            }
+            
+            formatTrend(trend) {
+                switch (trend) {
+                    case 'increasing': return 'Increasing';
+                    case 'decreasing': return 'Decreasing';
+                    case 'improving': return 'Improving';
+                    case 'degrading': return 'Degrading';
+                    case 'stable': return 'Stable';
+                    default: return 'Unknown';
+                }
+            }
+            
+            updateLastRefresh() {
+                const now = new Date();
+                document.getElementById('last-updated').textContent = now.toLocaleTimeString();
+            }
+            
+            startAutoRefresh() {
+                this.refreshTimer = setInterval(async () => {
+                    try {
+                        await this.loadDashboardData();
+                    } catch (error) {
+                        console.error('Auto-refresh failed:', error);
+                    }
+                }, this.refreshInterval);
+            }
+            
+            stopAutoRefresh() {
+                if (this.refreshTimer) {
+                    clearInterval(this.refreshTimer);
+                    this.refreshTimer = null;
+                }
+            }
+            
+            showDashboard() {
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('error').style.display = 'none';
+                document.getElementById('dashboard').style.display = 'block';
+            }
+            
+            showError() {
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('dashboard').style.display = 'none';
+                document.getElementById('error').style.display = 'block';
+            }
+        }
+        
+        // Initialize dashboard when page loads
+        document.addEventListener('DOMContentLoaded', () => {
+            const dashboard = new DashboardClient();
+            dashboard.initialize();
+            
+            // Clean up on page unload
+            window.addEventListener('beforeunload', () => {
+                dashboard.stopAutoRefresh();
+            });
+        });
+    </script>
+</body>
+</html>

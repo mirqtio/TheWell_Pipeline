@@ -286,6 +286,71 @@ CREATE TABLE cost_reports (
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
+-- Update cost budgets with provider filters
+UPDATE cost_budgets SET provider_filter = 'openai' WHERE name = 'OpenAI Daily Limit';
+UPDATE cost_budgets SET provider_filter = 'anthropic' WHERE name = 'Anthropic Daily Limit';
+
+-- =====================================================
+-- QUALITY MONITORING TABLES
+-- =====================================================
+
+-- Quality Reports: Store periodic quality assessment reports
+CREATE TABLE quality_reports (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    timestamp TIMESTAMP WITH TIME ZONE NOT NULL,
+    window_period VARCHAR(10) NOT NULL, -- '1m', '5m', '15m', '1h', '24h'
+    metrics JSONB NOT NULL, -- API, LLM, database metrics
+    slos JSONB NOT NULL, -- SLO compliance data
+    summary JSONB NOT NULL, -- Summary statistics
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- SLO Violations: Track when Service Level Objectives are violated
+CREATE TABLE slo_violations (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    slo_id VARCHAR(100) NOT NULL, -- SLO identifier
+    slo_name VARCHAR(200) NOT NULL, -- Human readable SLO name
+    target_value DECIMAL(10,6) NOT NULL, -- Target value for the SLO
+    current_value DECIMAL(10,6) NOT NULL, -- Current measured value
+    is_compliant BOOLEAN NOT NULL, -- Whether SLO is being met
+    labels JSONB DEFAULT '{}', -- Additional context labels
+    timestamp TIMESTAMP WITH TIME ZONE NOT NULL, -- When violation occurred
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Metric Data Points: Store individual metric measurements for analysis
+CREATE TABLE metric_data_points (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    metric_type VARCHAR(100) NOT NULL, -- Type of metric (response_time, error_rate, etc.)
+    value DECIMAL(15,6) NOT NULL, -- Metric value
+    labels JSONB DEFAULT '{}', -- Labels for filtering and grouping
+    timestamp TIMESTAMP WITH TIME ZONE NOT NULL, -- When metric was recorded
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Quality Monitoring Indexes
+CREATE INDEX idx_quality_reports_timestamp ON quality_reports(timestamp);
+CREATE INDEX idx_quality_reports_window_period ON quality_reports(window_period);
+CREATE INDEX idx_quality_reports_created_at ON quality_reports(created_at);
+CREATE INDEX idx_slo_violations_slo_id ON slo_violations(slo_id);
+CREATE INDEX idx_slo_violations_timestamp ON slo_violations(timestamp);
+CREATE INDEX idx_slo_violations_is_compliant ON slo_violations(is_compliant);
+CREATE INDEX idx_slo_violations_created_at ON slo_violations(created_at);
+CREATE INDEX idx_slo_violations_slo_timestamp ON slo_violations(slo_id, timestamp);
+CREATE INDEX idx_metric_data_points_metric_type ON metric_data_points(metric_type);
+CREATE INDEX idx_metric_data_points_timestamp ON metric_data_points(timestamp);
+CREATE INDEX idx_metric_data_points_labels ON metric_data_points USING gin(labels);
+CREATE INDEX idx_metric_data_points_type_timestamp ON metric_data_points(metric_type, timestamp);
+CREATE INDEX idx_metric_data_points_created_at ON metric_data_points(created_at);
+
+-- Add triggers for quality monitoring tables to update timestamps
+CREATE TRIGGER update_quality_reports_updated_at BEFORE UPDATE ON quality_reports FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+CREATE TRIGGER update_slo_violations_updated_at BEFORE UPDATE ON slo_violations FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+CREATE TRIGGER update_metric_data_points_updated_at BEFORE UPDATE ON metric_data_points FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
 -- =====================================================
 -- CONFIGURATION TABLES
 -- =====================================================
@@ -576,6 +641,9 @@ CREATE TRIGGER update_feedback_aggregates_on_delete
 CREATE TRIGGER update_feedback_updated_at BEFORE UPDATE ON feedback FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 CREATE TRIGGER update_document_feedback_updated_at BEFORE UPDATE ON document_feedback FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 CREATE TRIGGER update_source_reliability_scores_updated_at BEFORE UPDATE ON source_reliability_scores FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+-- Add trigger for quality monitoring tables to update timestamps
+CREATE TRIGGER update_quality_reports_updated_at BEFORE UPDATE ON quality_reports FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
 -- =====================================================
 -- INITIAL DATA

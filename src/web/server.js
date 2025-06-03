@@ -17,6 +17,7 @@ const visibilityRoutes = require('./routes/visibility');
 const feedbackRoutes = require('./routes/feedback');
 const ragRoutes = require('./routes/rag');
 const reliabilityRoutes = require('./routes/reliability');
+const dashboardRoutes = require('./routes/dashboard');
 
 // Import middleware
 const authMiddleware = require('./middleware/auth');
@@ -33,6 +34,9 @@ class ManualReviewServer {
     this.ragManager = options.ragManager;
     this.cacheManager = options.cacheManager;
     this.sourceReliabilityService = options.sourceReliabilityService;
+    this.costTracker = options.costTracker;
+    this.qualityMetrics = options.qualityMetrics;
+    this.dashboardManager = options.dashboardManager;
     
     // Initialize tracing middleware
     this.tracingMiddleware = new TracingMiddleware({
@@ -90,6 +94,11 @@ class ManualReviewServer {
       const FeedbackDAO = require('../database/FeedbackDAO');
       this.app.set('feedbackDAO', new FeedbackDAO(this.databaseManager));
     }
+    
+    // Set up dashboard manager
+    if (this.dashboardManager) {
+      this.app.set('dashboardManager', this.dashboardManager);
+    }
   }
 
   /**
@@ -144,6 +153,9 @@ class ManualReviewServer {
         sourceReliabilityService: this.sourceReliabilityService
       }));
     }
+
+    // Dashboard API routes
+    this.app.use('/api/dashboard', dashboardRoutes);
 
     this.app.use('/api', apiRoutes({
       queueManager: this.queueManager,
