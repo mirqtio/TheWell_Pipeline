@@ -827,6 +827,373 @@ module.exports = (dependencies = {}) => {
   }));
 
   /**
+   * Bulk flag documents
+   */
+  router.post('/bulk/flag', requirePermission('write'), asyncHandler(async (req, res) => {
+    const { documentIds, flag, type, notes, reason, priority = 1 } = req.body;
+
+    if (!documentIds || !Array.isArray(documentIds) || documentIds.length === 0) {
+      throw new ValidationError('Document IDs array is required');
+    }
+
+    // Accept either 'flag' or 'type' for the flag type
+    const flagType = flag || type;
+    // Accept either 'notes' or 'reason' for the flag reason
+    const flagReason = notes || reason;
+
+    if (!flagType) {
+      throw new ValidationError('Flag type is required');
+    }
+
+    logger.info('Bulk flagging documents', {
+      documentIds,
+      count: documentIds.length,
+      type: flagType,
+      reason: flagReason,
+      priority,
+      userId: req.user.id
+    });
+
+    const results = [];
+    const errors = [];
+
+    for (const documentId of documentIds) {
+      try {
+        const job = await queueManager.getJob('manual-review', documentId);
+        
+        if (!job) {
+          errors.push({ documentId, error: 'Document not found' });
+          continue;
+        }
+
+        // Add flag to document
+        const flagData = {
+          id: `flag-${Date.now()}-${documentId}`,
+          type: flagType,
+          reason: flagReason || '',
+          flaggedBy: req.user.id,
+          flaggedAt: new Date().toISOString(),
+          priority,
+          resolved: false,
+          bulkOperation: true
+        };
+
+        const flags = job.data.flags || [];
+        flags.push(flagData);
+
+        await job.update({
+          ...job.data,
+          flags
+        });
+
+        // Change job priority if specified
+        if (priority > job.opts.priority) {
+          await job.changePriority(priority);
+        }
+
+        // Log audit trail
+        await auditService.logCurationAction({
+          action: 'flag',
+          resourceType: 'document',
+          resourceId: documentId,
+          userId: req.user.id,
+          metadata: {
+            flagType,
+            reason: flagReason,
+            priority,
+            bulkOperation: true
+          }
+        });
+
+        results.push({ documentId, status: 'flagged' });
+
+      } catch (error) {
+        logger.error('Error in bulk flag', { documentId, error: error.message });
+        errors.push({ documentId, error: error.message });
+      }
+    }
+
+    logger.info('Bulk flag completed', {
+      successful: results.length,
+      failed: errors.length,
+      userId: req.user.id
+    });
+
+    res.json({
+      success: true,
+      message: `Bulk flagging completed: ${results.length} successful, ${errors.length} failed`,
+      results,
+      errors,
+      summary: {
+        total: documentIds.length,
+        successful: results.length,
+        failed: errors.length
+      }
+    });
+  }));
+
+  /**
+   * Bulk assign documents
+   */
+  router.post('/bulk/assign', requirePermission('write'), asyncHandler(async (req, res) => {
+    const { documentIds, assignTo, notes } = req.body;
+
+    if (!documentIds || !Array.isArray(documentIds) || documentIds.length === 0) {
+      throw new ValidationError('Document IDs array is required');
+    }
+
+    if (!assignTo) {
+      throw new ValidationError('Assignee is required');
+    }
+
+    logger.info('Bulk assigning documents', {
+      documentIds,
+      count: documentIds.length,
+      assignTo,
+      notes,
+      userId: req.user.id
+    });
+
+    const results = [];
+    const errors = [];
+
+    for (const documentId of documentIds) {
+      try {
+        const job = await queueManager.getJob('manual-review', documentId);
+        
+        if (!job) {
+          errors.push({ documentId, error: 'Document not found' });
+          continue;
+        }
+
+        // Update job with assignment
+        await job.update({
+          ...job.data,
+          assignedTo: assignTo,
+          assignedBy: req.user.id,
+          assignedAt: new Date().toISOString(),
+          assignmentNotes: notes || '',
+          bulkOperation: true
+        });
+
+        // Log audit trail
+        await auditService.logCurationAction({
+          action: 'assign',
+          resourceType: 'document',
+          resourceId: documentId,
+          userId: req.user.id,
+          metadata: {
+            assignTo,
+            assignedBy: req.user.id,
+            notes,
+            bulkOperation: true
+          }
+        });
+
+        results.push({ documentId, status: 'assigned', assignedTo: assignTo });
+
+      } catch (error) {
+        logger.error('Error in bulk assign', { documentId, error: error.message });
+        errors.push({ documentId, error: error.message });
+      }
+    }
+
+    logger.info('Bulk assign completed', {
+      successful: results.length,
+      failed: errors.length,
+      userId: req.user.id
+    });
+
+    res.json({
+      success: true,
+      message: `Bulk assignment completed: ${results.length} successful, ${errors.length} failed`,
+      results,
+      errors,
+      summary: {
+        total: documentIds.length,
+        successful: results.length,
+        failed: errors.length
+      }
+    });
+  }));
+
+  /**
+   * Bulk add tags to documents
+   */
+  router.post('/bulk/add-tags', requirePermission('write'), asyncHandler(async (req, res) => {
+    const { documentIds, tags, notes } = req.body;
+
+    if (!documentIds || !Array.isArray(documentIds) || documentIds.length === 0) {
+      throw new ValidationError('Document IDs array is required');
+    }
+
+    if (!tags || !Array.isArray(tags) || tags.length === 0) {
+      throw new ValidationError('Tags array is required');
+    }
+
+    logger.info('Bulk adding tags to documents', {
+      documentIds,
+      count: documentIds.length,
+      tags,
+      notes,
+      userId: req.user.id
+    });
+
+    const results = [];
+    const errors = [];
+
+    for (const documentId of documentIds) {
+      try {
+        const job = await queueManager.getJob('manual-review', documentId);
+        
+        if (!job) {
+          errors.push({ documentId, error: 'Document not found' });
+          continue;
+        }
+
+        // Merge new tags with existing tags
+        const existingTags = job.data.tags || [];
+        const newTags = [...new Set([...existingTags, ...tags])]; // Remove duplicates
+
+        await job.update({
+          ...job.data,
+          tags: newTags,
+          lastTaggedBy: req.user.id,
+          lastTaggedAt: new Date().toISOString(),
+          taggingNotes: notes || '',
+          bulkOperation: true
+        });
+
+        // Log audit trail
+        await auditService.logCurationAction({
+          action: 'add_tags',
+          resourceType: 'document',
+          resourceId: documentId,
+          userId: req.user.id,
+          metadata: {
+            addedTags: tags,
+            allTags: newTags,
+            notes,
+            bulkOperation: true
+          }
+        });
+
+        results.push({ documentId, status: 'tagged', addedTags: tags, allTags: newTags });
+
+      } catch (error) {
+        logger.error('Error in bulk add tags', { documentId, error: error.message });
+        errors.push({ documentId, error: error.message });
+      }
+    }
+
+    logger.info('Bulk add tags completed', {
+      successful: results.length,
+      failed: errors.length,
+      userId: req.user.id
+    });
+
+    res.json({
+      success: true,
+      message: `Bulk tagging completed: ${results.length} successful, ${errors.length} failed`,
+      results,
+      errors,
+      summary: {
+        total: documentIds.length,
+        successful: results.length,
+        failed: errors.length
+      }
+    });
+  }));
+
+  /**
+   * Bulk remove tags from documents
+   */
+  router.post('/bulk/remove-tags', requirePermission('write'), asyncHandler(async (req, res) => {
+    const { documentIds, tags, notes } = req.body;
+
+    if (!documentIds || !Array.isArray(documentIds) || documentIds.length === 0) {
+      throw new ValidationError('Document IDs array is required');
+    }
+
+    if (!tags || !Array.isArray(tags) || tags.length === 0) {
+      throw new ValidationError('Tags array is required');
+    }
+
+    logger.info('Bulk removing tags from documents', {
+      documentIds,
+      count: documentIds.length,
+      tags,
+      notes,
+      userId: req.user.id
+    });
+
+    const results = [];
+    const errors = [];
+
+    for (const documentId of documentIds) {
+      try {
+        const job = await queueManager.getJob('manual-review', documentId);
+        
+        if (!job) {
+          errors.push({ documentId, error: 'Document not found' });
+          continue;
+        }
+
+        // Remove specified tags from existing tags
+        const existingTags = job.data.tags || [];
+        const remainingTags = existingTags.filter(tag => !tags.includes(tag));
+
+        await job.update({
+          ...job.data,
+          tags: remainingTags,
+          lastTaggedBy: req.user.id,
+          lastTaggedAt: new Date().toISOString(),
+          taggingNotes: notes || '',
+          bulkOperation: true
+        });
+
+        // Log audit trail
+        await auditService.logCurationAction({
+          action: 'remove_tags',
+          resourceType: 'document',
+          resourceId: documentId,
+          userId: req.user.id,
+          metadata: {
+            removedTags: tags,
+            remainingTags,
+            notes,
+            bulkOperation: true
+          }
+        });
+
+        results.push({ documentId, status: 'untagged', removedTags: tags, remainingTags });
+
+      } catch (error) {
+        logger.error('Error in bulk remove tags', { documentId, error: error.message });
+        errors.push({ documentId, error: error.message });
+      }
+    }
+
+    logger.info('Bulk remove tags completed', {
+      successful: results.length,
+      failed: errors.length,
+      userId: req.user.id
+    });
+
+    res.json({
+      success: true,
+      message: `Bulk tag removal completed: ${results.length} successful, ${errors.length} failed`,
+      results,
+      errors,
+      summary: {
+        total: documentIds.length,
+        successful: results.length,
+        failed: errors.length
+      }
+    });
+  }));
+
+  /**
    * Get workflow status for documents
    */
   router.get('/workflow/status', requirePermission('read'), asyncHandler(async (req, res) => {

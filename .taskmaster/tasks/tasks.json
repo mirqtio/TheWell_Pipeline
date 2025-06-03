@@ -494,7 +494,7 @@
             2
           ],
           "details": "This subtask covers designing a schema for audit logs, integrating logging into workflow actions, and exposing audit data in the dashboard for review. Testing requirements: 1) Write unit tests for audit logging functions, 2) Create integration tests for audit trail persistence, 3) Implement e2e tests for audit trail workflows, 4) Run all tests and resolve any issues, 5) Merge to master and verify CI passes via GitHub logs.",
-          "status": "in-progress"
+          "status": "done"
         },
         {
           "id": 4,
@@ -504,7 +504,7 @@
             2
           ],
           "details": "This involves designing efficient batch processing endpoints, updating the UI for multi-select and bulk action controls, and ensuring audit logging for bulk changes. Testing requirements: 1) Write unit tests for bulk operation logic, 2) Create browser-based integration tests for bulk UI interactions, 3) Implement e2e tests for complete bulk operation workflows, 4) Run all tests and resolve any issues, 5) Merge to master and verify CI passes via GitHub logs.",
-          "status": "pending"
+          "status": "in-progress"
         },
         {
           "id": 5,

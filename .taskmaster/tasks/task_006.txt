@@ -90,13 +90,13 @@ This subtask involves wireframing, UI/UX design, and frontend development to ens
 ### Details:
 This includes implementing APIs and business logic for managing curation tasks, tracking progress, and supporting collaboration among curators. Testing requirements: 1) Write unit tests for workflow logic and APIs, 2) Create integration tests for workflow state transitions, 3) Implement e2e tests for complete curation workflows, 4) Run all tests and resolve any issues, 5) Merge to master and verify CI passes via GitHub logs.
 
-## 3. Implement Audit Trail System [in-progress]
+## 3. Implement Audit Trail System [done]
 ### Dependencies: 6.2
 ### Description: Create an audit trail mechanism to log all curation actions, changes, and user activities for compliance and traceability.
 ### Details:
 This subtask covers designing a schema for audit logs, integrating logging into workflow actions, and exposing audit data in the dashboard for review. Testing requirements: 1) Write unit tests for audit logging functions, 2) Create integration tests for audit trail persistence, 3) Implement e2e tests for audit trail workflows, 4) Run all tests and resolve any issues, 5) Merge to master and verify CI passes via GitHub logs.
 
-## 4. Enable Bulk Operations Functionality [pending]
+## 4. Enable Bulk Operations Functionality [in-progress]
 ### Dependencies: 6.2
 ### Description: Add support for bulk actions (e.g., tagging, approval, deletion) on curated data items through both the UI and backend.
 ### Details:

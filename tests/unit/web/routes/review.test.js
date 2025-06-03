@@ -6,6 +6,27 @@ const request = require('supertest');
 const express = require('express');
 const createReviewRoutes = require('../../../../src/web/routes/review');
 
+// Mock the audit service
+jest.mock('../../../../src/services/AuditService', () => ({
+  logCurationAction: jest.fn().mockResolvedValue(true)
+}));
+
+// Mock the auth middleware
+jest.mock('../../../../src/web/middleware/auth', () => ({
+  requirePermission: () => (req, res, next) => {
+    req.user = { id: 'test-user', username: 'testuser' };
+    next();
+  }
+}));
+
+// Mock the logger
+jest.mock('../../../../src/utils/logger', () => ({
+  info: jest.fn(),
+  error: jest.fn(),
+  warn: jest.fn(),
+  debug: jest.fn()
+}));
+
 describe('Review Routes', () => {
   let app;
   let mockQueueManager;
@@ -303,6 +324,437 @@ describe('Review Routes', () => {
       expect(response.body.stats.performance).toBeDefined();
       expect(mockQueueManager.getQueueStats).toHaveBeenCalledWith('manual-review');
       expect(mockQueueManager.getJobs).toHaveBeenCalledWith('manual-review', ['completed'], 0, -1);
+    });
+  });
+
+  describe('POST /bulk/flag', () => {
+    it('should bulk flag multiple documents', async () => {
+      const mockJobs = [
+        { 
+          id: 'job1', 
+          data: { documentId: 'doc1', flags: [] },
+          opts: { priority: 1 },
+          update: jest.fn().mockResolvedValue(true),
+          changePriority: jest.fn().mockResolvedValue(true)
+        },
+        { 
+          id: 'job2', 
+          data: { documentId: 'doc2', flags: [] },
+          opts: { priority: 1 },
+          update: jest.fn().mockResolvedValue(true),
+          changePriority: jest.fn().mockResolvedValue(true)
+        }
+      ];
+
+      // Mock getJob calls with queue name and document ID
+      mockQueueManager.getJob
+        .mockImplementation((queueName, documentId) => {
+          if (queueName === 'manual-review' && documentId === 'doc1') {
+            return Promise.resolve(mockJobs[0]);
+          }
+          if (queueName === 'manual-review' && documentId === 'doc2') {
+            return Promise.resolve(mockJobs[1]);
+          }
+          return Promise.resolve(null);
+        });
+
+      const response = await request(app)
+        .post('/api/review/bulk/flag')
+        .send({
+          documentIds: ['doc1', 'doc2'],
+          type: 'quality',
+          reason: 'Quality issue detected',
+          priority: 3
+        })
+        .expect(200);
+
+      expect(response.body.success).toBe(true);
+      expect(response.body.summary.total).toBe(2);
+      expect(response.body.summary.successful).toBe(2);
+      expect(response.body.summary.failed).toBe(0);
+      expect(mockQueueManager.getJob).toHaveBeenCalledWith('manual-review', 'doc1');
+      expect(mockQueueManager.getJob).toHaveBeenCalledWith('manual-review', 'doc2');
+      expect(mockJobs[0].update).toHaveBeenCalled();
+      expect(mockJobs[1].update).toHaveBeenCalled();
+    });
+
+    it('should handle partial failures in bulk flag', async () => {
+      const mockJob = { 
+        id: 'job1', 
+        data: { documentId: 'doc1', flags: [] },
+        opts: { priority: 1 },
+        update: jest.fn().mockResolvedValue(true),
+        changePriority: jest.fn().mockResolvedValue(true)
+      };
+
+      mockQueueManager.getJob
+        .mockImplementation((queueName, documentId) => {
+          if (queueName === 'manual-review' && documentId === 'doc1') {
+            return Promise.resolve(mockJob);
+          }
+          if (queueName === 'manual-review' && documentId === 'doc2') {
+            return Promise.resolve(null); // Simulate job not found
+          }
+          return Promise.resolve(null);
+        });
+
+      const response = await request(app)
+        .post('/api/review/bulk/flag')
+        .send({
+          documentIds: ['doc1', 'doc2'],
+          type: 'quality',
+          reason: 'Quality issue detected',
+          priority: 3
+        })
+        .expect(200);
+
+      expect(response.body.success).toBe(true);
+      expect(response.body.summary.successful).toBe(1);
+      expect(response.body.summary.failed).toBe(1);
+      expect(response.body.errors).toHaveLength(1);
+      expect(response.body.errors[0].documentId).toBe('doc2');
+      expect(response.body.errors[0].error).toBe('Document not found');
+    });
+
+    it('should return 400 if documentIds is not provided', async () => {
+      const response = await request(app)
+        .post('/api/review/bulk/flag')
+        .send({
+          type: 'quality'
+        })
+        .expect(400);
+
+      expect(response.body.error).toContain('Document IDs array is required');
+    });
+
+    it('should return 400 if type is not provided', async () => {
+      const response = await request(app)
+        .post('/api/review/bulk/flag')
+        .send({
+          documentIds: ['doc1']
+        })
+        .expect(400);
+
+      expect(response.body.error).toContain('Flag type is required');
+    });
+  });
+
+  describe('POST /bulk/assign', () => {
+    it('should bulk assign multiple documents', async () => {
+      const mockJobs = [
+        { 
+          id: 'job1', 
+          data: { documentId: 'doc1' },
+          opts: { priority: 1 },
+          update: jest.fn().mockResolvedValue(true)
+        },
+        { 
+          id: 'job2', 
+          data: { documentId: 'doc2' },
+          opts: { priority: 1 },
+          update: jest.fn().mockResolvedValue(true)
+        }
+      ];
+
+      // Mock getJob calls with queue name and document ID
+      mockQueueManager.getJob
+        .mockImplementation((queueName, documentId) => {
+          if (queueName === 'manual-review' && documentId === 'doc1') {
+            return Promise.resolve(mockJobs[0]);
+          }
+          if (queueName === 'manual-review' && documentId === 'doc2') {
+            return Promise.resolve(mockJobs[1]);
+          }
+          return Promise.resolve(null);
+        });
+
+      const response = await request(app)
+        .post('/api/review/bulk/assign')
+        .send({
+          documentIds: ['doc1', 'doc2'],
+          assignTo: 'reviewer123',
+          assignedBy: 'admin456'
+        })
+        .expect(200);
+
+      expect(response.body.success).toBe(true);
+      expect(response.body.summary.total).toBe(2);
+      expect(response.body.summary.successful).toBe(2);
+      expect(response.body.summary.failed).toBe(0);
+      expect(mockQueueManager.getJob).toHaveBeenCalledWith('manual-review', 'doc1');
+      expect(mockQueueManager.getJob).toHaveBeenCalledWith('manual-review', 'doc2');
+      expect(mockJobs[0].update).toHaveBeenCalled();
+      expect(mockJobs[1].update).toHaveBeenCalled();
+    });
+
+    it('should handle partial failures in bulk assign', async () => {
+      const mockJob = { 
+        id: 'job1', 
+        data: { documentId: 'doc1' },
+        opts: { priority: 1 },
+        update: jest.fn().mockResolvedValue(true)
+      };
+
+      mockQueueManager.getJob
+        .mockImplementation((queueName, documentId) => {
+          if (queueName === 'manual-review' && documentId === 'doc1') {
+            return Promise.resolve(mockJob);
+          }
+          if (queueName === 'manual-review' && documentId === 'doc2') {
+            return Promise.resolve(null); // Simulate job not found
+          }
+          return Promise.resolve(null);
+        });
+
+      const response = await request(app)
+        .post('/api/review/bulk/assign')
+        .send({
+          documentIds: ['doc1', 'doc2'],
+          assignTo: 'reviewer123',
+          assignedBy: 'admin456'
+        })
+        .expect(200);
+
+      expect(response.body.success).toBe(true);
+      expect(response.body.summary.successful).toBe(1);
+      expect(response.body.summary.failed).toBe(1);
+      expect(response.body.errors).toHaveLength(1);
+      expect(response.body.errors[0].documentId).toBe('doc2');
+      expect(response.body.errors[0].error).toBe('Document not found');
+    });
+
+    it('should return 400 if documentIds is not provided', async () => {
+      const response = await request(app)
+        .post('/api/review/bulk/assign')
+        .send({
+          assignTo: 'reviewer123'
+        })
+        .expect(400);
+
+      expect(response.body.error).toContain('Document IDs array is required');
+    });
+
+    it('should return 400 if assignTo is not provided', async () => {
+      const response = await request(app)
+        .post('/api/review/bulk/assign')
+        .send({
+          documentIds: ['doc1']
+        })
+        .expect(400);
+
+      expect(response.body.error).toContain('Assignee is required');
+    });
+  });
+
+  describe('POST /bulk/add-tags', () => {
+    it('should bulk add tags to multiple documents', async () => {
+      const mockJobs = [
+        { 
+          id: 'job1', 
+          data: { documentId: 'doc1', tags: ['existing'] },
+          opts: { priority: 1 },
+          update: jest.fn().mockResolvedValue(true)
+        },
+        { 
+          id: 'job2', 
+          data: { documentId: 'doc2', tags: [] },
+          opts: { priority: 1 },
+          update: jest.fn().mockResolvedValue(true)
+        }
+      ];
+
+      // Mock getJob calls with queue name and document ID
+      mockQueueManager.getJob
+        .mockImplementation((queueName, documentId) => {
+          if (queueName === 'manual-review' && documentId === 'doc1') {
+            return Promise.resolve(mockJobs[0]);
+          }
+          if (queueName === 'manual-review' && documentId === 'doc2') {
+            return Promise.resolve(mockJobs[1]);
+          }
+          return Promise.resolve(null);
+        });
+
+      const response = await request(app)
+        .post('/api/review/bulk/add-tags')
+        .send({
+          documentIds: ['doc1', 'doc2'],
+          tags: ['urgent', 'review-needed']
+        })
+        .expect(200);
+
+      expect(response.body.success).toBe(true);
+      expect(response.body.summary.total).toBe(2);
+      expect(response.body.summary.successful).toBe(2);
+      expect(response.body.summary.failed).toBe(0);
+      expect(mockQueueManager.getJob).toHaveBeenCalledWith('manual-review', 'doc1');
+      expect(mockQueueManager.getJob).toHaveBeenCalledWith('manual-review', 'doc2');
+      expect(mockJobs[0].update).toHaveBeenCalled();
+      expect(mockJobs[1].update).toHaveBeenCalled();
+    });
+
+    it('should handle partial failures in bulk add tags', async () => {
+      const mockJob = { 
+        id: 'job1', 
+        data: { documentId: 'doc1', tags: [] },
+        opts: { priority: 1 },
+        update: jest.fn().mockResolvedValue(true)
+      };
+
+      mockQueueManager.getJob
+        .mockImplementation((queueName, documentId) => {
+          if (queueName === 'manual-review' && documentId === 'doc1') {
+            return Promise.resolve(mockJob);
+          }
+          if (queueName === 'manual-review' && documentId === 'doc2') {
+            return Promise.resolve(null); // Simulate job not found
+          }
+          return Promise.resolve(null);
+        });
+
+      const response = await request(app)
+        .post('/api/review/bulk/add-tags')
+        .send({
+          documentIds: ['doc1', 'doc2'],
+          tags: ['urgent'],
+          notes: 'Tag notes'
+        })
+        .expect(200);
+
+      expect(response.body.success).toBe(true);
+      expect(response.body.summary.successful).toBe(1);
+      expect(response.body.summary.failed).toBe(1);
+      expect(response.body.errors).toHaveLength(1);
+      expect(response.body.errors[0].documentId).toBe('doc2');
+      expect(response.body.errors[0].error).toBe('Document not found');
+    });
+
+    it('should return 400 if documentIds is not provided', async () => {
+      const response = await request(app)
+        .post('/api/review/bulk/add-tags')
+        .send({
+          tags: ['urgent']
+        })
+        .expect(400);
+
+      expect(response.body.error).toContain('Document IDs array is required');
+    });
+
+    it('should return 400 if tags is not provided', async () => {
+      const response = await request(app)
+        .post('/api/review/bulk/add-tags')
+        .send({
+          documentIds: ['doc1']
+        })
+        .expect(400);
+
+      expect(response.body.error).toContain('Tags array is required');
+    });
+  });
+
+  describe('POST /bulk/remove-tags', () => {
+    it('should bulk remove tags from multiple documents', async () => {
+      const mockJobs = [
+        { 
+          id: 'job1', 
+          data: { documentId: 'doc1', tags: ['urgent', 'review-needed', 'keep'] },
+          opts: { priority: 1 },
+          update: jest.fn().mockResolvedValue(true)
+        },
+        { 
+          id: 'job2', 
+          data: { documentId: 'doc2', tags: ['urgent', 'other'] },
+          opts: { priority: 1 },
+          update: jest.fn().mockResolvedValue(true)
+        }
+      ];
+
+      // Mock getJob calls with queue name and document ID
+      mockQueueManager.getJob
+        .mockImplementation((queueName, documentId) => {
+          if (queueName === 'manual-review' && documentId === 'doc1') {
+            return Promise.resolve(mockJobs[0]);
+          }
+          if (queueName === 'manual-review' && documentId === 'doc2') {
+            return Promise.resolve(mockJobs[1]);
+          }
+          return Promise.resolve(null);
+        });
+
+      const response = await request(app)
+        .post('/api/review/bulk/remove-tags')
+        .send({
+          documentIds: ['doc1', 'doc2'],
+          tags: ['urgent', 'review-needed']
+        })
+        .expect(200);
+
+      expect(response.body.success).toBe(true);
+      expect(response.body.summary.total).toBe(2);
+      expect(response.body.summary.successful).toBe(2);
+      expect(response.body.summary.failed).toBe(0);
+      expect(mockQueueManager.getJob).toHaveBeenCalledWith('manual-review', 'doc1');
+      expect(mockQueueManager.getJob).toHaveBeenCalledWith('manual-review', 'doc2');
+      expect(mockJobs[0].update).toHaveBeenCalled();
+      expect(mockJobs[1].update).toHaveBeenCalled();
+    });
+
+    it('should handle partial failures in bulk remove tags', async () => {
+      const mockJob = { 
+        id: 'job1', 
+        data: { documentId: 'doc1', tags: ['urgent'] },
+        opts: { priority: 1 },
+        update: jest.fn().mockResolvedValue(true)
+      };
+
+      mockQueueManager.getJob
+        .mockImplementation((queueName, documentId) => {
+          if (queueName === 'manual-review' && documentId === 'doc1') {
+            return Promise.resolve(mockJob);
+          }
+          if (queueName === 'manual-review' && documentId === 'doc2') {
+            return Promise.resolve(null); // Simulate job not found
+          }
+          return Promise.resolve(null);
+        });
+
+      const response = await request(app)
+        .post('/api/review/bulk/remove-tags')
+        .send({
+          documentIds: ['doc1', 'doc2'],
+          tags: ['urgent'],
+          notes: 'Tag removal notes'
+        })
+        .expect(200);
+
+      expect(response.body.success).toBe(true);
+      expect(response.body.summary.successful).toBe(1);
+      expect(response.body.summary.failed).toBe(1);
+      expect(response.body.errors).toHaveLength(1);
+      expect(response.body.errors[0].documentId).toBe('doc2');
+      expect(response.body.errors[0].error).toBe('Document not found');
+    });
+
+    it('should return 400 if documentIds is not provided', async () => {
+      const response = await request(app)
+        .post('/api/review/bulk/remove-tags')
+        .send({
+          tags: ['urgent']
+        })
+        .expect(400);
+
+      expect(response.body.error).toContain('Document IDs array is required');
+    });
+
+    it('should return 400 if tags is not provided', async () => {
+      const response = await request(app)
+        .post('/api/review/bulk/remove-tags')
+        .send({
+          documentIds: ['doc1', 'doc2']
+        })
+        .expect(400);
+
+      expect(response.body.error).toContain('Tags array is required');
     });
   });
 });

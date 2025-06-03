@@ -486,7 +486,6 @@ class ManualReviewApp {
                 </button>
               </div>
             </div>
-          </div>
         </div>
       </div>
     `).join('');
@@ -1224,7 +1223,7 @@ class ManualReviewApp {
       </div>
     `;
 
-    // Add to toast container
+    // Add to container
     let container = document.getElementById('toast-container');
     if (!container) {
       container = document.createElement('div');
@@ -1415,7 +1414,7 @@ class ManualReviewApp {
         `;
     case 'in-review':
       return `
-          <button class="btn btn-sm btn-primary" onclick="app.openReviewModal('${item.id}')">
+          <button class="btn btn-primary btn-sm" onclick="app.openReviewModal('${item.id}')">
             <i class="bi bi-pencil"></i> Review
           </button>
         `;
@@ -1610,7 +1609,7 @@ class ManualReviewApp {
         <div>
           <span class="selected-count">${this.selectedItems.size}</span> items selected
         </div>
-        <div class="d-flex gap-2">
+        <div class="d-flex gap-2 flex-wrap">
           <button class="btn btn-success btn-sm" onclick="app.bulkApprove()">
             <i class="bi bi-check-all"></i> Approve All
           </button>
@@ -1619,6 +1618,18 @@ class ManualReviewApp {
           </button>
           <button class="btn btn-warning btn-sm" onclick="app.bulkStartReview()">
             <i class="bi bi-eye"></i> Start Review
+          </button>
+          <button class="btn btn-info btn-sm" onclick="app.bulkFlag()">
+            <i class="bi bi-flag"></i> Flag
+          </button>
+          <button class="btn btn-primary btn-sm" onclick="app.bulkAssign()">
+            <i class="bi bi-person-check"></i> Assign
+          </button>
+          <button class="btn btn-outline-primary btn-sm" onclick="app.bulkAddTags()">
+            <i class="bi bi-tags"></i> Add Tags
+          </button>
+          <button class="btn btn-outline-secondary btn-sm" onclick="app.bulkRemoveTags()">
+            <i class="bi bi-tag"></i> Remove Tags
           </button>
           <button class="btn btn-secondary btn-sm" onclick="app.clearSelection()">
             <i class="bi bi-x"></i> Clear
@@ -1766,6 +1777,389 @@ class ManualReviewApp {
     }
 
     return response.json();
+  }
+
+  /**
+   * Bulk flag selected items
+   */
+  async bulkFlag() {
+    if (this.selectedItems.size === 0) return;
+
+    // Show modal to get flag details
+    const modal = document.createElement('div');
+    modal.className = 'modal fade';
+    modal.innerHTML = `
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title">Bulk Flag Documents</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+          </div>
+          <div class="modal-body">
+            <form id="bulkFlagForm">
+              <div class="mb-3">
+                <label for="flagType" class="form-label">Flag Type *</label>
+                <select class="form-select" id="flagType" required>
+                  <option value="">Select flag type...</option>
+                  <option value="quality">Quality Issue</option>
+                  <option value="content">Content Issue</option>
+                  <option value="duplicate">Duplicate</option>
+                  <option value="spam">Spam</option>
+                  <option value="inappropriate">Inappropriate</option>
+                  <option value="other">Other</option>
+                </select>
+              </div>
+              <div class="mb-3">
+                <label for="flagReason" class="form-label">Reason</label>
+                <textarea class="form-control" id="flagReason" rows="3" placeholder="Optional reason for flagging..."></textarea>
+              </div>
+              <div class="mb-3">
+                <label for="flagPriority" class="form-label">Priority</label>
+                <select class="form-select" id="flagPriority">
+                  <option value="1">Low</option>
+                  <option value="2" selected>Medium</option>
+                  <option value="3">High</option>
+                  <option value="4">Critical</option>
+                </select>
+              </div>
+            </form>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+            <button type="button" class="btn btn-info" onclick="app.submitBulkFlag()">Flag ${this.selectedItems.size} Items</button>
+          </div>
+        </div>
+      </div>
+    `;
+    document.body.appendChild(modal);
+    const bsModal = new bootstrap.Modal(modal);
+    bsModal.show();
+
+    modal.addEventListener('hidden.bs.modal', () => {
+      modal.remove();
+    });
+  }
+
+  /**
+   * Submit bulk flag operation
+   */
+  async submitBulkFlag() {
+    const flagType = document.getElementById('flagType').value;
+    const flagReason = document.getElementById('flagReason').value;
+    const flagPriority = parseInt(document.getElementById('flagPriority').value);
+
+    if (!flagType) {
+      this.showErrorMessage('Please select a flag type');
+      return;
+    }
+
+    try {
+      const response = await this.apiCall('/api/review/bulk/flag', {
+        method: 'POST',
+        body: JSON.stringify({
+          documentIds: Array.from(this.selectedItems),
+          type: flagType,
+          reason: flagReason,
+          priority: flagPriority
+        })
+      });
+
+      if (response.success) {
+        this.showSuccessMessage(`Successfully flagged ${response.summary.successful} items`);
+        this.clearSelection();
+        await this.loadCurationData();
+        
+        // Close modal
+        const modal = document.querySelector('.modal.show');
+        if (modal) {
+          bootstrap.Modal.getInstance(modal).hide();
+        }
+      } else {
+        throw new Error(response.message || 'Failed to flag items');
+      }
+    } catch (error) {
+      console.error('Error in bulk flag:', error);
+      this.showErrorMessage('Failed to flag items: ' + error.message);
+    }
+  }
+
+  /**
+   * Bulk assign selected items
+   */
+  async bulkAssign() {
+    if (this.selectedItems.size === 0) return;
+
+    // Show modal to get assignment details
+    const modal = document.createElement('div');
+    modal.className = 'modal fade';
+    modal.innerHTML = `
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title">Bulk Assign Documents</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+          </div>
+          <div class="modal-body">
+            <form id="bulkAssignForm">
+              <div class="mb-3">
+                <label for="assignTo" class="form-label">Assign To *</label>
+                <input type="text" class="form-control" id="assignTo" placeholder="Enter user ID or email" required>
+              </div>
+              <div class="mb-3">
+                <label for="assignNotes" class="form-label">Notes</label>
+                <textarea class="form-control" id="assignNotes" rows="3" placeholder="Optional assignment notes..."></textarea>
+              </div>
+            </form>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+            <button type="button" class="btn btn-primary" onclick="app.submitBulkAssign()">Assign ${this.selectedItems.size} Items</button>
+          </div>
+        </div>
+      </div>
+    `;
+    document.body.appendChild(modal);
+    const bsModal = new bootstrap.Modal(modal);
+    bsModal.show();
+
+    modal.addEventListener('hidden.bs.modal', () => {
+      modal.remove();
+    });
+  }
+
+  /**
+   * Submit bulk assign operation
+   */
+  async submitBulkAssign() {
+    const assignTo = document.getElementById('assignTo').value.trim();
+    const assignNotes = document.getElementById('assignNotes').value;
+
+    if (!assignTo) {
+      this.showErrorMessage('Please enter an assignee');
+      return;
+    }
+
+    try {
+      const response = await this.apiCall('/api/review/bulk/assign', {
+        method: 'POST',
+        body: JSON.stringify({
+          documentIds: Array.from(this.selectedItems),
+          assignTo: assignTo,
+          notes: assignNotes
+        })
+      });
+
+      if (response.success) {
+        this.showSuccessMessage(`Successfully assigned ${response.summary.successful} items to ${assignTo}`);
+        this.clearSelection();
+        await this.loadCurationData();
+        
+        // Close modal
+        const modal = document.querySelector('.modal.show');
+        if (modal) {
+          bootstrap.Modal.getInstance(modal).hide();
+        }
+      } else {
+        throw new Error(response.message || 'Failed to assign items');
+      }
+    } catch (error) {
+      console.error('Error in bulk assign:', error);
+      this.showErrorMessage('Failed to assign items: ' + error.message);
+    }
+  }
+
+  /**
+   * Bulk add tags to selected items
+   */
+  async bulkAddTags() {
+    if (this.selectedItems.size === 0) return;
+
+    // Show modal to get tag details
+    const modal = document.createElement('div');
+    modal.className = 'modal fade';
+    modal.innerHTML = `
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title">Bulk Add Tags</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+          </div>
+          <div class="modal-body">
+            <form id="bulkAddTagsForm">
+              <div class="mb-3">
+                <label for="tagsToAdd" class="form-label">Tags to Add *</label>
+                <input type="text" class="form-control" id="tagsToAdd" placeholder="Enter tags separated by commas" required>
+                <div class="form-text">Example: urgent, review-needed, high-priority</div>
+              </div>
+              <div class="mb-3">
+                <label for="tagNotes" class="form-label">Notes</label>
+                <textarea class="form-control" id="tagNotes" rows="3" placeholder="Optional tagging notes..."></textarea>
+              </div>
+            </form>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+            <button type="button" class="btn btn-outline-primary" onclick="app.submitBulkAddTags()">Add Tags to ${this.selectedItems.size} Items</button>
+          </div>
+        </div>
+      </div>
+    `;
+    document.body.appendChild(modal);
+    const bsModal = new bootstrap.Modal(modal);
+    bsModal.show();
+
+    modal.addEventListener('hidden.bs.modal', () => {
+      modal.remove();
+    });
+  }
+
+  /**
+   * Submit bulk add tags operation
+   */
+  async submitBulkAddTags() {
+    const tagsInput = document.getElementById('tagsToAdd').value.trim();
+    const tagNotes = document.getElementById('tagNotes').value;
+
+    if (!tagsInput) {
+      this.showErrorMessage('Please enter tags to add');
+      return;
+    }
+
+    const tags = tagsInput.split(',').map(tag => tag.trim()).filter(tag => tag.length > 0);
+    
+    if (tags.length === 0) {
+      this.showErrorMessage('Please enter valid tags');
+      return;
+    }
+
+    try {
+      const response = await this.apiCall('/api/review/bulk/add-tags', {
+        method: 'POST',
+        body: JSON.stringify({
+          documentIds: Array.from(this.selectedItems),
+          tags: tags,
+          notes: tagNotes
+        })
+      });
+
+      if (response.success) {
+        this.showSuccessMessage(`Successfully added tags to ${response.summary.successful} items`);
+        this.clearSelection();
+        await this.loadCurationData();
+        
+        // Close modal
+        const modal = document.querySelector('.modal.show');
+        if (modal) {
+          bootstrap.Modal.getInstance(modal).hide();
+        }
+      } else {
+        throw new Error(response.message || 'Failed to add tags');
+      }
+    } catch (error) {
+      console.error('Error in bulk add tags:', error);
+      this.showErrorMessage('Failed to add tags: ' + error.message);
+    }
+  }
+
+  /**
+   * Bulk remove tags from selected items
+   */
+  async bulkRemoveTags() {
+    if (this.selectedItems.size === 0) return;
+
+    // Show modal to get tag details
+    const modal = document.createElement('div');
+    modal.className = 'modal fade';
+    modal.innerHTML = `
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title">Bulk Remove Tags</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+          </div>
+          <div class="modal-body">
+            <form id="bulkRemoveTagsForm">
+              <div class="mb-3">
+                <label for="tagsToRemove" class="form-label">Tags to Remove *</label>
+                <input type="text" class="form-control" id="tagsToRemove" placeholder="Enter tags separated by commas" required>
+                <div class="form-text">Example: urgent, review-needed, high-priority</div>
+              </div>
+              <div class="mb-3">
+                <label for="removeTagNotes" class="form-label">Notes</label>
+                <textarea class="form-control" id="removeTagNotes" rows="3" placeholder="Optional removal notes..."></textarea>
+              </div>
+            </form>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+            <button type="button" class="btn btn-outline-secondary" onclick="app.submitBulkRemoveTags()">Remove Tags from ${this.selectedItems.size} Items</button>
+          </div>
+        </div>
+      </div>
+    `;
+    document.body.appendChild(modal);
+    const bsModal = new bootstrap.Modal(modal);
+    bsModal.show();
+
+    modal.addEventListener('hidden.bs.modal', () => {
+      modal.remove();
+    });
+  }
+
+  /**
+   * Submit bulk remove tags operation
+   */
+  async submitBulkRemoveTags() {
+    const tagsInput = document.getElementById('tagsToRemove').value.trim();
+    const removeTagNotes = document.getElementById('removeTagNotes').value;
+
+    if (!tagsInput) {
+      this.showErrorMessage('Please enter tags to remove');
+      return;
+    }
+
+    const tags = tagsInput.split(',').map(tag => tag.trim()).filter(tag => tag.length > 0);
+    
+    if (tags.length === 0) {
+      this.showErrorMessage('Please enter valid tags');
+      return;
+    }
+
+    try {
+      const response = await this.apiCall('/api/review/bulk/remove-tags', {
+        method: 'POST',
+        body: JSON.stringify({
+          documentIds: Array.from(this.selectedItems),
+          tags: tags,
+          notes: removeTagNotes
+        })
+      });
+
+      if (response.success) {
+        this.showSuccessMessage(`Successfully removed tags from ${response.summary.successful} items`);
+        this.clearSelection();
+        await this.loadCurationData();
+        
+        // Close modal
+        const modal = document.querySelector('.modal.show');
+        if (modal) {
+          bootstrap.Modal.getInstance(modal).hide();
+        }
+      } else {
+        throw new Error(response.message || 'Failed to remove tags');
+      }
+    } catch (error) {
+      console.error('Error in bulk remove tags:', error);
+      this.showErrorMessage('Failed to remove tags: ' + error.message);
+    }
+  }
+
+  /**
+   * Refresh curation data
+   */
+  async refreshCurationData() {
+    await this.loadCurationData();
+    this.showSuccessMessage('Curation data refreshed');
   }
 
   /**
@@ -1956,7 +2350,7 @@ class ManualReviewApp {
     const bsModal = new bootstrap.Modal(modal);
     bsModal.show();
 
-    // Remove modal from DOM when hidden
+    // Remove modal from DOM after hiding
     modal.addEventListener('hidden.bs.modal', () => {
       modal.remove();
     });
@@ -1982,14 +2376,6 @@ class ManualReviewApp {
       console.error('Error in bulk start review:', error);
       this.showErrorMessage('Failed to start review for some items');
     }
-  }
-
-  /**
-   * Refresh curation data
-   */
-  async refreshCurationData() {
-    await this.loadCurationData();
-    this.showSuccessMessage('Curation data refreshed');
   }
 
   // ===== END CURATION INTERFACE METHODS =====
