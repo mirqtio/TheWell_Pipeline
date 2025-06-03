@@ -4,15 +4,30 @@
  */
 
 const { chromium } = require('playwright');
-const { waitForServer } = require('../../helpers/server');
+const { spawn } = require('child_process');
+const path = require('path');
+const { waitForServer, killProcess } = require('../../helpers/server');
 
 describe('Curation Dashboard UI E2E Tests', () => {
   let browser;
   let context;
   let page;
+  let webServer;
   const baseUrl = 'http://localhost:3099';
 
   beforeAll(async () => {
+    // Start web server
+    const serverPath = path.join(__dirname, '../../../src/web/start.js');
+    webServer = spawn('node', [serverPath], {
+      env: {
+        ...process.env,
+        WEB_PORT: 3099,
+        NODE_ENV: 'test',
+        REDIS_DB: '15' // Use separate Redis DB for E2E tests
+      },
+      stdio: ['pipe', 'pipe', 'pipe']
+    });
+
     // Wait for server to be available
     await waitForServer(baseUrl, 30000);
     
@@ -26,6 +41,9 @@ describe('Curation Dashboard UI E2E Tests', () => {
   afterAll(async () => {
     if (browser) {
       await browser.close();
+    }
+    if (webServer) {
+      await killProcess(webServer);
     }
   });
 

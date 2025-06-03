@@ -3,15 +3,49 @@
  * Tests complete user workflows in the admin dashboard
  */
 
-const { waitForServer } = require('../../helpers/server');
+const { chromium } = require('playwright');
+const { spawn } = require('child_process');
+const path = require('path');
+const { waitForServer, killProcess } = require('../../helpers/server');
 
 describe('Enrichment Pipeline E2E Tests', () => {
+  let browser;
+  let context;
+  let page;
+  let webServer;
   const baseUrl = 'http://localhost:3099';
 
   beforeAll(async () => {
+    // Start web server
+    const serverPath = path.join(__dirname, '../../../src/web/start.js');
+    webServer = spawn('node', [serverPath], {
+      env: {
+        ...process.env,
+        WEB_PORT: 3099,
+        NODE_ENV: 'test',
+        REDIS_DB: '15' // Use separate Redis DB for E2E tests
+      },
+      stdio: ['pipe', 'pipe', 'pipe']
+    });
+
     // Wait for server to be available
     await waitForServer(baseUrl, 30000);
+    
+    browser = await chromium.launch({
+      headless: process.env.CI === 'true'
+    });
+    context = await browser.newContext();
+    page = await context.newPage();
   }, 35000);
+
+  afterAll(async () => {
+    if (browser) {
+      await browser.close();
+    }
+    if (webServer) {
+      await killProcess(webServer);
+    }
+  });
 
   describe('Admin Dashboard Enrichment Visualization', () => {
     it('should load admin dashboard and display enrichment tab', async () => {

@@ -22,7 +22,7 @@ describe('Complete Curation Workflow E2E Tests', () => {
     webServer = spawn('node', [serverPath], {
       env: {
         ...process.env,
-        PORT: testPort,
+        WEB_PORT: testPort,
         NODE_ENV: 'test',
         REDIS_DB: '15' // Use separate Redis DB for E2E tests
       },

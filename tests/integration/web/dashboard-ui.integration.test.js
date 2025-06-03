@@ -22,6 +22,10 @@ describe('Dashboard UI Integration Tests', () => {
     app.use(express.static(path.join(__dirname, '../../../src/web/public')));
 
     // Mock API endpoints
+    app.get('/health', (req, res) => {
+      res.json({ status: 'healthy' });
+    });
+
     app.get('/api/v1/review/pending', (req, res) => {
       res.json({
         documents: [
