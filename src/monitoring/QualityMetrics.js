@@ -252,31 +252,34 @@ class QualityMetrics extends EventEmitter {
     let currentValue;
     
     switch (slo.metric) {
-      case 'response_time':
-        const responseMetrics = this.calculateMetrics('response_time', {}, checkWindow);
-        currentValue = slo.percentile === 95 ? responseMetrics.p95 : responseMetrics.p99;
-        break;
+    case 'response_time': {
+      const responseMetrics = this.calculateMetrics('response_time', {}, checkWindow);
+      currentValue = slo.percentile === 95 ? responseMetrics.p95 : responseMetrics.p99;
+      break;
+    }
         
-      case 'error_rate':
-        currentValue = this.calculateErrorRate({}, checkWindow);
-        break;
+    case 'error_rate':
+      currentValue = this.calculateErrorRate({}, checkWindow);
+      break;
         
-      case 'availability':
-        currentValue = this.calculateAvailability({}, checkWindow);
-        break;
+    case 'availability':
+      currentValue = this.calculateAvailability({}, checkWindow);
+      break;
         
-      case 'llm_processing_time':
-        const llmMetrics = this.calculateMetrics('llm_processing_time', {}, checkWindow);
-        currentValue = slo.percentile === 95 ? llmMetrics.p95 : llmMetrics.p99;
-        break;
+    case 'llm_processing_time': {
+      const llmMetrics = this.calculateMetrics('llm_processing_time', {}, checkWindow);
+      currentValue = slo.percentile === 95 ? llmMetrics.p95 : llmMetrics.p99;
+      break;
+    }
         
-      case 'llm_success_rate':
-        const llmSuccessMetrics = this.calculateMetrics('llm_success_rate', {}, checkWindow);
-        currentValue = llmSuccessMetrics.avg;
-        break;
+    case 'llm_success_rate': {
+      const llmSuccessMetrics = this.calculateMetrics('llm_success_rate', {}, checkWindow);
+      currentValue = llmSuccessMetrics.avg;
+      break;
+    }
         
-      default:
-        throw new Error(`Unknown SLO metric: ${slo.metric}`);
+    default:
+      throw new Error(`Unknown SLO metric: ${slo.metric}`);
     }
     
     const isCompliant = (slo.metric === 'error_rate' || slo.metric === 'response_time' || slo.metric === 'llm_processing_time') ? 

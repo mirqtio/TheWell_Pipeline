@@ -252,23 +252,23 @@ function filterDataByTimeRange(data, timeRange) {
   let cutoffTime;
   
   switch (timeRange) {
-    case '1h':
-      cutoffTime = new Date(now.getTime() - 60 * 60 * 1000);
-      break;
-    case '6h':
-      cutoffTime = new Date(now.getTime() - 6 * 60 * 60 * 1000);
-      break;
-    case '24h':
-      cutoffTime = new Date(now.getTime() - 24 * 60 * 60 * 1000);
-      break;
-    case '7d':
-      cutoffTime = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
-      break;
-    case '30d':
-      cutoffTime = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
-      break;
-    default:
-      cutoffTime = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+  case '1h':
+    cutoffTime = new Date(now.getTime() - 60 * 60 * 1000);
+    break;
+  case '6h':
+    cutoffTime = new Date(now.getTime() - 6 * 60 * 60 * 1000);
+    break;
+  case '24h':
+    cutoffTime = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+    break;
+  case '7d':
+    cutoffTime = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+    break;
+  case '30d':
+    cutoffTime = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+    break;
+  default:
+    cutoffTime = new Date(now.getTime() - 24 * 60 * 60 * 1000);
   }
   
   return data.filter(item => {
@@ -314,17 +314,17 @@ function getBucketKey(timestamp, granularity) {
   const date = new Date(timestamp);
   
   switch (granularity) {
-    case 'minute':
-      return new Date(date.getFullYear(), date.getMonth(), date.getDate(), 
-                     date.getHours(), date.getMinutes()).toISOString();
-    case 'hour':
-      return new Date(date.getFullYear(), date.getMonth(), date.getDate(), 
-                     date.getHours()).toISOString();
-    case 'day':
-      return new Date(date.getFullYear(), date.getMonth(), date.getDate()).toISOString();
-    default:
-      return new Date(date.getFullYear(), date.getMonth(), date.getDate(), 
-                     date.getHours()).toISOString();
+  case 'minute':
+    return new Date(date.getFullYear(), date.getMonth(), date.getDate(), 
+      date.getHours(), date.getMinutes()).toISOString();
+  case 'hour':
+    return new Date(date.getFullYear(), date.getMonth(), date.getDate(), 
+      date.getHours()).toISOString();
+  case 'day':
+    return new Date(date.getFullYear(), date.getMonth(), date.getDate()).toISOString();
+  default:
+    return new Date(date.getFullYear(), date.getMonth(), date.getDate(), 
+      date.getHours()).toISOString();
   }
 }
 

@@ -324,7 +324,7 @@ describe('QualityDAO', () => {
           expect.any(String), // UUID
           metricType,
           value,
-          "null", // null labels become "null" string
+          'null', // null labels become "null" string
           new Date(timestamp).toISOString()
         ]
       );
