@@ -141,7 +141,7 @@ class CostReporter {
   /**
    * Generate overall summary from cost events and breakdown
    */
-  generateOverallSummary(costEvents, costSummary) {
+  generateOverallSummary(costEvents, _costSummary) {
     const totalCost = costEvents.reduce((sum, event) => sum + event.totalCost, 0);
     const totalTokens = costEvents.reduce((sum, event) => sum + event.inputTokens + event.outputTokens, 0);
     

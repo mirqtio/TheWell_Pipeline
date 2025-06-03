@@ -338,7 +338,7 @@ class JobScheduler extends EventEmitter {
    * Calculate next run time for a schedule
    * This is a simplified implementation - in production, use a proper cron parser
    */
-  _calculateNextRun(schedule) {
+  _calculateNextRun(_schedule) {
     // For now, return a time 1 hour from now
     // In a real implementation, parse the cron expression
     const nextRun = new Date();

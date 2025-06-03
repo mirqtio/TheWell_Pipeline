@@ -218,7 +218,7 @@ module.exports = (sequelize, DataTypes) => {
     });
   };
 
-  DocumentVisibility.findAccessibleDocuments = function(userGroups = [], accessLevel = 'read') {
+  DocumentVisibility.findAccessibleDocuments = function(userGroups = [], _accessLevel = 'read') {
     const whereClause = {
       [sequelize.Sequelize.Op.or]: [
         { visibilityLevel: 'public' },

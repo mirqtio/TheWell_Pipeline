@@ -99,10 +99,10 @@ class BaseSourceHandler {
 
   /**
    * Validate source configuration
-   * @param {SourceConfig} config - Source configuration
+   * @param {SourceConfig} _config - Source configuration
    * @returns {Promise<boolean>}
    */
-  async validateConfig(config) {
+  async validateConfig(_config) {
     throw new Error('validateConfig() must be implemented by subclass');
   }
 
@@ -116,19 +116,19 @@ class BaseSourceHandler {
 
   /**
    * Extract content from a specific document
-   * @param {Object} document - Document reference
+   * @param {Object} _document - Document reference
    * @returns {Promise<Object>}
    */
-  async extract(document) {
+  async extract(_document) {
     throw new Error('extract() must be implemented by subclass');
   }
 
   /**
    * Transform extracted content to standard format
-   * @param {Object} content - Raw extracted content
+   * @param {Object} _content - Raw extracted content
    * @returns {Promise<Object>}
    */
-  async transform(content) {
+  async transform(_content) {
     throw new Error('transform() must be implemented by subclass');
   }
 

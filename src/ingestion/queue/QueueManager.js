@@ -330,7 +330,7 @@ class QueueManager extends EventEmitter {
 
     try {
       // Close all queues
-      for (const [name, queue] of this.queues) {
+      for (const [_name, queue] of this.queues) {
         await queue.close();
       }
 
