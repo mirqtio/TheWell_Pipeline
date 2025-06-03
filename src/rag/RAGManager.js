@@ -134,7 +134,7 @@ class RAGManager {
         limit: queryData.limit,
         offset: queryData.offset,
       },
-      async (querySpan) => {
+      async (_querySpan) => {
         const startTime = Date.now();
         const traceId = queryData.traceId || this.generateTraceId();
         

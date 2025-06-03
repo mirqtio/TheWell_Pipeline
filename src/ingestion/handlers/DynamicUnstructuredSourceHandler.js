@@ -550,7 +550,6 @@ class DynamicUnstructuredSourceHandler extends BaseSourceHandler {
    */
   async _createDocumentFromPage(page, url, _target) {
     const title = await page.title();
-    const _content = await page.content();
     
     return {
       id: this._generateDocumentId(url),

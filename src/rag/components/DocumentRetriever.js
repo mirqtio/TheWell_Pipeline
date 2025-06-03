@@ -129,10 +129,10 @@ class DocumentRetriever {
    * Perform vector similarity search
    * @param {Array} queryEmbedding - Query embedding vector
    * @param {Object|number} filtersOrLimit - Search filters object or simple limit number
-   * @param {Object} userAuth - User authentication data (optional for testing)
+   * @param {Object} _userAuth - User authentication data (optional for testing)
    * @returns {Array} Vector search results
    */
-  async performVectorSearch(queryEmbedding, filtersOrLimit = {}, userAuth = null) {
+  async performVectorSearch(queryEmbedding, filtersOrLimit = {}, _userAuth = null) {
     try {
       // Handle simplified test interface
       let filters = {};
@@ -212,10 +212,10 @@ class DocumentRetriever {
    * Perform keyword search
    * @param {string} searchQuery - The search query
    * @param {Object|number} filtersOrLimit - Search filters object or simple limit number
-   * @param {Object} userAuth - User authentication data (optional for testing)
+   * @param {Object} _userAuth - User authentication data (optional for testing)
    * @returns {Array} Keyword search results
    */
-  async performKeywordSearch(searchQuery, filtersOrLimit = {}, userAuth = null) {
+  async performKeywordSearch(searchQuery, filtersOrLimit = {}, _userAuth = null) {
     try {
       // Handle simplified test interface
       let filters = {};

@@ -19,7 +19,7 @@ try {
 /**
  * Global error handler middleware
  */
-function errorHandler(error, req, res, next) {
+function errorHandler(error, req, res, _next) {
   // Log the error
   try {
     logger.error('HTTP Error', {

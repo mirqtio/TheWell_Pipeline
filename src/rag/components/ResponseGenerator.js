@@ -213,10 +213,10 @@ Content: ${content}
    * Process and validate the LLM response
    * @param {Object} llmResponse - Raw LLM response
    * @param {Array} documents - Source documents
-   * @param {string} query - Original query
+   * @param {string} _query - Original query
    * @returns {Object} Processed response
    */
-  processResponse(llmResponse, documents, query) {
+  processResponse(llmResponse, documents, _query) {
     const content = llmResponse.content || llmResponse.message || '';
     
     // Extract sources mentioned in the response

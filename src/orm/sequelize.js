@@ -137,9 +137,9 @@ class SequelizeORM {
       JobDependency,
       JobLog,
       DocumentVisibility,
-      VisibilityRule,
+      // VisibilityRule,  // Commented out - not used in associations
       VisibilityAuditLog,
-      CostEvent,
+      // CostEvent,  // Commented out - not used in associations
       CostBudget,
       CostAlert,
       DocumentFeedback,
