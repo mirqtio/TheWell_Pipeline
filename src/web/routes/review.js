@@ -507,5 +507,465 @@ module.exports = (dependencies = {}) => {
     res.json(result);
   }));
 
+  // ===== CURATION WORKFLOW ENDPOINTS =====
+
+  /**
+   * Start review workflow for a document
+   */
+  router.post('/start-review/:id', requirePermission('write'), asyncHandler(async (req, res) => {
+    const documentId = req.params.id;
+    const { notes, priority } = req.body;
+
+    logger.info('Starting review workflow', {
+      documentId,
+      notes,
+      priority,
+      userId: req.user.id
+    });
+
+    // Get job from queue
+    const job = await queueManager.getJob('manual-review', documentId);
+    
+    if (!job) {
+      throw new NotFoundError(`Document ${documentId} not found`);
+    }
+
+    // Update job status to in-review
+    const workflowData = {
+      status: 'in-review',
+      reviewStartedBy: req.user.id,
+      reviewStartedAt: new Date().toISOString(),
+      reviewNotes: notes || '',
+      workflowStage: 'review',
+      assignedTo: req.user.id
+    };
+
+    if (priority) {
+      await job.changePriority(priority);
+    }
+
+    await job.update({
+      ...job.data,
+      ...workflowData
+    });
+
+    logger.info('Review workflow started successfully', {
+      documentId,
+      userId: req.user.id
+    });
+
+    res.json({
+      success: true,
+      message: 'Review workflow started',
+      documentId,
+      status: 'in-review',
+      assignedTo: req.user.id,
+      startedAt: new Date().toISOString()
+    });
+  }));
+
+  /**
+   * Bulk approve documents
+   */
+  router.post('/bulk/approve', requirePermission('approve'), asyncHandler(async (req, res) => {
+    const { documentIds, notes, visibility = 'internal', tags = [] } = req.body;
+
+    if (!documentIds || !Array.isArray(documentIds) || documentIds.length === 0) {
+      throw new ValidationError('Document IDs array is required');
+    }
+
+    logger.info('Bulk approving documents', {
+      documentIds,
+      count: documentIds.length,
+      notes,
+      visibility,
+      tags,
+      userId: req.user.id
+    });
+
+    const results = [];
+    const errors = [];
+
+    for (const documentId of documentIds) {
+      try {
+        const job = await queueManager.getJob('manual-review', documentId);
+        
+        if (!job) {
+          errors.push({ documentId, error: 'Document not found' });
+          continue;
+        }
+
+        // Update job data with approval
+        const approvalData = {
+          status: 'approved',
+          approvedBy: req.user.id,
+          approvedAt: new Date().toISOString(),
+          reviewNotes: notes || '',
+          visibility,
+          tags,
+          decision: 'approve',
+          bulkOperation: true
+        };
+
+        await job.update({
+          ...job.data,
+          ...approvalData
+        });
+
+        // Move to approved queue for further processing
+        await queueManager.addJob('document-processing', {
+          ...job.data,
+          ...approvalData
+        }, {
+          priority: job.opts.priority || 0,
+          attempts: 3
+        });
+
+        // Complete the review job
+        await job.moveToCompleted('approved', true);
+
+        results.push({ documentId, status: 'approved' });
+
+      } catch (error) {
+        logger.error('Error in bulk approve', { documentId, error: error.message });
+        errors.push({ documentId, error: error.message });
+      }
+    }
+
+    logger.info('Bulk approve completed', {
+      successful: results.length,
+      failed: errors.length,
+      userId: req.user.id
+    });
+
+    res.json({
+      success: true,
+      message: `Bulk approval completed: ${results.length} successful, ${errors.length} failed`,
+      results,
+      errors,
+      summary: {
+        total: documentIds.length,
+        successful: results.length,
+        failed: errors.length
+      }
+    });
+  }));
+
+  /**
+   * Bulk reject documents
+   */
+  router.post('/bulk/reject', requirePermission('reject'), asyncHandler(async (req, res) => {
+    const { documentIds, reason, notes, permanent = false } = req.body;
+
+    if (!documentIds || !Array.isArray(documentIds) || documentIds.length === 0) {
+      throw new ValidationError('Document IDs array is required');
+    }
+
+    if (!reason) {
+      throw new ValidationError('Rejection reason is required');
+    }
+
+    logger.info('Bulk rejecting documents', {
+      documentIds,
+      count: documentIds.length,
+      reason,
+      notes,
+      permanent,
+      userId: req.user.id
+    });
+
+    const results = [];
+    const errors = [];
+
+    for (const documentId of documentIds) {
+      try {
+        const job = await queueManager.getJob('manual-review', documentId);
+        
+        if (!job) {
+          errors.push({ documentId, error: 'Document not found' });
+          continue;
+        }
+
+        // Update job data with rejection
+        const rejectionData = {
+          status: 'rejected',
+          rejectedBy: req.user.id,
+          rejectedAt: new Date().toISOString(),
+          rejectionReason: reason,
+          reviewNotes: notes || '',
+          permanent,
+          decision: 'reject',
+          bulkOperation: true
+        };
+
+        await job.update({
+          ...job.data,
+          ...rejectionData
+        });
+
+        if (permanent) {
+          // Move to failed queue permanently
+          await job.moveToFailed(new Error(`Rejected: ${reason}`), true);
+        } else {
+          // Move to rejected queue for potential re-review
+          await queueManager.addJob('rejected-documents', {
+            ...job.data,
+            ...rejectionData
+          }, {
+            priority: 0,
+            attempts: 1
+          });
+          
+          await job.moveToCompleted('rejected', true);
+        }
+
+        results.push({ documentId, status: 'rejected' });
+
+      } catch (error) {
+        logger.error('Error in bulk reject', { documentId, error: error.message });
+        errors.push({ documentId, error: error.message });
+      }
+    }
+
+    logger.info('Bulk reject completed', {
+      successful: results.length,
+      failed: errors.length,
+      userId: req.user.id
+    });
+
+    res.json({
+      success: true,
+      message: `Bulk rejection completed: ${results.length} successful, ${errors.length} failed`,
+      results,
+      errors,
+      summary: {
+        total: documentIds.length,
+        successful: results.length,
+        failed: errors.length
+      }
+    });
+  }));
+
+  /**
+   * Bulk start review for documents
+   */
+  router.post('/bulk/start-review', requirePermission('write'), asyncHandler(async (req, res) => {
+    const { documentIds, notes, assignTo } = req.body;
+
+    if (!documentIds || !Array.isArray(documentIds) || documentIds.length === 0) {
+      throw new ValidationError('Document IDs array is required');
+    }
+
+    logger.info('Bulk starting review', {
+      documentIds,
+      count: documentIds.length,
+      notes,
+      assignTo,
+      userId: req.user.id
+    });
+
+    const results = [];
+    const errors = [];
+
+    for (const documentId of documentIds) {
+      try {
+        const job = await queueManager.getJob('manual-review', documentId);
+        
+        if (!job) {
+          errors.push({ documentId, error: 'Document not found' });
+          continue;
+        }
+
+        // Update job status to in-review
+        const workflowData = {
+          status: 'in-review',
+          reviewStartedBy: req.user.id,
+          reviewStartedAt: new Date().toISOString(),
+          reviewNotes: notes || '',
+          workflowStage: 'review',
+          assignedTo: assignTo || req.user.id,
+          bulkOperation: true
+        };
+
+        await job.update({
+          ...job.data,
+          ...workflowData
+        });
+
+        results.push({ documentId, status: 'in-review' });
+
+      } catch (error) {
+        logger.error('Error in bulk start review', { documentId, error: error.message });
+        errors.push({ documentId, error: error.message });
+      }
+    }
+
+    logger.info('Bulk start review completed', {
+      successful: results.length,
+      failed: errors.length,
+      userId: req.user.id
+    });
+
+    res.json({
+      success: true,
+      message: `Bulk start review completed: ${results.length} successful, ${errors.length} failed`,
+      results,
+      errors,
+      summary: {
+        total: documentIds.length,
+        successful: results.length,
+        failed: errors.length
+      }
+    });
+  }));
+
+  /**
+   * Get workflow status for documents
+   */
+  router.get('/workflow/status', requirePermission('read'), asyncHandler(async (req, res) => {
+    const { documentIds } = req.query;
+
+    if (!documentIds) {
+      throw new ValidationError('Document IDs are required');
+    }
+
+    const ids = Array.isArray(documentIds) ? documentIds : documentIds.split(',');
+
+    logger.info('Getting workflow status', {
+      documentIds: ids,
+      count: ids.length,
+      userId: req.user.id
+    });
+
+    const statuses = [];
+
+    for (const documentId of ids) {
+      try {
+        const job = await queueManager.getJob('manual-review', documentId);
+        
+        if (!job) {
+          statuses.push({
+            documentId,
+            status: 'not-found',
+            error: 'Document not found'
+          });
+          continue;
+        }
+
+        statuses.push({
+          documentId,
+          status: job.data.status || 'pending',
+          workflowStage: job.data.workflowStage || 'pending',
+          assignedTo: job.data.assignedTo,
+          reviewStartedAt: job.data.reviewStartedAt,
+          lastUpdated: job.data.updatedAt || job.timestamp
+        });
+
+      } catch (error) {
+        logger.error('Error getting workflow status', { documentId, error: error.message });
+        statuses.push({
+          documentId,
+          status: 'error',
+          error: error.message
+        });
+      }
+    }
+
+    res.json({
+      success: true,
+      statuses
+    });
+  }));
+
+  /**
+   * Get curation workflow metrics
+   */
+  router.get('/workflow/metrics', requirePermission('read'), asyncHandler(async (req, res) => {
+    const { timeframe = '24h' } = req.query;
+
+    logger.info('Getting workflow metrics', {
+      timeframe,
+      userId: req.user.id
+    });
+
+    // Get queue statistics
+    const queueStats = await queueManager.getQueueStats('manual-review');
+    
+    // Get recent jobs for analysis
+    const timeframeMins = timeframe === '24h' ? 1440 : timeframe === '7d' ? 10080 : 60;
+    const since = new Date(Date.now() - timeframeMins * 60 * 1000);
+    
+    const recentJobs = await queueManager.getJobs('manual-review', ['completed', 'active'], 0, -1);
+    const completedJobs = recentJobs || [];
+
+    // Calculate workflow metrics
+    const pending = completedJobs.filter(job => !job.data?.status || job.data.status === 'pending').length;
+    const inReview = completedJobs.filter(job => job.data?.status === 'in-review').length;
+    const approved = completedJobs.filter(job => job.data?.status === 'approved').length;
+    const rejected = completedJobs.filter(job => job.data?.status === 'rejected').length;
+    const flagged = completedJobs.filter(job => job.data?.flags?.length > 0).length;
+
+    // Calculate throughput
+    const total = approved + rejected;
+    const approvalRate = total > 0 ? Math.round((approved / total) * 100) : 0;
+    const rejectionRate = total > 0 ? Math.round((rejected / total) * 100) : 0;
+
+    // Calculate average review times
+    const reviewTimes = completedJobs
+      .filter(job => job.data?.reviewStartedAt && job.finishedOn)
+      .map(job => {
+        const startTime = new Date(job.data.reviewStartedAt).getTime();
+        return job.finishedOn - startTime;
+      });
+    
+    const avgReviewTime = reviewTimes.length > 0 
+      ? Math.round(reviewTimes.reduce((a, b) => a + b, 0) / reviewTimes.length / 1000)
+      : 0;
+
+    // Get assignee workload
+    const assigneeWorkload = {};
+    completedJobs.forEach(job => {
+      const assignee = job.data?.assignedTo || 'unassigned';
+      if (!assigneeWorkload[assignee]) {
+        assigneeWorkload[assignee] = { pending: 0, inReview: 0, completed: 0 };
+      }
+      
+      const status = job.data?.status || 'pending';
+      if (status === 'pending') assigneeWorkload[assignee].pending++;
+      else if (status === 'in-review') assigneeWorkload[assignee].inReview++;
+      else assigneeWorkload[assignee].completed++;
+    });
+
+    const metrics = {
+      queue: {
+        waiting: queueStats.waiting || 0,
+        active: queueStats.active || 0,
+        completed: queueStats.completed || 0
+      },
+      workflow: {
+        pending,
+        inReview,
+        approved,
+        rejected,
+        flagged
+      },
+      performance: {
+        approvalRate,
+        rejectionRate,
+        avgReviewTime,
+        throughputPerHour: avgReviewTime > 0 ? Math.round(3600 / avgReviewTime) : 0
+      },
+      workload: assigneeWorkload
+    };
+
+    res.json({
+      success: true,
+      metrics,
+      timeframe
+    });
+  }));
+
+  // ===== END CURATION WORKFLOW ENDPOINTS =====
+
   return router;
 };

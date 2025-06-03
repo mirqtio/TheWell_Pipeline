@@ -78,13 +78,13 @@ Create a curation interface with the following components:
 10. CI verification through GitHub logs via MCP or CLI
 
 # Subtasks:
-## 1. Design and Implement Dashboard UI [in-progress]
+## 1. Design and Implement Dashboard UI [done]
 ### Dependencies: None
 ### Description: Create a user-facing dashboard interface for curators to view, manage, and interact with curated data, including visualizations, filters, and actionable controls.
 ### Details:
 This subtask involves wireframing, UI/UX design, and frontend development to ensure the dashboard is intuitive and supports the curation workflow. It should provide access to bulk operations, audit trails, and reliability scores. Testing requirements: 1) Write unit tests for UI components with React Testing Library, 2) Create browser-based integration tests for UI interactions, 3) Implement e2e tests for complete dashboard workflows, 4) Run all tests and resolve any issues, 5) Merge to master and verify CI passes via GitHub logs.
 
-## 2. Develop Workflow Backend Logic [pending]
+## 2. Develop Workflow Backend Logic [in-progress]
 ### Dependencies: 6.1
 ### Description: Build backend services to handle curation workflows, including task assignment, state transitions, and integration with the dashboard UI.
 ### Details:

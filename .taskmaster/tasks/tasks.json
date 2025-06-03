@@ -474,7 +474,7 @@
           "description": "Create a user-facing dashboard interface for curators to view, manage, and interact with curated data, including visualizations, filters, and actionable controls.",
           "dependencies": [],
           "details": "This subtask involves wireframing, UI/UX design, and frontend development to ensure the dashboard is intuitive and supports the curation workflow. It should provide access to bulk operations, audit trails, and reliability scores. Testing requirements: 1) Write unit tests for UI components with React Testing Library, 2) Create browser-based integration tests for UI interactions, 3) Implement e2e tests for complete dashboard workflows, 4) Run all tests and resolve any issues, 5) Merge to master and verify CI passes via GitHub logs.",
-          "status": "in-progress"
+          "status": "done"
         },
         {
           "id": 2,
@@ -484,7 +484,7 @@
             1
           ],
           "details": "This includes implementing APIs and business logic for managing curation tasks, tracking progress, and supporting collaboration among curators. Testing requirements: 1) Write unit tests for workflow logic and APIs, 2) Create integration tests for workflow state transitions, 3) Implement e2e tests for complete curation workflows, 4) Run all tests and resolve any issues, 5) Merge to master and verify CI passes via GitHub logs.",
-          "status": "pending"
+          "status": "in-progress"
         },
         {
           "id": 3,
