@@ -9,9 +9,67 @@ const { asyncHandler } = require('../middleware/errorHandler');
 const { requirePermission, requireDocumentAccess } = require('../middleware/auth');
 const logger = require('../../utils/logger');
 
+// Performance optimization components
+const { RequestThrottler, ParallelSearchManager, PerformanceBenchmark } = require('../../rag/performance');
+
 module.exports = (dependencies = {}) => {
   const router = express.Router();
   const { ragManager, cacheManager } = dependencies;
+
+  // Initialize performance components only if ragManager is available
+  let requestThrottler, parallelSearchManager, performanceBenchmark;
+  
+  if (ragManager) {
+    requestThrottler = new RequestThrottler({
+      maxConcurrentRequests: process.env.RAG_MAX_CONCURRENT_REQUESTS || 15,
+      maxQueueSize: process.env.RAG_MAX_QUEUE_SIZE || 100,
+      requestTimeoutMs: process.env.RAG_REQUEST_TIMEOUT_MS || 25000,
+      rateLimitPerMinute: process.env.RAG_RATE_LIMIT_PER_MINUTE || 120
+    });
+
+    parallelSearchManager = new ParallelSearchManager({
+      documentRetriever: ragManager?.documentRetriever,
+      embeddingService: ragManager?.embeddingService,
+      maxConcurrency: process.env.RAG_SEARCH_CONCURRENCY || 4,
+      timeoutMs: process.env.RAG_SEARCH_TIMEOUT_MS || 8000
+    });
+
+    performanceBenchmark = new PerformanceBenchmark({
+      ragManager,
+      enableMetrics: process.env.NODE_ENV !== 'test',
+      sampleRate: process.env.RAG_METRICS_SAMPLE_RATE || 0.1
+    });
+  }
+
+  // Initialize performance components
+  let performanceInitialized = false;
+  const initializePerformanceComponents = async () => {
+    if (performanceInitialized) return;
+    
+    try {
+      if (requestThrottler) {
+        await requestThrottler.initialize();
+      }
+      if (parallelSearchManager) {
+        await parallelSearchManager.initialize();
+      }
+      if (performanceBenchmark) {
+        await performanceBenchmark.initialize();
+      }
+      performanceInitialized = true;
+      logger.info('Performance optimization components initialized');
+    } catch (error) {
+      logger.error('Failed to initialize performance components:', error);
+    }
+  };
+
+  // Initialize on first request
+  router.use(async (req, res, next) => {
+    if (!performanceInitialized) {
+      await initializePerformanceComponents();
+    }
+    next();
+  });
 
   // Request validation schemas
   const searchRequestSchema = Joi.object({
@@ -112,6 +170,7 @@ module.exports = (dependencies = {}) => {
     asyncHandler(async (req, res) => {
       const traceId = req.headers['x-trace-id'] || generateTraceId();
       const startTime = Date.now();
+      const clientId = req.user?.id || req.ip;
 
       try {
         logger.info('RAG search request received', {
@@ -120,63 +179,131 @@ module.exports = (dependencies = {}) => {
           queryLength: req.body.query?.length
         });
 
-        // Validate request
-        const { error, value } = searchRequestSchema.validate(req.body);
-        if (error) {
-          return res.status(400).json({
+        // Apply request throttling
+        const throttleResult = await requestThrottler?.throttleRequest(clientId, async () => {
+          // Validate request
+          const { error, value } = searchRequestSchema.validate(req.body);
+          if (error) {
+            throw new Error(`Invalid request: ${error.details[0].message}`);
+          }
+
+          // Add trace ID to request data
+          value.traceId = traceId;
+
+          // Check cache if enabled
+          let cacheKey = null;
+          if (cacheManager && shouldCache(value, req.user)) {
+            cacheKey = generateCacheKey(value, req.user);
+            const cachedResult = await cacheManager.get(cacheKey);
+          
+            if (cachedResult) {
+              logger.info('Cache hit for RAG search', { traceId, cacheKey });
+              return {
+                ...cachedResult,
+                cached: true,
+                cache_hit_at: new Date().toISOString()
+              };
+            }
+          }
+
+          // Start performance benchmarking
+          const benchmark = performanceBenchmark?.startBenchmark('rag_search', {
+            traceId,
+            query: value.query,
+            userId: req.user.id
+          });
+
+          let result;
+          
+          // Use parallel search if available and query is complex enough
+          if (parallelSearchManager?.isInitialized && shouldUseParallelSearch(value)) {
+            logger.debug('Using parallel search optimization', { traceId });
+            
+            result = await parallelSearchManager.performParallelSearch(
+              value.query,
+              value.filters || {},
+              {
+                userId: req.user.id,
+                roles: req.user.roles || [],
+                permissions: req.user.permissions || []
+              }
+            );
+            
+            // Convert parallel search result to RAG format
+            result = await ragManager.processSearchResults(result, value, {
+              userId: req.user.id,
+              roles: req.user.roles || [],
+              permissions: req.user.permissions || []
+            });
+          } else {
+            // Use standard RAG processing
+            result = await ragManager.processQuery(value, {
+              userId: req.user.id,
+              roles: req.user.roles || [],
+              permissions: req.user.permissions || []
+            });
+          }
+
+          // End performance benchmarking
+          const benchmarkResult = benchmark?.end();
+          
+          // Add performance metrics to result
+          result.performance_metrics = {
+            processing_time_ms: benchmarkResult?.duration,
+            optimization_used: parallelSearchManager?.isInitialized && shouldUseParallelSearch(value) ? 'parallel' : 'standard',
+            cache_checked: !!cacheKey,
+            benchmark_id: benchmarkResult?.id
+          };
+
+          // Cache result if appropriate
+          if (cacheManager && cacheKey && shouldCacheResult(result)) {
+            const ttl = calculateCacheTTL(value, result);
+            await cacheManager.setex(cacheKey, ttl, JSON.stringify(result));
+            logger.debug('Result cached', { traceId, cacheKey, ttl });
+          }
+
+          return result;
+        });
+
+        // Handle throttling results
+        if (throttleResult?.status === 'rejected') {
+          return res.status(429).json({
             success: false,
             error: {
-              message: `Invalid request: ${error.details[0].message}`,
-              type: 'ValidationError',
+              message: 'Too many requests. Please try again later.',
+              type: 'RateLimitExceeded',
+              trace_id: traceId,
+              retry_after: throttleResult.retryAfter
+            }
+          });
+        }
+
+        if (throttleResult?.status === 'timeout') {
+          return res.status(408).json({
+            success: false,
+            error: {
+              message: 'Request timeout. Please try again.',
+              type: 'RequestTimeout',
               trace_id: traceId
             }
           });
         }
 
-        // Add trace ID to request data
-        value.traceId = traceId;
-
-        // Check cache if enabled
-        let cacheKey = null;
-        if (cacheManager && shouldCache(value, req.user)) {
-          cacheKey = generateCacheKey(value, req.user);
-          const cachedResult = await cacheManager.get(cacheKey);
-        
-          if (cachedResult) {
-            logger.info('Cache hit for RAG search', { traceId, cacheKey });
-            return res.json({
-              ...cachedResult,
-              cached: true,
-              cache_hit_at: new Date().toISOString()
-            });
-          }
-        }
-
-        // Process RAG query
-        const result = await ragManager.processQuery(value, {
-          userId: req.user.id,
-          roles: req.user.roles || [],
-          permissions: req.user.permissions || []
-        });
-
-        // Cache result if appropriate
-        if (cacheManager && cacheKey && shouldCacheResult(result)) {
-          const ttl = calculateCacheTTL(value, result);
-          await cacheManager.setex(cacheKey, ttl, JSON.stringify(result));
-          logger.debug('Result cached', { traceId, cacheKey, ttl });
-        }
+        const result = throttleResult?.result;
 
         // Add request metadata
         result.request_metadata = {
           trace_id: traceId,
           processing_time_ms: Date.now() - startTime,
-          cached: false
+          cached: result.cached || false,
+          throttle_queue_time_ms: throttleResult?.queueTime || 0
         };
 
         logger.info('RAG search completed successfully', {
           traceId,
           processingTime: Date.now() - startTime,
-          confidence: result.data?.confidence
+          confidence: result.data?.confidence,
+          optimizationUsed: result.performance_metrics?.optimization_used
         });
 
         res.json(result);
@@ -187,6 +314,18 @@ module.exports = (dependencies = {}) => {
           error: error.message,
           processingTime: Date.now() - startTime
         });
+
+        // Handle validation errors
+        if (error.message.includes('Invalid request:')) {
+          return res.status(400).json({
+            success: false,
+            error: {
+              message: error.message,
+              type: 'ValidationError',
+              trace_id: traceId
+            }
+          });
+        }
 
         const errorResponse = {
           success: false,
@@ -438,6 +577,31 @@ module.exports = (dependencies = {}) => {
   }));
 
   // Helper functions
+
+  /**
+   * Determine if parallel search should be used for this query
+   */
+  function shouldUseParallelSearch(requestData) {
+    // Use parallel search for complex queries
+    if (requestData.query.length > 100) {
+      return true;
+    }
+    
+    // Use parallel search if multiple filters are specified
+    if (requestData.filters) {
+      const filterCount = Object.keys(requestData.filters).length;
+      if (filterCount > 2) {
+        return true;
+      }
+    }
+    
+    // Use parallel search for high result count requests
+    if (requestData.options && requestData.options.maxResults > 20) {
+      return true;
+    }
+    
+    return false;
+  }
 
   /**
    * Generate a unique trace ID

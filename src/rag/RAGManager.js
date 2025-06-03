@@ -242,6 +242,85 @@ class RAGManager {
   }
 
   /**
+   * Process search results from parallel search manager
+   * @param {Array} searchResults - Raw search results from parallel search
+   * @param {Object} queryData - Original query data
+   * @param {Object} userAuth - User authentication data
+   * @returns {Object} Processed RAG response
+   */
+  async processSearchResults(searchResults, queryData, userAuth) {
+    if (!this.isInitialized) {
+      throw new Error('RAG Manager not initialized');
+    }
+
+    const startTime = Date.now();
+    const traceId = queryData.traceId || this.generateTraceId();
+    
+    try {
+      logger.info('Processing parallel search results', {
+        traceId,
+        userId: userAuth.userId,
+        resultCount: searchResults.length
+      });
+
+      // Process input for context
+      const processedInput = await this.inputProcessor.process(queryData, userAuth);
+      
+      // Generate response using the search results
+      const generatedResponse = await this.ragTracing.traceGeneration(
+        this.llmProviderManager?.getCurrentProvider() || 'unknown',
+        {
+          model: this.responseGenerator.getModel(),
+          promptVersion: '1.0',
+          temperature: this.responseGenerator.getTemperature(),
+        },
+        async () => {
+          return await this.responseGenerator.generate(
+            processedInput.query,
+            searchResults,
+            processedInput.context
+          );
+        }
+      );
+      
+      // Format output
+      const formattedOutput = await this.outputFormatter.format(
+        generatedResponse,
+        searchResults,
+        {
+          traceId,
+          processingTime: Date.now() - startTime,
+          metadata: processedInput.metadata
+        }
+      );
+      
+      logger.info('Parallel search results processed successfully', {
+        traceId,
+        processingTime: Date.now() - startTime,
+        documentsProcessed: searchResults.length,
+        responseLength: generatedResponse.content?.length
+      });
+      
+      return {
+        ...formattedOutput,
+        fromCache: false,
+        searchType: 'parallel',
+        totalCount: searchResults.length,
+        maxScore: Math.max(...searchResults.map(doc => doc.score || 0)),
+        documents: searchResults,
+      };
+      
+    } catch (error) {
+      logger.error('Failed to process parallel search results', {
+        traceId,
+        error: error.message,
+        processingTime: Date.now() - startTime
+      });
+      throw error;
+    }
+  }
+
+  /**
    * Get system health status
    */
   async getHealthStatus() {
