@@ -716,3 +716,363 @@ body {
     transform: none;
   }
 }
+
+/* Kanban Board Styles */
+.kanban-board {
+    margin-top: 1rem;
+}
+
+.kanban-column {
+    background: #f8f9fa;
+    border-radius: 8px;
+    margin-bottom: 1rem;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    transition: all 0.3s ease;
+}
+
+.kanban-column:hover {
+    box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+}
+
+.kanban-header {
+    padding: 1rem;
+    border-radius: 8px 8px 0 0;
+    border-bottom: 2px solid rgba(255,255,255,0.2);
+}
+
+.kanban-body {
+    min-height: 400px;
+    max-height: 70vh;
+    overflow-y: auto;
+    padding: 1rem;
+    background: white;
+    border-radius: 0 0 8px 8px;
+}
+
+/* Kanban Card Styles */
+.kanban-card {
+    background: white;
+    border: 1px solid #e9ecef;
+    border-radius: 6px;
+    padding: 1rem;
+    margin-bottom: 0.75rem;
+    cursor: grab;
+    transition: all 0.2s ease;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+.kanban-card:hover {
+    border-color: #007bff;
+    box-shadow: 0 2px 6px rgba(0,123,255,0.2);
+    transform: translateY(-1px);
+}
+
+.kanban-card.dragging {
+    opacity: 0.5;
+    cursor: grabbing;
+    transform: rotate(5deg);
+}
+
+.kanban-card.drag-over {
+    border-color: #28a745;
+    background-color: #f8fff9;
+}
+
+.kanban-card-header {
+    display: flex;
+    justify-content: between;
+    align-items: flex-start;
+    margin-bottom: 0.5rem;
+}
+
+.kanban-card-title {
+    font-weight: 600;
+    font-size: 0.9rem;
+    line-height: 1.3;
+    margin-bottom: 0.25rem;
+    color: #212529;
+}
+
+.kanban-card-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.25rem;
+    margin-bottom: 0.5rem;
+}
+
+.kanban-card-content {
+    font-size: 0.85rem;
+    color: #6c757d;
+    line-height: 1.4;
+    margin-bottom: 0.75rem;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.kanban-card-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-top: 0.5rem;
+    border-top: 1px solid #f1f3f4;
+}
+
+.kanban-card-actions {
+    display: flex;
+    gap: 0.25rem;
+}
+
+.kanban-card-actions .btn {
+    padding: 0.25rem 0.5rem;
+    font-size: 0.75rem;
+}
+
+/* Priority indicators */
+.priority-high {
+    border-left: 4px solid #dc3545;
+}
+
+.priority-medium {
+    border-left: 4px solid #ffc107;
+}
+
+.priority-low {
+    border-left: 4px solid #28a745;
+}
+
+/* Source reliability indicators */
+.reliability-high::before {
+    content: "🟢";
+    margin-right: 0.25rem;
+}
+
+.reliability-medium::before {
+    content: "🟡";
+    margin-right: 0.25rem;
+}
+
+.reliability-low::before {
+    content: "🔴";
+    margin-right: 0.25rem;
+}
+
+/* Drag and drop zones */
+.drop-zone {
+    min-height: 100px;
+    border: 2px dashed #dee2e6;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #6c757d;
+    transition: all 0.3s ease;
+}
+
+.drop-zone.drag-over {
+    border-color: #007bff;
+    background-color: rgba(0,123,255,0.1);
+    color: #007bff;
+}
+
+.drop-zone.drag-active {
+    border-color: #28a745;
+    background-color: rgba(40,167,69,0.1);
+    color: #28a745;
+}
+
+/* Bulk operations */
+.bulk-operations-bar {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: #343a40;
+    color: white;
+    padding: 1rem;
+    transform: translateY(100%);
+    transition: transform 0.3s ease;
+    z-index: 1050;
+}
+
+.bulk-operations-bar.show {
+    transform: translateY(0);
+}
+
+.bulk-operations-content {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+/* Selection checkbox */
+.kanban-card .form-check-input {
+    position: absolute;
+    top: 0.5rem;
+    right: 0.5rem;
+}
+
+.kanban-card.selected {
+    border-color: #007bff;
+    background-color: rgba(0,123,255,0.05);
+}
+
+/* Curation filters */
+.curation-filters {
+    background: #f8f9fa;
+    border-radius: 6px;
+    padding: 1rem;
+    margin-bottom: 1rem;
+}
+
+.filter-chip {
+    display: inline-block;
+    background: #e9ecef;
+    color: #495057;
+    padding: 0.25rem 0.75rem;
+    border-radius: 15px;
+    font-size: 0.85rem;
+    margin: 0.25rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.filter-chip:hover {
+    background: #dee2e6;
+}
+
+.filter-chip.active {
+    background: #007bff;
+    color: white;
+}
+
+.filter-chip .bi {
+    margin-left: 0.25rem;
+    cursor: pointer;
+}
+
+/* Animation enhancements */
+.fade-in {
+    opacity: 0;
+    transform: translateY(20px);
+    transition: all 0.3s ease;
+}
+
+.fade-in.visible {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.slide-in {
+    transform: translateX(-100%);
+    transition: transform 0.3s ease;
+}
+
+.slide-in.visible {
+    transform: translateX(0);
+}
+
+/* Mobile responsiveness for Kanban */
+@media (max-width: 768px) {
+    .kanban-board .row {
+        flex-direction: column;
+    }
+    
+    .kanban-column {
+        margin-bottom: 1rem;
+    }
+    
+    .kanban-body {
+        max-height: 300px;
+    }
+    
+    .kanban-card {
+        padding: 0.75rem;
+    }
+}
+
+/* Loading states for Kanban */
+.kanban-loading {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 200px;
+    color: #6c757d;
+}
+
+.kanban-skeleton {
+    background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+    background-size: 200% 100%;
+    animation: loading 1.5s infinite;
+    border-radius: 6px;
+    height: 120px;
+    margin-bottom: 0.75rem;
+}
+
+@keyframes loading {
+    0% {
+        background-position: 200% 0;
+    }
+    100% {
+        background-position: -200% 0;
+    }
+}
+
+/* Enhanced tooltips */
+.tooltip-inner {
+    max-width: 300px;
+    text-align: left;
+}
+
+/* Status indicators */
+.status-indicator {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    display: inline-block;
+    margin-right: 0.5rem;
+}
+
+.status-pending {
+    background-color: #6c757d;
+}
+
+.status-in-review {
+    background-color: #ffc107;
+}
+
+.status-approved {
+    background-color: #28a745;
+}
+
+.status-rejected {
+    background-color: #dc3545;
+}
+
+/* Curation stats */
+.curation-stats {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border-radius: 8px;
+    padding: 1.5rem;
+    margin-bottom: 1rem;
+}
+
+.stat-item {
+    text-align: center;
+}
+
+.stat-number {
+    font-size: 2rem;
+    font-weight: bold;
+    display: block;
+}
+
+.stat-label {
+    font-size: 0.9rem;
+    opacity: 0.9;
+}

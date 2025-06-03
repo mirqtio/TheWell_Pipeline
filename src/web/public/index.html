@@ -28,6 +28,11 @@
                         </a>
                     </li>
                     <li class="nav-item">
+                        <a class="nav-link" href="#" data-view="curation">
+                            <i class="bi bi-kanban"></i> Curation Board
+                        </a>
+                    </li>
+                    <li class="nav-item">
                         <a class="nav-link" href="#" data-view="jobs">
                             <i class="bi bi-list-task"></i> Jobs
                         </a>
@@ -61,43 +66,46 @@
 
     <!-- Main Content -->
     <div class="container-fluid mt-3">
-        <!-- Review View -->
+        <!-- Review View (Enhanced) -->
         <div id="review-view" class="view-content">
             <div class="row">
                 <div class="col-12">
                     <div class="d-flex justify-content-between align-items-center mb-3">
                         <h2><i class="bi bi-clipboard-check"></i> Document Review</h2>
                         <div class="d-flex gap-2">
-                            <button class="btn btn-outline-primary" onclick="refreshReviewData()">
+                            <button class="btn btn-outline-primary" onclick="app.refreshData('review')">
                                 <i class="bi bi-arrow-clockwise"></i> Refresh
+                            </button>
+                            <button class="btn btn-primary" onclick="app.showBulkOperations()">
+                                <i class="bi bi-check2-all"></i> Bulk Actions
                             </button>
                             <div class="dropdown">
                                 <button class="btn btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
                                     <i class="bi bi-funnel"></i> Filter
                                 </button>
                                 <ul class="dropdown-menu">
-                                    <li><a class="dropdown-item" href="#" data-filter="all">All Documents</a></li>
-                                    <li><a class="dropdown-item" href="#" data-filter="static">Static Sources</a></li>
-                                    <li><a class="dropdown-item" href="#" data-filter="semi-static">Semi-Static Sources</a></li>
-                                    <li><a class="dropdown-item" href="#" data-filter="dynamic-consistent">Dynamic Consistent</a></li>
-                                    <li><a class="dropdown-item" href="#" data-filter="dynamic-unstructured">Dynamic Unstructured</a></li>
+                                    <li><a class="dropdown-item filter-option" href="#" data-filter="all">All Documents</a></li>
+                                    <li><a class="dropdown-item filter-option" href="#" data-filter="pending">Pending Review</a></li>
+                                    <li><a class="dropdown-item filter-option" href="#" data-filter="in-review">In Review</a></li>
+                                    <li><a class="dropdown-item filter-option" href="#" data-filter="high-priority">High Priority</a></li>
+                                    <li><a class="dropdown-item filter-option" href="#" data-filter="flagged">Flagged</a></li>
                                 </ul>
                             </div>
                         </div>
                     </div>
 
-                    <!-- Search Bar -->
+                    <!-- Search and Filters -->
                     <div class="row mb-3">
                         <div class="col-md-6">
                             <div class="input-group">
                                 <span class="input-group-text"><i class="bi bi-search"></i></span>
                                 <input type="text" class="form-control" id="search-input" placeholder="Search documents...">
-                                <button class="btn btn-outline-secondary" type="button" onclick="searchDocuments()">Search</button>
                             </div>
                         </div>
                         <div class="col-md-6">
                             <div class="d-flex gap-2 justify-content-end">
-                                <span class="badge bg-warning text-dark" id="pending-count">0 pending</span>
+                                <span class="badge bg-primary" id="pending-count">0 pending</span>
+                                <span class="badge bg-warning" id="in-review-count">0 in review</span>
                                 <span class="badge bg-success" id="approved-count">0 approved</span>
                                 <span class="badge bg-danger" id="rejected-count">0 rejected</span>
                             </div>
@@ -120,6 +128,111 @@
                             <!-- Pagination will be populated by JavaScript -->
                         </ul>
                     </nav>
+                </div>
+            </div>
+        </div>
+
+        <!-- Curation Board View (New Kanban Interface) -->
+        <div id="curation-view" class="view-content" style="display: none;">
+            <div class="row">
+                <div class="col-12">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h2><i class="bi bi-kanban"></i> Curation Board</h2>
+                        <div class="d-flex gap-2">
+                            <button class="btn btn-outline-primary" onclick="app.refreshData('curation')">
+                                <i class="bi bi-arrow-clockwise"></i> Refresh
+                            </button>
+                            <button class="btn btn-primary" onclick="app.showBulkCurationActions()">
+                                <i class="bi bi-check2-all"></i> Bulk Actions
+                            </button>
+                            <button class="btn btn-outline-secondary" onclick="app.showCurationFilters()">
+                                <i class="bi bi-funnel"></i> Filters
+                            </button>
+                            <button class="btn btn-outline-info" onclick="app.showCurationStats()">
+                                <i class="bi bi-graph-up"></i> Stats
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Curation Board Controls -->
+                    <div class="row mb-3">
+                        <div class="col-md-8">
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="bi bi-search"></i></span>
+                                <input type="text" class="form-control" id="curation-search" placeholder="Search content for curation...">
+                                <button class="btn btn-outline-secondary" type="button" onclick="app.searchCurationContent()">
+                                    <i class="bi bi-search"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <select class="form-select" id="curation-sort">
+                                <option value="priority">Sort by Priority</option>
+                                <option value="date">Sort by Date</option>
+                                <option value="source">Sort by Source</option>
+                                <option value="reliability">Sort by Reliability</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Kanban Board -->
+                    <div class="kanban-board">
+                        <div class="row">
+                            <!-- Pending Review Column -->
+                            <div class="col-lg-4">
+                                <div class="kanban-column" data-status="pending">
+                                    <div class="kanban-header bg-primary">
+                                        <h5 class="mb-0 text-white">
+                                            <i class="bi bi-clock-history"></i> Pending Review
+                                            <span class="badge bg-light text-primary ms-2" id="pending-kanban-count">0</span>
+                                        </h5>
+                                    </div>
+                                    <div class="kanban-body" id="pending-column">
+                                        <div class="text-center py-4 text-muted">
+                                            <i class="bi bi-inbox fs-1"></i>
+                                            <p>No items pending review</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- In Review Column -->
+                            <div class="col-lg-4">
+                                <div class="kanban-column" data-status="in-review">
+                                    <div class="kanban-header bg-warning">
+                                        <h5 class="mb-0 text-white">
+                                            <i class="bi bi-eye"></i> In Review
+                                            <span class="badge bg-light text-warning ms-2" id="in-review-kanban-count">0</span>
+                                        </h5>
+                                    </div>
+                                    <div class="kanban-body" id="in-review-column">
+                                        <div class="text-center py-4 text-muted">
+                                            <i class="bi bi-search fs-1"></i>
+                                            <p>No items in review</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Processed Column -->
+                            <div class="col-lg-4">
+                                <div class="kanban-column" data-status="processed">
+                                    <div class="kanban-header bg-success">
+                                        <h5 class="mb-0 text-white">
+                                            <i class="bi bi-check-circle"></i> Processed
+                                            <span class="badge bg-light text-success ms-2" id="processed-kanban-count">0</span>
+                                        </h5>
+                                    </div>
+                                    <div class="kanban-body" id="processed-column">
+                                        <div class="text-center py-4 text-muted">
+                                            <i class="bi bi-check-all fs-1"></i>
+                                            <p>No processed items</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>

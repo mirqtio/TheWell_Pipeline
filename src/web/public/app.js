@@ -13,6 +13,13 @@ class ManualReviewApp {
     this.pageSize = 20;
     this.searchQuery = '';
     this.loadingStates = new Set();
+    this.selectedItems = new Set();
+    this.draggedItem = null;
+    this.curationData = {
+      pending: [],
+      'in-review': [],
+      processed: []
+    };
     
     this.init();
   }
@@ -966,6 +973,9 @@ class ManualReviewApp {
     case 'visibility':
       await this.loadVisibilityData();
       break;
+    case 'curation':
+      await this.loadCurationData();
+      break;
     default:
       console.warn(`Unknown view: ${view}`);
     }
@@ -1021,6 +1031,9 @@ class ManualReviewApp {
       break;
     case 'visibility':
       await this.loadVisibilityData();
+      break;
+    case 'curation':
+      await this.loadCurationData();
       break;
     }
   }
@@ -1276,123 +1289,752 @@ class ManualReviewApp {
       return { success: false, error: error.message };
     }
   }
-}
 
-// Global functions for onclick handlers
-window.refreshReviewData = () => app.refreshReviewData();
-window.refreshJobsData = () => app.refreshJobsData();
-window.searchDocuments = () => app.searchDocuments();
-window.approveDocument = () => app.approveDocument();
-window.rejectDocument = () => app.rejectDocument();
-window.flagDocument = () => app.flagDocument();
+  /**
+   * Load curation data for Kanban board
+   */
+  async loadCurationData() {
+    try {
+      this.setLoadingState('curation', true);
+      
+      const response = await fetch('/api/v1/review/pending?limit=100', {
+        headers: {
+          'x-api-key': this.apiKey,
+          'Content-Type': 'application/json'
+        }
+      });
 
-// Visibility management global functions
-window.refreshVisibilityData = () => app.loadVisibilityData();
-window.showBulkVisibilityModal = () => {
-  const modal = new bootstrap.Modal(document.getElementById('bulkVisibilityModal'));
-  modal.show();
+      if (!response.ok) {
+        throw new Error(`Failed to load curation data: ${response.statusText}`);
+      }
+
+      const data = await response.json();
+      
+      // Organize data by status for Kanban columns
+      this.curationData = {
+        pending: data.documents?.filter(doc => doc.status === 'pending' || !doc.status) || [],
+        'in-review': data.documents?.filter(doc => doc.status === 'in-review') || [],
+        processed: data.documents?.filter(doc => doc.status === 'approved' || doc.status === 'rejected') || []
+      };
+
+      this.renderKanbanBoard();
+      this.updateKanbanCounts();
+      
+    } catch (error) {
+      console.error('Error loading curation data:', error);
+      this.showErrorMessage('Failed to load curation data');
+    } finally {
+      this.setLoadingState('curation', false);
+    }
+  }
+
+  /**
+   * Render the Kanban board with current data
+   */
+  renderKanbanBoard() {
+    const columns = ['pending', 'in-review', 'processed'];
+    
+    columns.forEach(status => {
+      const column = document.getElementById(`${status === 'in-review' ? 'in-review' : status}-column`);
+      if (!column) return;
+
+      const items = this.curationData[status] || [];
+      
+      if (items.length === 0) {
+        column.innerHTML = this.getEmptyColumnHTML(status);
+      } else {
+        column.innerHTML = items.map(item => this.createKanbanCard(item, status)).join('');
+      }
+
+      // Setup drag and drop for this column
+      this.setupDragAndDrop(column, status);
+    });
+  }
+
+  /**
+   * Create a Kanban card HTML
+   */
+  createKanbanCard(item, status) {
+    const priority = this.getPriority(item);
+    const reliability = this.getSourceReliability(item);
+    const timeAgo = this.formatTimeAgo(item.createdAt);
+    
+    return `
+      <div class="kanban-card ${priority}" 
+           draggable="true" 
+           data-item-id="${item.id}"
+           data-status="${status}">
+        <div class="form-check position-absolute top-0 end-0 m-2">
+          <input class="form-check-input" type="checkbox" 
+                 onchange="app.toggleItemSelection('${item.id}')" 
+                 id="select-${item.id}">
+        </div>
+        
+        <div class="kanban-card-header">
+          <div class="kanban-card-title">${this.truncateText(item.title || 'Untitled Document', 60)}</div>
+        </div>
+        
+        <div class="kanban-card-meta">
+          <span class="badge bg-secondary">${item.source?.type || 'Unknown'}</span>
+          <span class="badge bg-info reliability-${reliability}">${item.source?.name || 'Unknown Source'}</span>
+          ${item.flags?.length ? `<span class="badge bg-warning">🚩 ${item.flags.length}</span>` : ''}
+        </div>
+        
+        <div class="kanban-card-content">
+          ${this.truncateText(item.contentPreview || item.content || 'No content preview available', 150)}
+        </div>
+        
+        <div class="kanban-card-footer">
+          <small class="text-muted">
+            <i class="bi bi-clock"></i> ${timeAgo}
+          </small>
+          <div class="kanban-card-actions">
+            ${this.getCardActions(item, status)}
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
+  /**
+   * Get card actions based on status
+   */
+  getCardActions(item, status) {
+    switch (status) {
+      case 'pending':
+        return `
+          <button class="btn btn-sm btn-outline-primary" onclick="app.startReview('${item.id}')">
+            <i class="bi bi-eye"></i>
+          </button>
+          <button class="btn btn-sm btn-outline-success" onclick="app.quickApprove('${item.id}')">
+            <i class="bi bi-check"></i>
+          </button>
+          <button class="btn btn-sm btn-outline-danger" onclick="app.quickReject('${item.id}')">
+            <i class="bi bi-x"></i>
+          </button>
+        `;
+      case 'in-review':
+        return `
+          <button class="btn btn-sm btn-primary" onclick="app.openReviewModal('${item.id}')">
+            <i class="bi bi-pencil"></i> Review
+          </button>
+        `;
+      case 'processed':
+        return `
+          <button class="btn btn-sm btn-outline-info" onclick="app.viewProcessedItem('${item.id}')">
+            <i class="bi bi-info-circle"></i>
+          </button>
+        `;
+      default:
+        return '';
+    }
+  }
+
+  /**
+   * Setup drag and drop functionality
+   */
+  setupDragAndDrop(column, status) {
+    // Setup drag events for cards
+    const cards = column.querySelectorAll('.kanban-card');
+    cards.forEach(card => {
+      card.addEventListener('dragstart', (e) => {
+        this.draggedItem = {
+          id: card.dataset.itemId,
+          fromStatus: card.dataset.status,
+          element: card
+        };
+        card.classList.add('dragging');
+        e.dataTransfer.effectAllowed = 'move';
+      });
+
+      card.addEventListener('dragend', () => {
+        card.classList.remove('dragging');
+        this.draggedItem = null;
+      });
+    });
+
+    // Setup drop events for column
+    column.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      e.dataTransfer.dropEffect = 'move';
+      column.classList.add('drag-over');
+    });
+
+    column.addEventListener('dragleave', () => {
+      column.classList.remove('drag-over');
+    });
+
+    column.addEventListener('drop', (e) => {
+      e.preventDefault();
+      column.classList.remove('drag-over');
+      
+      if (this.draggedItem && this.draggedItem.fromStatus !== status) {
+        this.moveItem(this.draggedItem.id, this.draggedItem.fromStatus, status);
+      }
+    });
+  }
+
+  /**
+   * Move item between columns
+   */
+  async moveItem(itemId, fromStatus, toStatus) {
+    try {
+      // Optimistically update UI
+      const item = this.findItemById(itemId);
+      if (!item) return;
+
+      // Remove from old column
+      this.curationData[fromStatus] = this.curationData[fromStatus].filter(i => i.id !== itemId);
+      
+      // Add to new column
+      item.status = toStatus;
+      this.curationData[toStatus].push(item);
+      
+      // Re-render affected columns
+      this.renderKanbanBoard();
+      this.updateKanbanCounts();
+
+      // Make API call to update status
+      const endpoint = this.getStatusUpdateEndpoint(toStatus);
+      if (endpoint) {
+        const response = await fetch(endpoint.replace(':id', itemId), {
+          method: 'POST',
+          headers: {
+            'x-api-key': this.apiKey,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            notes: `Moved to ${toStatus} via drag and drop`,
+            timestamp: new Date().toISOString()
+          })
+        });
+
+        if (!response.ok) {
+          throw new Error(`Failed to update item status: ${response.statusText}`);
+        }
+      }
+
+      this.showSuccessMessage(`Item moved to ${toStatus.replace('-', ' ')}`);
+      
+    } catch (error) {
+      console.error('Error moving item:', error);
+      this.showErrorMessage('Failed to move item');
+      // Reload data to restore correct state
+      await this.loadCurationData();
+    }
+  }
+
+  /**
+   * Get status update endpoint
+   */
+  getStatusUpdateEndpoint(status) {
+    switch (status) {
+      case 'in-review':
+        return '/api/v1/review/start-review/:id';
+      case 'processed':
+        return '/api/v1/review/approve/:id';
+      default:
+        return null;
+    }
+  }
+
+  /**
+   * Update Kanban column counts
+   */
+  updateKanbanCounts() {
+    const counts = {
+      'pending-kanban-count': this.curationData.pending?.length || 0,
+      'in-review-kanban-count': this.curationData['in-review']?.length || 0,
+      'processed-kanban-count': this.curationData.processed?.length || 0
+    };
+
+    Object.entries(counts).forEach(([id, count]) => {
+      const element = document.getElementById(id);
+      if (element) {
+        element.textContent = count;
+      }
+    });
+  }
+
+  /**
+   * Toggle item selection for bulk operations
+   */
+  toggleItemSelection(itemId) {
+    if (this.selectedItems.has(itemId)) {
+      this.selectedItems.delete(itemId);
+    } else {
+      this.selectedItems.add(itemId);
+    }
+
+    // Update UI
+    const card = document.querySelector(`[data-item-id="${itemId}"]`);
+    if (card) {
+      card.classList.toggle('selected', this.selectedItems.has(itemId));
+    }
+
+    // Show/hide bulk operations bar
+    this.updateBulkOperationsBar();
+  }
+
+  /**
+   * Update bulk operations bar visibility
+   */
+  updateBulkOperationsBar() {
+    const bar = document.getElementById('bulk-operations-bar');
+    const count = this.selectedItems.size;
+    
+    if (count > 0) {
+      if (!bar) {
+        this.createBulkOperationsBar();
+      } else {
+        bar.classList.add('show');
+        const countElement = bar.querySelector('.selected-count');
+        if (countElement) {
+          countElement.textContent = count;
+        }
+      }
+    } else if (bar) {
+      bar.classList.remove('show');
+    }
+  }
+
+  /**
+   * Create bulk operations bar
+   */
+  createBulkOperationsBar() {
+    const bar = document.createElement('div');
+    bar.id = 'bulk-operations-bar';
+    bar.className = 'bulk-operations-bar show';
+    bar.innerHTML = `
+      <div class="bulk-operations-content">
+        <div>
+          <span class="selected-count">${this.selectedItems.size}</span> items selected
+        </div>
+        <div class="d-flex gap-2">
+          <button class="btn btn-success btn-sm" onclick="app.bulkApprove()">
+            <i class="bi bi-check-all"></i> Approve All
+          </button>
+          <button class="btn btn-danger btn-sm" onclick="app.bulkReject()">
+            <i class="bi bi-x-circle"></i> Reject All
+          </button>
+          <button class="btn btn-warning btn-sm" onclick="app.bulkStartReview()">
+            <i class="bi bi-eye"></i> Start Review
+          </button>
+          <button class="btn btn-secondary btn-sm" onclick="app.clearSelection()">
+            <i class="bi bi-x"></i> Clear
+          </button>
+        </div>
+      </div>
+    `;
+    document.body.appendChild(bar);
+  }
+
+  /**
+   * Bulk approve selected items
+   */
+  async bulkApprove() {
+    if (this.selectedItems.size === 0) return;
+
+    try {
+      const promises = Array.from(this.selectedItems).map(itemId => 
+        this.approveItem(itemId, 'Bulk approved')
+      );
+      
+      await Promise.all(promises);
+      this.showSuccessMessage(`${this.selectedItems.size} items approved`);
+      this.clearSelection();
+      await this.loadCurationData();
+      
+    } catch (error) {
+      console.error('Error in bulk approve:', error);
+      this.showErrorMessage('Failed to approve some items');
+    }
+  }
+
+  /**
+   * Bulk reject selected items
+   */
+  async bulkReject() {
+    if (this.selectedItems.size === 0) return;
+
+    const reason = prompt('Enter rejection reason:');
+    if (!reason) return;
+
+    try {
+      const promises = Array.from(this.selectedItems).map(itemId => 
+        this.rejectItem(itemId, reason)
+      );
+      
+      await Promise.all(promises);
+      this.showSuccessMessage(`${this.selectedItems.size} items rejected`);
+      this.clearSelection();
+      await this.loadCurationData();
+      
+    } catch (error) {
+      console.error('Error in bulk reject:', error);
+      this.showErrorMessage('Failed to reject some items');
+    }
+  }
+
+  /**
+   * Clear selection
+   */
+  clearSelection() {
+    this.selectedItems.clear();
+    document.querySelectorAll('.kanban-card.selected').forEach(card => {
+      card.classList.remove('selected');
+      const checkbox = card.querySelector('.form-check-input');
+      if (checkbox) checkbox.checked = false;
+    });
+    this.updateBulkOperationsBar();
+  }
+
+  /**
+   * Quick approve item
+   */
+  async quickApprove(itemId) {
+    try {
+      await this.approveItem(itemId, 'Quick approved');
+      this.showSuccessMessage('Item approved');
+      await this.loadCurationData();
+    } catch (error) {
+      console.error('Error approving item:', error);
+      this.showErrorMessage('Failed to approve item');
+    }
+  }
+
+  /**
+   * Quick reject item
+   */
+  async quickReject(itemId) {
+    const reason = prompt('Enter rejection reason:');
+    if (!reason) return;
+
+    try {
+      await this.rejectItem(itemId, reason);
+      this.showSuccessMessage('Item rejected');
+      await this.loadCurationData();
+    } catch (error) {
+      console.error('Error rejecting item:', error);
+      this.showErrorMessage('Failed to reject item');
+    }
+  }
+
+  /**
+   * Approve item via API
+   */
+  async approveItem(itemId, notes = '') {
+    const response = await fetch(`/api/v1/review/approve/${itemId}`, {
+      method: 'POST',
+      headers: {
+        'x-api-key': this.apiKey,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        notes,
+        visibility: 'internal',
+        tags: []
+      })
+    });
+
+    if (!response.ok) {
+      throw new Error(`Failed to approve item: ${response.statusText}`);
+    }
+
+    return response.json();
+  }
+
+  /**
+   * Reject item via API
+   */
+  async rejectItem(itemId, reason, notes = '') {
+    const response = await fetch(`/api/v1/review/reject/${itemId}`, {
+      method: 'POST',
+      headers: {
+        'x-api-key': this.apiKey,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        reason,
+        notes,
+        permanent: false
+      })
+    });
+
+    if (!response.ok) {
+      throw new Error(`Failed to reject item: ${response.statusText}`);
+    }
+
+    return response.json();
+  }
+
+  /**
+   * Helper methods
+   */
+  findItemById(itemId) {
+    for (const status in this.curationData) {
+      const item = this.curationData[status].find(item => item.id === itemId);
+      if (item) return item;
+    }
+    return null;
+  }
+
+  getPriority(item) {
+    if (item.flags?.includes('high-priority')) return 'priority-high';
+    if (item.flags?.includes('medium-priority')) return 'priority-medium';
+    return 'priority-low';
+  }
+
+  getSourceReliability(item) {
+    const score = item.source?.reliabilityScore || 0.5;
+    if (score >= 0.8) return 'high';
+    if (score >= 0.5) return 'medium';
+    return 'low';
+  }
+
+  getEmptyColumnHTML(status) {
+    const messages = {
+      pending: '<i class="bi bi-inbox fs-1"></i><p>No items pending review</p>',
+      'in-review': '<i class="bi bi-search fs-1"></i><p>No items in review</p>',
+      processed: '<i class="bi bi-check-all fs-1"></i><p>No processed items</p>'
+    };
+    
+    return `
+      <div class="text-center py-4 text-muted">
+        ${messages[status] || '<p>No items</p>'}
+      </div>
+    `;
+  }
+
+  truncateText(text, maxLength) {
+    if (!text) return '';
+    return text.length > maxLength ? text.substring(0, maxLength) + '...' : text;
+  }
+
+  formatTimeAgo(dateString) {
+    if (!dateString) return 'Unknown';
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffMs = now - date;
+    const diffMins = Math.floor(diffMs / 60000);
+    const diffHours = Math.floor(diffMins / 60);
+    const diffDays = Math.floor(diffHours / 24);
+
+    if (diffMins < 1) return 'Just now';
+    if (diffMins < 60) return `${diffMins}m ago`;
+    if (diffHours < 24) return `${diffHours}h ago`;
+    return `${diffDays}d ago`;
+  }
+
+  /**
+   * Show/hide bulk curation actions
+   */
+  showBulkCurationActions() {
+    // Implementation for bulk curation actions modal
+    console.log('Show bulk curation actions');
+  }
+
+  /**
+   * Show curation filters
+   */
+  showCurationFilters() {
+    // Implementation for curation filters modal
+    console.log('Show curation filters');
+  }
+
+  /**
+   * Show curation stats
+   */
+  showCurationStats() {
+    // Implementation for curation stats modal
+    console.log('Show curation stats');
+  }
+
+  /**
+   * Search curation content
+   */
+  searchCurationContent() {
+    const query = document.getElementById('curation-search')?.value;
+    console.log('Search curation content:', query);
+    // Implementation for search functionality
+  }
+
+  /**
+   * Search curation content
+   */
+  searchCurationContent() {
+    const query = document.getElementById('curation-search')?.value;
+    console.log('Search curation content:', query);
+    // Implementation for search functionality
+  }
+
+  /**
+   * Start review for an item
+   */
+  async startReview(itemId) {
+    try {
+      const response = await fetch(`/api/v1/review/start-review/${itemId}`, {
+        method: 'POST',
+        headers: {
+          'x-api-key': this.apiKey,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          notes: 'Started review from curation board',
+          timestamp: new Date().toISOString()
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error(`Failed to start review: ${response.statusText}`);
+      }
+
+      this.showSuccessMessage('Review started');
+      await this.loadCurationData();
+      
+    } catch (error) {
+      console.error('Error starting review:', error);
+      this.showErrorMessage('Failed to start review');
+    }
+  }
+
+  /**
+   * Open review modal for detailed review
+   */
+  openReviewModal(itemId) {
+    // Switch to review view and open the specific item
+    this.switchViewWithAnimation('review');
+    // Set a timeout to allow view to load, then open the item
+    setTimeout(() => {
+      this.viewDocument(itemId);
+    }, 500);
+  }
+
+  /**
+   * View processed item details
+   */
+  viewProcessedItem(itemId) {
+    const item = this.findItemById(itemId);
+    if (!item) return;
+
+    // Create a modal to show processed item details
+    const modal = document.createElement('div');
+    modal.className = 'modal fade';
+    modal.id = 'processedItemModal';
+    modal.innerHTML = `
+      <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title">Processed Item Details</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+          </div>
+          <div class="modal-body">
+            <div class="row">
+              <div class="col-md-6">
+                <h6>Item Information</h6>
+                <p><strong>Title:</strong> ${item.title || 'Untitled'}</p>
+                <p><strong>Status:</strong> <span class="badge bg-${item.status === 'approved' ? 'success' : 'danger'}">${item.status}</span></p>
+                <p><strong>Source:</strong> ${item.source?.name || 'Unknown'}</p>
+                <p><strong>Created:</strong> ${this.formatTimeAgo(item.createdAt)}</p>
+              </div>
+              <div class="col-md-6">
+                <h6>Content Preview</h6>
+                <div class="border p-2 rounded" style="max-height: 200px; overflow-y: auto;">
+                  ${item.contentPreview || item.content || 'No content available'}
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+          </div>
+        </div>
+      </div>
+    `;
+
+    document.body.appendChild(modal);
+    const bsModal = new bootstrap.Modal(modal);
+    bsModal.show();
+
+    // Remove modal from DOM when hidden
+    modal.addEventListener('hidden.bs.modal', () => {
+      modal.remove();
+    });
+  }
+
+  /**
+   * Bulk start review for selected items
+   */
+  async bulkStartReview() {
+    if (this.selectedItems.size === 0) return;
+
+    try {
+      const promises = Array.from(this.selectedItems).map(itemId => 
+        this.startReview(itemId)
+      );
+      
+      await Promise.all(promises);
+      this.showSuccessMessage(`${this.selectedItems.size} items moved to review`);
+      this.clearSelection();
+      await this.loadCurationData();
+      
+    } catch (error) {
+      console.error('Error in bulk start review:', error);
+      this.showErrorMessage('Failed to start review for some items');
+    }
+  }
+
+  /**
+   * Refresh curation data
+   */
+  async refreshCurationData() {
+    await this.loadCurationData();
+    this.showSuccessMessage('Curation data refreshed');
+  }
+
+  // ===== END CURATION INTERFACE METHODS =====
 };
-window.showAddRuleModal = () => {
-  const modal = new bootstrap.Modal(document.getElementById('addRuleModal'));
-  modal.show();
-};
-window.showDocumentVisibilityModal = (documentId, currentVisibility) => {
-  const modal = new bootstrap.Modal(document.getElementById('documentVisibilityModal'));
-  document.getElementById('documentVisibilityDocumentId').value = documentId;
-  document.getElementById('documentVisibilitySelect').value = currentVisibility;
-  modal.show();
-};
-window.submitBulkVisibilityUpdate = async () => {
-  const documentIds = document.getElementById('bulkDocumentIds').value.trim();
-  const visibility = document.getElementById('bulkVisibilitySelect').value;
-  const reason = document.getElementById('bulkVisibilityReason').value.trim();
-  
-  if (!documentIds || !visibility) {
-    app.showToast('Please provide document IDs and select a visibility state', 'warning');
-    return;
-  }
-  
-  const ids = documentIds.split('\n').map(id => id.trim()).filter(id => id);
-  const updates = ids.map(id => ({ documentId: id, visibility }));
-  
-  try {
-    await app.bulkUpdateVisibility(updates, reason);
-    bootstrap.Modal.getInstance(document.getElementById('bulkVisibilityModal')).hide();
-    document.getElementById('bulkVisibilityForm').reset();
-  } catch (error) {
-    // Error already handled in the method
+
+// Global functions for backward compatibility
+window.refreshReviewData = () => {
+  if (window.app) {
+    window.app.refreshData('review');
   }
 };
-window.submitAddRule = async () => {
-  const ruleId = document.getElementById('ruleId').value.trim();
-  const ruleName = document.getElementById('ruleName').value.trim();
-  const ruleDescription = document.getElementById('ruleDescription').value.trim();
-  const rulePriority = parseInt(document.getElementById('rulePriority').value);
-  const ruleVisibility = document.getElementById('ruleVisibility').value;
-  const ruleConditions = document.getElementById('ruleConditions').value.trim();
-  
-  if (!ruleId || !ruleName || !ruleVisibility) {
-    app.showToast('Please fill in all required fields', 'warning');
-    return;
-  }
-  
-  let conditions;
-  try {
-    conditions = ruleConditions ? JSON.parse(ruleConditions) : {};
-  } catch (error) {
-    app.showToast('Invalid JSON in conditions field', 'error');
-    return;
-  }
-  
-  const rule = {
-    name: ruleName,
-    description: ruleDescription,
-    priority: rulePriority,
-    visibility: ruleVisibility,
-    conditions
-  };
-  
-  try {
-    await app.addVisibilityRule(ruleId, rule);
-    bootstrap.Modal.getInstance(document.getElementById('addRuleModal')).hide();
-    document.getElementById('addRuleForm').reset();
-  } catch (error) {
-    // Error already handled in the method
+
+window.refreshJobsData = () => {
+  if (window.app) {
+    window.app.refreshData('jobs');
   }
 };
-window.submitDocumentVisibilityChange = async () => {
-  const documentId = document.getElementById('documentVisibilityDocumentId').value;
-  const visibility = document.getElementById('documentVisibilitySelect').value;
-  const reason = document.getElementById('documentVisibilityReason').value.trim();
-  
-  if (!documentId || !visibility) {
-    app.showToast('Missing document ID or visibility state', 'warning');
-    return;
-  }
-  
-  try {
-    await app.setDocumentVisibility(documentId, visibility, reason);
-    bootstrap.Modal.getInstance(document.getElementById('documentVisibilityModal')).hide();
-    document.getElementById('documentVisibilityForm').reset();
-  } catch (error) {
-    // Error already handled in the method
+
+window.searchDocuments = () => {
+  if (window.app) {
+    const query = document.getElementById('search-input')?.value;
+    window.app.searchQuery = query || '';
+    window.app.currentPage = 1;
+    window.app.loadReviewData();
   }
 };
-window.approveVisibilityChange = async (approvalId) => {
-  try {
-    await app.approveVisibilityChange(approvalId);
-  } catch (error) {
-    // Error already handled in the method
+
+window.approveDocument = (documentId) => {
+  if (window.app) {
+    window.app.approveDocument(documentId);
   }
 };
-window.rejectVisibilityChange = async (approvalId) => {
-  const reason = prompt('Please provide a reason for rejection (optional):');
-  try {
-    await app.rejectVisibilityChange(approvalId, reason || '');
-  } catch (error) {
-    // Error already handled in the method
+
+window.rejectDocument = (documentId) => {
+  if (window.app) {
+    window.app.rejectDocument(documentId);
   }
 };
+
+window.viewDocument = (documentId) => {
+  if (window.app) {
+    window.app.viewDocument(documentId);
+  }
+};
+
 window.viewDocumentAudit = (documentId) => {
   // Switch to audit log tab and filter by document ID
   const auditTab = document.querySelector('a[href="#audit-log"]');
@@ -1408,3 +2050,4 @@ window.viewDocumentAudit = (documentId) => {
 
 // Initialize the application
 const app = new ManualReviewApp();
+window.app = app;

@@ -1,6 +1,6 @@
 # Task ID: 6
 # Title: Manual Curation Interface
-# Status: pending
+# Status: in-progress
 # Dependencies: 1
 # Priority: medium
 # Description: Develop a user interface for manual review and curation of ingested content with approval workflows and audit trails.
@@ -78,7 +78,7 @@ Create a curation interface with the following components:
 10. CI verification through GitHub logs via MCP or CLI
 
 # Subtasks:
-## 1. Design and Implement Dashboard UI [pending]
+## 1. Design and Implement Dashboard UI [in-progress]
 ### Dependencies: None
 ### Description: Create a user-facing dashboard interface for curators to view, manage, and interact with curated data, including visualizations, filters, and actionable controls.
 ### Details:
