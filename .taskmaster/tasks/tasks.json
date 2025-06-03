@@ -684,7 +684,7 @@
             1
           ],
           "details": "Implement metrics visualization for ingestion rates, errors, and processing times. Include expandable/collapsible nodes to drill down into specific ingestion pipelines. Add progress indicators and status alerts for ongoing processes. Testing requirements: 1) Write unit tests for monitoring components, 2) Create browser-based integration tests for data visualization, 3) Implement e2e tests for monitoring interactions, 4) Run all tests and resolve any issues, 5) Merge to master and verify CI passes via GitHub logs.",
-          "status": "in-progress"
+          "status": "done"
         },
         {
           "id": 3,
@@ -694,7 +694,7 @@
             1
           ],
           "details": "Create a flowchart-like structure showing data transformation stages. Implement color-coded nodes to indicate pipeline health. Design interactive elements to expand pipeline components for detailed metrics and configuration options. Testing requirements: 1) Write unit tests for visualization components, 2) Create browser-based integration tests for interactive elements, 3) Implement e2e tests for pipeline visualization workflows, 4) Run all tests and resolve any issues, 5) Merge to master and verify CI passes via GitHub logs.",
-          "status": "pending"
+          "status": "in-progress"
         },
         {
           "id": 4,

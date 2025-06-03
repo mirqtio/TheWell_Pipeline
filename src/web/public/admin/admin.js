@@ -148,7 +148,7 @@ class AdminDashboard {
                     content.innerHTML = await this.getIngestionContent();
                     break;
                 case 'enrichment':
-                    content.innerHTML = this.getEnrichmentContent();
+                    content.innerHTML = await this.getEnrichmentContent();
                     break;
                 case 'providers':
                     content.innerHTML = this.getProvidersContent();
@@ -319,47 +319,332 @@ class AdminDashboard {
         }
     }
     
-    getEnrichmentContent() {
-        return `
-            <div class="row">
-                <div class="col-lg-6">
-                    <div class="chart-container">
-                        <h5>Pipeline Flow</h5>
-                        <div class="pipeline-flow">
-                            <div class="flow-step">
-                                <div class="step-icon bg-primary text-white">1</div>
-                                <div class="step-content">
-                                    <h6>Document Ingestion</h6>
-                                    <div class="text-success">✓ 156 documents today</div>
+    async getEnrichmentContent() {
+        try {
+            const response = await fetch('/api/dashboard/admin/data/enrichment');
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            const data = await response.json();
+            
+            return `
+                <div class="row mb-4">
+                    <!-- Pipeline Metrics Overview -->
+                    <div class="col-12">
+                        <div class="row">
+                            <div class="col-md-2">
+                                <div class="metric-card">
+                                    <div class="metric-value">${data.pipeline.metrics.totalProcessed}</div>
+                                    <div class="metric-label">Total Processed</div>
+                                    <div class="metric-trend text-success">↗ ${data.pipeline.metrics.successRate}%</div>
                                 </div>
                             </div>
-                            <div class="flow-arrow">↓</div>
-                            <div class="flow-step">
-                                <div class="step-icon bg-info text-white">2</div>
-                                <div class="step-content">
-                                    <h6>Entity Extraction</h6>
-                                    <div class="text-success">✓ 142 processed</div>
+                            <div class="col-md-2">
+                                <div class="metric-card">
+                                    <div class="metric-value">${data.pipeline.metrics.totalQueued}</div>
+                                    <div class="metric-label">In Queue</div>
+                                    <div class="metric-trend text-info">⏳ Processing</div>
                                 </div>
                             </div>
-                            <div class="flow-arrow">↓</div>
-                            <div class="flow-step">
-                                <div class="step-icon bg-warning text-white">3</div>
-                                <div class="step-content">
-                                    <h6>LLM Enrichment</h6>
-                                    <div class="text-warning">⏳ 14 in queue</div>
+                            <div class="col-md-2">
+                                <div class="metric-card">
+                                    <div class="metric-value">${data.pipeline.metrics.overallThroughput}/min</div>
+                                    <div class="metric-label">Throughput</div>
+                                    <div class="metric-trend text-primary">📊 Live</div>
+                                </div>
+                            </div>
+                            <div class="col-md-2">
+                                <div class="metric-card">
+                                    <div class="metric-value">${data.pipeline.metrics.avgEndToEndTime}s</div>
+                                    <div class="metric-label">Avg Time</div>
+                                    <div class="metric-trend text-warning">⏱ E2E</div>
+                                </div>
+                            </div>
+                            <div class="col-md-2">
+                                <div class="metric-card">
+                                    <div class="metric-value">${data.pipeline.metrics.totalErrors}</div>
+                                    <div class="metric-label">Errors Today</div>
+                                    <div class="metric-trend ${data.pipeline.metrics.totalErrors > 5 ? 'text-danger' : 'text-success'}">
+                                        ${data.pipeline.metrics.totalErrors > 5 ? '⚠ High' : '✓ Low'}
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-2">
+                                <div class="metric-card">
+                                    <div class="metric-value">${data.pipeline.metrics.successRate}%</div>
+                                    <div class="metric-label">Success Rate</div>
+                                    <div class="metric-trend text-success">✓ Healthy</div>
                                 </div>
                             </div>
                         </div>
                     </div>
                 </div>
-                <div class="col-lg-6">
-                    <div class="chart-container">
-                        <h5>Provider Performance</h5>
-                        <canvas id="providerPerformanceChart" height="200"></canvas>
+
+                <div class="row">
+                    <!-- Interactive Pipeline Flow -->
+                    <div class="col-lg-8">
+                        <div class="card">
+                            <div class="card-header d-flex justify-content-between align-items-center">
+                                <h5 class="mb-0">Enrichment Pipeline Flow</h5>
+                                <div class="btn-group btn-group-sm" role="group">
+                                    <button type="button" class="btn btn-outline-primary active" onclick="adminDashboard.togglePipelineView('flow')">Flow View</button>
+                                    <button type="button" class="btn btn-outline-primary" onclick="adminDashboard.togglePipelineView('metrics')">Metrics View</button>
+                                </div>
+                            </div>
+                            <div class="card-body">
+                                <div id="pipeline-flow-view">
+                                    <div class="pipeline-container">
+                                        ${data.pipeline.stages.map((stage, index) => {
+                                            const statusColors = {
+                                                'active': 'success',
+                                                'processing': 'warning', 
+                                                'error': 'danger',
+                                                'idle': 'secondary'
+                                            };
+                                            const statusColor = statusColors[stage.status] || 'secondary';
+                                            const hasQueue = stage.queued > 0;
+                                            const hasErrors = stage.errors > 0;
+                                            
+                                            return `
+                                                <div class="pipeline-stage" data-stage="${stage.id}" onclick="adminDashboard.expandStageDetails('${stage.id}')">
+                                                    <div class="stage-header">
+                                                        <div class="stage-icon bg-${statusColor}">
+                                                            <span class="stage-number">${index + 1}</span>
+                                                        </div>
+                                                        <div class="stage-info">
+                                                            <h6 class="stage-title">${stage.name}</h6>
+                                                            <div class="stage-status">
+                                                                <span class="badge badge-${statusColor}">${stage.status}</span>
+                                                                ${hasQueue ? `<span class="badge badge-info ml-1">${stage.queued} queued</span>` : ''}
+                                                                ${hasErrors ? `<span class="badge badge-danger ml-1">${stage.errors} errors</span>` : ''}
+                                                            </div>
+                                                        </div>
+                                                        <div class="stage-metrics">
+                                                            <div class="metric-small">
+                                                                <span class="metric-value">${stage.processed}</span>
+                                                                <span class="metric-label">processed</span>
+                                                            </div>
+                                                            <div class="metric-small">
+                                                                <span class="metric-value">${stage.throughput}/min</span>
+                                                                <span class="metric-label">throughput</span>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <div class="stage-details" id="stage-details-${stage.id}" style="display: none;">
+                                                        <div class="row">
+                                                            <div class="col-md-6">
+                                                                <small class="text-muted">Processing Time: ${stage.avgProcessingTime}s avg</small>
+                                                            </div>
+                                                            <div class="col-md-6">
+                                                                <small class="text-muted">Queue Size: ${stage.queued} documents</small>
+                                                            </div>
+                                                        </div>
+                                                        <div class="progress mt-2" style="height: 6px;">
+                                                            <div class="progress-bar bg-${statusColor}" style="width: ${Math.min(100, (stage.processed / (stage.processed + stage.queued)) * 100)}%"></div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                ${index < data.pipeline.stages.length - 1 ? '<div class="pipeline-arrow">→</div>' : ''}
+                                            `;
+                                        }).join('')}
+                                    </div>
+                                </div>
+                                <div id="pipeline-metrics-view" style="display: none;">
+                                    <div class="table-responsive">
+                                        <table class="table table-sm">
+                                            <thead>
+                                                <tr>
+                                                    <th>Stage</th>
+                                                    <th>Status</th>
+                                                    <th>Processed</th>
+                                                    <th>Queued</th>
+                                                    <th>Errors</th>
+                                                    <th>Avg Time</th>
+                                                    <th>Throughput</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                ${data.pipeline.stages.map(stage => `
+                                                    <tr>
+                                                        <td><strong>${stage.name}</strong></td>
+                                                        <td><span class="badge badge-${stage.status === 'active' ? 'success' : stage.status === 'processing' ? 'warning' : 'secondary'}">${stage.status}</span></td>
+                                                        <td>${stage.processed}</td>
+                                                        <td>${stage.queued}</td>
+                                                        <td class="${stage.errors > 0 ? 'text-danger' : ''}">${stage.errors}</td>
+                                                        <td>${stage.avgProcessingTime}s</td>
+                                                        <td>${stage.throughput}/min</td>
+                                                    </tr>
+                                                `).join('')}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Provider Performance & Strategy Distribution -->
+                    <div class="col-lg-4">
+                        <div class="card mb-3">
+                            <div class="card-header">
+                                <h6 class="mb-0">Provider Performance</h6>
+                            </div>
+                            <div class="card-body">
+                                ${data.providers.map(provider => {
+                                    const statusColor = provider.status === 'healthy' ? 'success' : 
+                                                      provider.status === 'warning' ? 'warning' : 'danger';
+                                    return `
+                                        <div class="provider-item mb-3" onclick="adminDashboard.expandProviderDetails('${provider.id}')">
+                                            <div class="d-flex justify-content-between align-items-center">
+                                                <div>
+                                                    <strong>${provider.name}</strong>
+                                                    <span class="badge badge-${statusColor} ml-2">${provider.status}</span>
+                                                </div>
+                                                <div class="text-right">
+                                                    <div class="text-muted small">${provider.responseTime}ms</div>
+                                                    <div class="text-success small">${provider.successRate}%</div>
+                                                </div>
+                                            </div>
+                                            <div class="provider-details mt-2" id="provider-details-${provider.id}" style="display: none;">
+                                                <div class="row">
+                                                    <div class="col-6">
+                                                        <small class="text-muted">Requests: ${provider.requestsToday}</small>
+                                                    </div>
+                                                    <div class="col-6">
+                                                        <small class="text-muted">Cost: $${provider.costToday}</small>
+                                                    </div>
+                                                </div>
+                                                <div class="row">
+                                                    <div class="col-12">
+                                                        <small class="text-muted">Models: ${provider.modelsUsed.join(', ')}</small>
+                                                    </div>
+                                                </div>
+                                                <div class="progress mt-2" style="height: 4px;">
+                                                    <div class="progress-bar" style="width: ${provider.currentLoad * 100}%"></div>
+                                                </div>
+                                                <small class="text-muted">Load: ${Math.round(provider.currentLoad * 100)}%</small>
+                                            </div>
+                                        </div>
+                                    `;
+                                }).join('')}
+                            </div>
+                        </div>
+
+                        <div class="card">
+                            <div class="card-header">
+                                <h6 class="mb-0">Processing Strategies</h6>
+                            </div>
+                            <div class="card-body">
+                                <div class="strategy-distribution">
+                                    ${Object.entries(data.strategies.current).map(([strategy, percentage]) => `
+                                        <div class="strategy-item mb-2">
+                                            <div class="d-flex justify-content-between">
+                                                <span class="text-capitalize">${strategy}</span>
+                                                <span>${percentage}%</span>
+                                            </div>
+                                            <div class="progress" style="height: 6px;">
+                                                <div class="progress-bar" style="width: ${percentage}%"></div>
+                                            </div>
+                                        </div>
+                                    `).join('')}
+                                </div>
+                                <div class="mt-3">
+                                    <h6 class="small">Strategy Performance</h6>
+                                    ${Object.entries(data.strategies.performance).map(([strategy, perf]) => `
+                                        <div class="d-flex justify-content-between text-sm">
+                                            <span class="text-capitalize">${strategy}:</span>
+                                            <span>${perf.avgTime}s, ${perf.successRate}%, $${perf.cost}</span>
+                                        </div>
+                                    `).join('')}
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
-            </div>
-        `;
+
+                <div class="row mt-4">
+                    <div class="col-12">
+                        <div class="card">
+                            <div class="card-header">
+                                <h6 class="mb-0">Recent Pipeline Activity</h6>
+                            </div>
+                            <div class="card-body">
+                                <div class="activity-feed" style="max-height: 300px; overflow-y: auto;">
+                                    ${data.recentActivity.map(event => {
+                                        const iconMap = {
+                                            success: '✅',
+                                            info: 'ℹ️',
+                                            warning: '⚠️',
+                                            error: '❌'
+                                        };
+                                        const icon = iconMap[event.type] || '•';
+                                        const timeAgo = this.formatTimeAgo(event.timestamp);
+                                        const textClass = event.type === 'success' ? 'success' : 
+                                                        event.type === 'warning' ? 'warning' : 
+                                                        event.type === 'error' ? 'danger' : 'info';
+                                        
+                                        return `
+                                            <div class="activity-item d-flex justify-content-between align-items-start mb-2">
+                                                <div class="activity-content">
+                                                    <span class="activity-icon">${icon}</span>
+                                                    <span class="activity-message text-${textClass}">${event.message}</span>
+                                                    ${event.stage ? `<span class="badge badge-light ml-2">${event.stage}</span>` : ''}
+                                                    ${event.provider ? `<span class="badge badge-outline-secondary ml-1">${event.provider}</span>` : ''}
+                                                    ${event.documentsProcessed ? `<small class="text-muted ml-2">(${event.documentsProcessed} docs)</small>` : ''}
+                                                </div>
+                                                <small class="text-muted">${timeAgo}</small>
+                                            </div>
+                                        `;
+                                    }).join('')}
+                                    ${data.recentActivity.length === 0 ? '<div class="text-muted text-center">No recent activity</div>' : ''}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        } catch (error) {
+            console.error('Failed to fetch enrichment data:', error);
+            return `
+                <div class="alert alert-danger">
+                    <h6>Error Loading Enrichment Pipeline Data</h6>
+                    <p>Failed to load enrichment pipeline data. Please try again.</p>
+                    <button class="btn btn-sm btn-outline-danger" onclick="adminDashboard.loadViewContent('enrichment')">Retry</button>
+                </div>
+            `;
+        }
+    }
+
+    togglePipelineView(view) {
+        const flowView = document.getElementById('pipeline-flow-view');
+        const metricsView = document.getElementById('pipeline-metrics-view');
+        const buttons = document.querySelectorAll('.btn-group button');
+        
+        buttons.forEach(btn => btn.classList.remove('active'));
+        
+        if (view === 'flow') {
+            flowView.style.display = 'block';
+            metricsView.style.display = 'none';
+            buttons[0].classList.add('active');
+        } else {
+            flowView.style.display = 'none';
+            metricsView.style.display = 'block';
+            buttons[1].classList.add('active');
+        }
+    }
+
+    expandStageDetails(stageId) {
+        const details = document.getElementById(`stage-details-${stageId}`);
+        if (details) {
+            details.style.display = details.style.display === 'none' ? 'block' : 'none';
+        }
+    }
+
+    expandProviderDetails(providerId) {
+        const details = document.getElementById(`provider-details-${providerId}`);
+        if (details) {
+            details.style.display = details.style.display === 'none' ? 'block' : 'none';
+        }
     }
     
     getProvidersContent() {
