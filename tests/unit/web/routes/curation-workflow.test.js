@@ -23,6 +23,13 @@ jest.mock('../../../../src/web/middleware/auth', () => ({
   })
 }));
 
+jest.mock('../../../../src/services/AuditService', () => ({
+  setContext: jest.fn(),
+  logCurationAction: jest.fn(),
+  logSessionActivity: jest.fn(),
+  clearContext: jest.fn()
+}));
+
 describe('Curation Workflow Routes', () => {
   let app;
   let mockQueueManager;

@@ -93,6 +93,7 @@ class SequelizeORM {
     const DocumentVisibility = require('./models/DocumentVisibility')(this.sequelize, DataTypes);
     const VisibilityRule = require('./models/VisibilityRule')(this.sequelize, DataTypes);
     const VisibilityAuditLog = require('./models/VisibilityAuditLog')(this.sequelize, DataTypes);
+    const AuditLog = require('./models/AuditLog')(this.sequelize, DataTypes);
     const CostEvent = require('./models/CostEvent')(this.sequelize, DataTypes);
     const CostBudget = require('./models/CostBudget')(this.sequelize, DataTypes);
     const CostAlert = require('./models/CostAlert')(this.sequelize, DataTypes);
@@ -109,6 +110,7 @@ class SequelizeORM {
       DocumentVisibility,
       VisibilityRule,
       VisibilityAuditLog,
+      AuditLog,
       CostEvent,
       CostBudget,
       CostAlert,

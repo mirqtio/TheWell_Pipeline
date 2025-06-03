@@ -484,7 +484,7 @@
             1
           ],
           "details": "This includes implementing APIs and business logic for managing curation tasks, tracking progress, and supporting collaboration among curators. Testing requirements: 1) Write unit tests for workflow logic and APIs, 2) Create integration tests for workflow state transitions, 3) Implement e2e tests for complete curation workflows, 4) Run all tests and resolve any issues, 5) Merge to master and verify CI passes via GitHub logs.",
-          "status": "in-progress"
+          "status": "done"
         },
         {
           "id": 3,
@@ -494,7 +494,7 @@
             2
           ],
           "details": "This subtask covers designing a schema for audit logs, integrating logging into workflow actions, and exposing audit data in the dashboard for review. Testing requirements: 1) Write unit tests for audit logging functions, 2) Create integration tests for audit trail persistence, 3) Implement e2e tests for audit trail workflows, 4) Run all tests and resolve any issues, 5) Merge to master and verify CI passes via GitHub logs.",
-          "status": "pending"
+          "status": "in-progress"
         },
         {
           "id": 4,

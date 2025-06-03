@@ -6,6 +6,14 @@ const request = require('supertest');
 const { createTestApp } = require('../../helpers/test-app');
 const { setupTestDatabase, cleanupTestDatabase } = require('../../helpers/database');
 
+// Mock AuditService to prevent ORM initialization issues
+jest.mock('../../../src/services/AuditService', () => ({
+  setContext: jest.fn(),
+  logCurationAction: jest.fn(),
+  logSessionActivity: jest.fn(),
+  clearContext: jest.fn()
+}));
+
 describe('Curation Workflow Integration Tests', () => {
   let app;
   let mockQueueManager;

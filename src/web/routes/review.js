@@ -6,6 +6,7 @@
 const express = require('express');
 const { asyncHandler, ValidationError, NotFoundError } = require('../middleware/errorHandler');
 const { requirePermission } = require('../middleware/auth');
+const auditService = require('../../services/AuditService');
 const logger = require('../../utils/logger');
 
 module.exports = (dependencies = {}) => {
@@ -507,8 +508,6 @@ module.exports = (dependencies = {}) => {
     res.json(result);
   }));
 
-  // ===== CURATION WORKFLOW ENDPOINTS =====
-
   /**
    * Start review workflow for a document
    */
@@ -529,6 +528,14 @@ module.exports = (dependencies = {}) => {
     if (!job) {
       throw new NotFoundError(`Document ${documentId} not found`);
     }
+
+    // Log the start of review workflow
+    await auditService.logCurationAction('START_REVIEW', documentId, {
+      reviewStartedBy: req.user.id,
+      notes: notes || '',
+      priority: priority || job.opts?.priority,
+      previousStatus: job.data.status || 'pending'
+    });
 
     // Update job status to in-review
     const workflowData = {
