@@ -1,5 +1,7 @@
-# Use Node.js 20 LTS as base image
-FROM node:20-alpine
+# Multi-stage build for TheWell Pipeline
+
+# Base stage with dependencies
+FROM node:20-alpine AS base
 
 # Set working directory
 WORKDIR /app
@@ -15,13 +17,28 @@ RUN echo "Installing system dependencies..." && \
 # Copy package files
 COPY package*.json ./
 
-# Install dependencies with verbose output
-RUN echo "Installing Node.js dependencies..." && \
-    npm ci --only=production --verbose && \
+# Development stage
+FROM base AS development
+RUN echo "Installing all dependencies for development..." && \
+    npm ci --verbose && \
     npm cache clean --force && \
-    echo "Node.js dependencies installed successfully"
+    echo "Development dependencies installed successfully"
 
 # Copy application source
+COPY src/ ./src/
+COPY config/ ./config/
+COPY tests/ ./tests/
+
+# Production stage
+FROM base AS production
+
+# Install only production dependencies
+RUN echo "Installing production dependencies..." && \
+    npm ci --only=production --verbose && \
+    npm cache clean --force && \
+    echo "Production dependencies installed successfully"
+
+# Copy application source (no tests in production)
 COPY src/ ./src/
 COPY config/ ./config/
 
