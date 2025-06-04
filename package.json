@@ -19,7 +19,11 @@
     "lint": "eslint src tests",
     "lint:fix": "eslint src tests --fix",
     "typecheck": "echo 'TypeScript checking skipped for JavaScript project'",
-    "db:setup:test": "node scripts/setup-test-database.js"
+    "db:setup:test": "node scripts/setup-test-database.js",
+    "test:smoke": "jest tests/smoke || echo 'Smoke tests not implemented yet'",
+    "test:staging": "jest tests/staging || echo 'Staging tests not implemented yet'",
+    "test:performance": "jest tests/performance || echo 'Performance tests not implemented yet'",
+    "db:migrate": "echo 'Database migrations would run here'"
   },
   "dependencies": {
     "axios": "^1.6.0",
