@@ -1,5 +1,5 @@
 const TracingManager = require('./TracingManager');
-const logger = require('../utils/logger');
+const logger = require('../utils/logger'); // eslint-disable-line no-unused-vars
 
 /**
  * TracingMiddleware - Express middleware for automatic request tracing

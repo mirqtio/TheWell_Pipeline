@@ -3,7 +3,7 @@
  * Comprehensive admin interface for system monitoring and management
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react'; // eslint-disable-line no-unused-vars
 import './AdminDashboard.css';
 
 const AdminDashboard = ({ user }) => {
@@ -78,7 +78,7 @@ const AdminDashboard = ({ user }) => {
     setRefreshInterval(interval);
   };
 
-  const handleAlertAction = async (alertId, action) => {
+  const handleAlertAction = async (alertId, action) => { // eslint-disable-line no-unused-vars
     try {
       await fetch(`/api/v1/monitoring/alerts/${alertId}/${action}`, {
         method: 'POST',

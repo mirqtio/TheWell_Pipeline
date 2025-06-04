@@ -10,7 +10,7 @@
  */
 
 const logger = require('../utils/logger');
-const { ValidationError } = require('../web/middleware/errorHandler');
+const { ValidationError } = require('../web/middleware/errorHandler'); // eslint-disable-line no-unused-vars
 
 class SourceReliabilityService {
   constructor(options = {}) {

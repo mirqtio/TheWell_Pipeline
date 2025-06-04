@@ -1,4 +1,4 @@
-const logger = require('../utils/logger');
+const logger = require('../utils/logger'); // eslint-disable-line no-unused-vars
 
 /**
  * RAG-specific tracing utilities

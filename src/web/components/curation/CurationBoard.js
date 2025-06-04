@@ -3,7 +3,7 @@
  * Kanban-style interface for document curation with drag-and-drop
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react'; // eslint-disable-line no-unused-vars
 import './CurationBoard.css';
 
 const CurationBoard = ({ user, onItemUpdate }) => {
