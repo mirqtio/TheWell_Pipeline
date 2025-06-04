@@ -3,6 +3,8 @@
  * Frontend JavaScript application for document review and job management
  */
 
+/* global bootstrap */
+
 class ManualReviewApp {
   constructor() {
     this.apiKey = localStorage.getItem('reviewApiKey') || 'dev-review-key';
@@ -2147,15 +2149,6 @@ class ManualReviewApp {
   showCurationStats() {
     // Implementation for curation stats modal
     console.log('Show curation stats');
-  }
-
-  /**
-   * Search curation content
-   */
-  searchCurationContent() {
-    const query = document.getElementById('curation-search')?.value;
-    console.log('Search curation content:', query);
-    // Implementation for search functionality
   }
 
   /**
