@@ -4,7 +4,6 @@
  */
 
 const { chromium } = require('playwright');
-const { expect: playwrightExpect } = require('@playwright/test');
 const { spawn } = require('child_process');
 const path = require('path');
 const { waitForServer, killProcess } = require('../../helpers/server');
@@ -58,8 +57,8 @@ describe('Curation Dashboard UI E2E Tests', () => {
     it('should display main navigation elements', async () => {
       // Check navbar brand
       const navbarBrand = await page.locator('.navbar-brand');
-      await playwrightExpect(navbarBrand).toBeVisible();
-      await playwrightExpect(navbarBrand).toContainText('TheWell Pipeline');
+      expect(await navbarBrand.isVisible()).toBe(true);
+      expect(await navbarBrand.textContent()).toContain('TheWell Pipeline');
 
       // Check navigation links
       const navLinks = [
@@ -72,8 +71,8 @@ describe('Curation Dashboard UI E2E Tests', () => {
 
       for (const link of navLinks) {
         const element = await page.locator(link.selector);
-        await playwrightExpect(element).toBeVisible();
-        await playwrightExpect(element).toContainText(link.text);
+        expect(await element.isVisible()).toBe(true);
+        expect(await element.textContent()).toContain(link.text);
       }
     });
 
@@ -84,7 +83,7 @@ describe('Curation Dashboard UI E2E Tests', () => {
       
       // Verify curation view is active
       const curationView = await page.locator('#curation-view');
-      await playwrightExpect(curationView).toBeVisible();
+      expect(await curationView.isVisible()).toBe(true);
 
       // Click on Jobs
       await page.click('[data-view="jobs"]');
@@ -92,7 +91,7 @@ describe('Curation Dashboard UI E2E Tests', () => {
       
       // Verify jobs view is active
       const jobsView = await page.locator('#jobs-view');
-      await playwrightExpect(jobsView).toBeVisible();
+      expect(await jobsView.isVisible()).toBe(true);
     });
   });
 
@@ -106,7 +105,7 @@ describe('Curation Dashboard UI E2E Tests', () => {
     it('should display kanban board with three columns', async () => {
       // Check for kanban board
       const kanbanBoard = await page.locator('.kanban-board');
-      await playwrightExpect(kanbanBoard).toBeVisible();
+      expect(await kanbanBoard.isVisible()).toBe(true);
 
       // Check for three columns
       const columns = [
@@ -117,10 +116,10 @@ describe('Curation Dashboard UI E2E Tests', () => {
 
       for (const column of columns) {
         const columnElement = await page.locator(column.selector);
-        await playwrightExpect(columnElement).toBeVisible();
+        expect(await columnElement.isVisible()).toBe(true);
         
         const header = await columnElement.locator('.kanban-header');
-        await playwrightExpect(header).toContainText(column.title);
+        expect(await header.textContent()).toContain(column.title);
       }
     });
 
@@ -134,11 +133,11 @@ describe('Curation Dashboard UI E2E Tests', () => {
 
       for (const badge of countBadges) {
         const element = await page.locator(badge);
-        await playwrightExpect(element).toBeVisible();
+        expect(await element.isVisible()).toBe(true);
         
         // Should display a number (even if 0)
         const text = await element.textContent();
-        playwrightExpect(text).toMatch(/^\d+$/);
+        expect(text).toMatch(/^\d+$/);
       }
     });
 
@@ -149,7 +148,7 @@ describe('Curation Dashboard UI E2E Tests', () => {
       // Check if loading state was handled
       const loadingIndicator = await page.locator('.loading-indicator');
       if (await loadingIndicator.isVisible()) {
-        await playwrightExpect(loadingIndicator).not.toBeVisible({ timeout: 10000 });
+        expect(await loadingIndicator.isVisible()).toBe(false);
       }
     });
   });
@@ -164,8 +163,8 @@ describe('Curation Dashboard UI E2E Tests', () => {
       // Check for search input
       const searchInput = await page.locator('#curation-search');
       if (await searchInput.isVisible()) {
-        await playwrightExpect(searchInput).toBeVisible();
-        await playwrightExpect(searchInput).toHaveAttribute('placeholder');
+        expect(await searchInput.isVisible()).toBe(true);
+        expect(await searchInput.getAttribute('placeholder')).toBeTruthy();
       }
     });
 
@@ -173,7 +172,7 @@ describe('Curation Dashboard UI E2E Tests', () => {
       // Check for filter dropdowns/buttons
       const filterControls = await page.locator('.filter-controls');
       if (await filterControls.isVisible()) {
-        await playwrightExpect(filterControls).toBeVisible();
+        expect(await filterControls.isVisible()).toBe(true);
       }
     });
   });
@@ -188,17 +187,17 @@ describe('Curation Dashboard UI E2E Tests', () => {
       // Check for bulk action buttons
       const bulkControls = await page.locator('.bulk-actions');
       if (await bulkControls.isVisible()) {
-        await playwrightExpect(bulkControls).toBeVisible();
+        expect(await bulkControls.isVisible()).toBe(true);
         
         // Check for common bulk actions
         const bulkApprove = await page.locator('[data-action="bulk-approve"]');
         const bulkReject = await page.locator('[data-action="bulk-reject"]');
         
         if (await bulkApprove.isVisible()) {
-          await playwrightExpect(bulkApprove).toBeVisible();
+          expect(await bulkApprove.isVisible()).toBe(true);
         }
         if (await bulkReject.isVisible()) {
-          await playwrightExpect(bulkReject).toBeVisible();
+          expect(await bulkReject.isVisible()).toBe(true);
         }
       }
     });
@@ -210,7 +209,7 @@ describe('Curation Dashboard UI E2E Tests', () => {
       await page.waitForTimeout(500);
       
       const statsView = await page.locator('#stats-view');
-      await playwrightExpect(statsView).toBeVisible();
+      expect(await statsView.isVisible()).toBe(true);
     });
 
     it('should display key metrics', async () => {
@@ -221,7 +220,7 @@ describe('Curation Dashboard UI E2E Tests', () => {
       const statsCards = await page.locator('.stats-card');
       if (await statsCards.first().isVisible()) {
         const count = await statsCards.count();
-        playwrightExpect(count).toBeGreaterThan(0);
+        expect(count).toBeGreaterThan(0);
       }
     });
   });
@@ -234,11 +233,11 @@ describe('Curation Dashboard UI E2E Tests', () => {
       
       // Check navbar toggle button is visible
       const navbarToggle = await page.locator('.navbar-toggler');
-      await playwrightExpect(navbarToggle).toBeVisible();
+      expect(await navbarToggle.isVisible()).toBe(true);
       
       // Check main content is still accessible
       const mainContent = await page.locator('main, .container-fluid');
-      await playwrightExpect(mainContent).toBeVisible();
+      expect(await mainContent.isVisible()).toBe(true);
     });
 
     it('should work on tablet viewport', async () => {
@@ -248,14 +247,14 @@ describe('Curation Dashboard UI E2E Tests', () => {
       
       // Check navigation is accessible
       const navbar = await page.locator('.navbar');
-      await playwrightExpect(navbar).toBeVisible();
+      expect(await navbar.isVisible()).toBe(true);
       
       // Check kanban board layout
       await page.click('[data-view="curation"]');
       await page.waitForTimeout(500);
       
       const kanbanBoard = await page.locator('.kanban-board');
-      await playwrightExpect(kanbanBoard).toBeVisible();
+      expect(await kanbanBoard.isVisible()).toBe(true);
     });
   });
 
@@ -270,7 +269,7 @@ describe('Curation Dashboard UI E2E Tests', () => {
       // Check for error message or fallback state
       const errorMessage = await page.locator('.error-message, .alert-danger');
       if (await errorMessage.isVisible()) {
-        await playwrightExpect(errorMessage).toBeVisible();
+        expect(await errorMessage.isVisible()).toBe(true);
       }
     });
   });
@@ -279,7 +278,7 @@ describe('Curation Dashboard UI E2E Tests', () => {
     it('should have proper ARIA labels and roles', async () => {
       // Check main navigation has proper roles
       const navbar = await page.locator('nav[role="navigation"], .navbar');
-      await playwrightExpect(navbar).toBeVisible();
+      expect(await navbar.isVisible()).toBe(true);
       
       // Check buttons have accessible names
       const buttons = await page.locator('button');
@@ -293,7 +292,7 @@ describe('Curation Dashboard UI E2E Tests', () => {
           const title = await button.getAttribute('title');
           
           // Button should have some form of accessible name
-          playwrightExpect(ariaLabel || text?.trim() || title).toBeTruthy();
+          expect(ariaLabel || text?.trim() || title).toBeTruthy();
         }
       }
     });
@@ -304,7 +303,7 @@ describe('Curation Dashboard UI E2E Tests', () => {
       
       // Check that focus is visible and logical
       const focusedElement = await page.locator(':focus');
-      await playwrightExpect(focusedElement).toBeVisible();
+      expect(await focusedElement.isVisible()).toBe(true);
     });
   });
 });
