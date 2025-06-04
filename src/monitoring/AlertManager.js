@@ -251,7 +251,7 @@ class AlertManager extends EventEmitter {
   }
 
   async sendWebhookNotification(channel, notification) {
-    const payload = {
+    const _payload = {
       alert: notification.alert,
       timestamp: new Date().toISOString(),
       severity: notification.alert.severity,

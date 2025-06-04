@@ -589,7 +589,7 @@ class FeedbackProcessor extends EventEmitter {
     return `${topics}_${sentiment}`;
   }
 
-  generateTrendId(trend) {
+  generateTrendId(_trend) {
     return `trend_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
   }
 
@@ -618,7 +618,7 @@ class FeedbackProcessor extends EventEmitter {
     });
     
     return Array.from(wordCounts.entries())
-      .filter(([word, count]) => count > 1)
+      .filter(([_word, count]) => count > 1)
       .sort((a, b) => b[1] - a[1])
       .slice(0, 10)
       .map(([word]) => word);
@@ -636,7 +636,7 @@ class FeedbackProcessor extends EventEmitter {
     });
     
     return Array.from(topicCounts.entries())
-      .filter(([topic, count]) => count > 1)
+      .filter(([_topic, count]) => count > 1)
       .sort((a, b) => b[1] - a[1])
       .map(([topic]) => topic);
   }

@@ -339,7 +339,7 @@ class DatabaseOptimizer {
     }
 
     const conditions = [];
-    for (const [key, value] of Object.entries(filters.metadata)) {
+    for (const [key, _value] of Object.entries(filters.metadata)) {
       conditions.push(`d.metadata->>'${key}' = $${this.getNextParamIndex(filters, `metadata_${key}`)}`);
     }
 
@@ -371,7 +371,7 @@ class DatabaseOptimizer {
    * @param {string} type - Parameter type
    * @returns {number} Next parameter index
    */
-  getNextParamIndex(filters, type = null) {
+  getNextParamIndex(filters, _type = null) {
     let index = 2; // Start from 2 (after the main query parameter)
     
     if (filters.userAuth) {
@@ -553,7 +553,7 @@ class DatabaseOptimizer {
    * @param {number} limit - Maximum results to return
    * @returns {Promise<Array>} Search results
    */
-  async optimizedVectorSearch(queryEmbedding, filters = {}, userAuth = null, limit = 10) {
+  async optimizedVectorSearch(queryEmbedding, filters = {}, _userAuth = null, limit = 10) {
     return this.executeOptimizedVectorSearch(queryEmbedding, filters, limit);
   }
 
@@ -565,7 +565,7 @@ class DatabaseOptimizer {
    * @param {number} limit - Maximum results to return
    * @returns {Promise<Array>} Search results
    */
-  async optimizedKeywordSearch(query, filters = {}, userAuth = null, limit = 10) {
+  async optimizedKeywordSearch(query, filters = {}, _userAuth = null, limit = 10) {
     return this.executeOptimizedKeywordSearch(query, filters, limit);
   }
 
