@@ -439,21 +439,21 @@ class DocumentDAO {
   async getCurationStats(timeframe = '7d') {
     try {
       const timeInterval = timeframe === '24h' ? '24 hours' : 
-                          timeframe === '7d' ? '7 days' : 
-                          timeframe === '30d' ? '30 days' : '7 days';
+        timeframe === '7d' ? '7 days' : 
+          timeframe === '30d' ? '30 days' : '7 days';
 
       const queries = [
         {
           key: 'pending',
-          query: `SELECT COUNT(*) as count FROM documents WHERE curation_status = 'pending'`
+          query: 'SELECT COUNT(*) as count FROM documents WHERE curation_status = \'pending\''
         },
         {
           key: 'inReview',
-          query: `SELECT COUNT(*) as count FROM documents WHERE curation_status = 'in_review'`
+          query: 'SELECT COUNT(*) as count FROM documents WHERE curation_status = \'in_review\''
         },
         {
           key: 'processed',
-          query: `SELECT COUNT(*) as count FROM documents WHERE curation_status IN ('approved', 'rejected')`
+          query: 'SELECT COUNT(*) as count FROM documents WHERE curation_status IN (\'approved\', \'rejected\')'
         },
         {
           key: 'approvalRate',

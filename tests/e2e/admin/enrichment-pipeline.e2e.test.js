@@ -8,7 +8,7 @@ const { spawn } = require('child_process');
 const path = require('path');
 const { waitForServer, killProcess } = require('../../helpers/server');
 
-describe.skip('Enrichment Pipeline E2E Tests', () => {
+describe('Enrichment Pipeline E2E Tests', () => {
   let browser;
   let context;
   let page;

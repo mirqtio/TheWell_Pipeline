@@ -237,16 +237,16 @@ class AlertManager extends EventEmitter {
 
   async sendToChannel(channel, notification) {
     switch (channel.type) {
-      case 'webhook':
-        return this.sendWebhookNotification(channel, notification);
-      case 'email':
-        return this.sendEmailNotification(channel, notification);
-      case 'slack':
-        return this.sendSlackNotification(channel, notification);
-      case 'console':
-        return this.sendConsoleNotification(channel, notification);
-      default:
-        throw new Error(`Unsupported notification channel type: ${channel.type}`);
+    case 'webhook':
+      return this.sendWebhookNotification(channel, notification);
+    case 'email':
+      return this.sendEmailNotification(channel, notification);
+    case 'slack':
+      return this.sendSlackNotification(channel, notification);
+    case 'console':
+      return this.sendConsoleNotification(channel, notification);
+    default:
+      throw new Error(`Unsupported notification channel type: ${channel.type}`);
     }
   }
 

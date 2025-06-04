@@ -15,7 +15,7 @@ const feedbackRoutes = require('../../../src/web/routes/feedback');
 // These tests can be skipped if no database is available
 let skipIfNoDatabase = process.env.SKIP_DB_TESTS === 'true';
 
-(skipIfNoDatabase ? describe.skip : describe)('Feedback API Integration Tests', () => {
+describe('Feedback API Integration Tests', () => {
   let app;
   let databaseManager;
   let feedbackDAO;

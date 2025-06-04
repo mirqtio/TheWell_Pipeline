@@ -8,7 +8,7 @@ const path = require('path');
 const { setupTestDatabase, cleanupTestDatabase } = require('../../helpers/database');
 const { waitForServer, killProcess } = require('../../helpers/server');
 
-describe.skip('Complete Curation Workflow E2E Tests', () => {
+describe('Complete Curation Workflow E2E Tests', () => {
   let webServer;
   let baseUrl;
   const testPort = 3099;

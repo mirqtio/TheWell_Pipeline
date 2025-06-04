@@ -97,7 +97,8 @@ const CurationBoard = ({ user, onItemUpdate }) => {
       const updated = await response.json();
       onItemUpdate?.(updated.item);
     } catch (err) {
-      throw err;
+      console.error('Failed to move item:', err);
+      loadCurationItems(); // Reload to sync with server state
     }
   };
 
@@ -280,7 +281,7 @@ const ItemDetailModal = ({ item, user, onClose, onUpdate }) => {
 
   const handleDecision = async (action) => {
     try {
-      const response = await fetch(`/api/v1/curation/decision`, {
+      const response = await fetch('/api/v1/curation/decision', {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${user.token}`,

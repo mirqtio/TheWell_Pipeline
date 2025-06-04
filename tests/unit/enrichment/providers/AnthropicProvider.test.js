@@ -189,7 +189,7 @@ describe('AnthropicProvider', () => {
       })).rejects.toThrow('Unsupported model: unsupported-model');
     });
 
-    it.skip('should handle timeout', async () => {
+    it('should handle timeout', async () => {
       const provider = new AnthropicProvider({ 
         apiKey: 'test-key',
         timeout: 100 

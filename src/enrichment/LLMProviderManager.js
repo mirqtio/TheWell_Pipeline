@@ -107,7 +107,7 @@ class LLMProviderManager {
 
     // Initialize provider health tracking for backward compatibility
     this.providerHealth = {};
-    for (const [name, _provider] of this.providers) {
+    for (const [name] of this.providers) {
       this.providerHealth[name] = {
         consecutiveFailures: 0,
         lastFailure: null,
@@ -458,7 +458,7 @@ class LLMProviderManager {
     try {
       const {
         promptVersion = 'latest',
-        provider: _provider = null,
+        provider = null,
         taskType = 'enrichment',
         ...executeOptions
       } = options;

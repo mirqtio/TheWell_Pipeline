@@ -357,7 +357,7 @@ describe('Prompt Versioning Integration Tests', () => {
         .resolves.toBeDefined(); // Should still work with empty content
     });
 
-    it.skip('should handle filesystem errors gracefully', async () => {
+    it('should handle filesystem errors gracefully', async () => {
       // Skip this test for now - filesystem mocking in integration tests is complex
       // This functionality is covered in unit tests
     });

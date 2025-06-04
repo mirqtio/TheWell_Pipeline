@@ -13,7 +13,7 @@ const request = require('supertest');
 const ManualReviewServer = require('../../../src/web/server');
 const DatabaseManager = require('../../../src/database/DatabaseManager');
 
-(skipIfNoDatabase ? describe.skip : describe)('Feedback Workflows E2E Tests', () => {
+describe('Feedback Workflows E2E Tests', () => {
   let server;
   let app;
   let databaseManager;

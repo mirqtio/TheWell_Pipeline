@@ -254,7 +254,7 @@ describe('PromptVersionManager', () => {
       expect(result).toBeNull();
     });
 
-    it.skip('should get specific version from git', async () => {
+    it('should get specific version from git', async () => {
       // Skip this test for now - git mocking is complex
       // This functionality is tested in integration tests
     });
@@ -374,7 +374,7 @@ describe('PromptVersionManager', () => {
       await manager.initialize();
     });
 
-    it.skip('should rollback to previous version', async () => {
+    it('should rollback to previous version', async () => {
       // Skip this test for now - git mocking is complex
       // This functionality is tested in integration tests
     });

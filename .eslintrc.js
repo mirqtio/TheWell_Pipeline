@@ -11,7 +11,10 @@ module.exports = {
   ],
   parserOptions: {
     ecmaVersion: 'latest',
-    sourceType: 'module'
+    sourceType: 'module',
+    ecmaFeatures: {
+      jsx: true
+    }
   },
   rules: {
     'indent': ['error', 2],
@@ -31,6 +34,17 @@ module.exports = {
       rules: {
         'no-unused-vars': 'off',
         'no-console': 'off',
+        'no-undef': 'off'
+      }
+    },
+    {
+      files: ['src/web/components/**/*.js'],
+      parserOptions: {
+        ecmaFeatures: {
+          jsx: true
+        }
+      },
+      rules: {
         'no-undef': 'off'
       }
     }

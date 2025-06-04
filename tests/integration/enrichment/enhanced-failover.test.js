@@ -232,7 +232,7 @@ describe('Enhanced Failover Logic Integration', () => {
   });
 
   describe('Retry Logic', () => {
-    test.skip('should retry on retryable errors before failover', async () => {
+    test('should retry on retryable errors before failover', async () => {
       let callCount = 0;
       fetch.mockImplementation(() => {
         callCount++;

@@ -120,7 +120,7 @@ describe('Dashboard UI Integration Tests', () => {
     await page.waitForLoadState('networkidle');
   });
 
-  describe.skip('Kanban Board Data Loading', () => {
+  describe('Kanban Board Data Loading', () => {
     it('should load and display curation data in kanban columns', async () => {
       // Navigate to curation board
       await page.click('[data-view="curation"]');
@@ -169,7 +169,7 @@ describe('Dashboard UI Integration Tests', () => {
     });
   });
 
-  describe.skip('Document Card Interactions', () => {
+  describe('Document Card Interactions', () => {
     beforeEach(async () => {
       await page.click('[data-view="curation"]');
       await page.waitForTimeout(1000);
@@ -225,7 +225,7 @@ describe('Dashboard UI Integration Tests', () => {
     });
   });
 
-  describe.skip('Statistics View Integration', () => {
+  describe('Statistics View Integration', () => {
     it('should load and display statistics data', async () => {
       await page.click('[data-view="stats"]');
       await page.waitForTimeout(1000);
@@ -246,7 +246,7 @@ describe('Dashboard UI Integration Tests', () => {
     });
   });
 
-  describe.skip('Jobs View Integration', () => {
+  describe('Jobs View Integration', () => {
     it('should load and display job status data', async () => {
       await page.click('[data-view="jobs"]');
       await page.waitForTimeout(1000);
@@ -266,7 +266,7 @@ describe('Dashboard UI Integration Tests', () => {
     });
   });
 
-  describe.skip('Error State Handling', () => {
+  describe('Error State Handling', () => {
     it('should display error message when API fails', async () => {
       // Intercept and fail API calls
       await page.route('**/api/v1/review/pending', route => 
@@ -323,7 +323,7 @@ describe('Dashboard UI Integration Tests', () => {
     });
   });
 
-  describe.skip('Search Functionality', () => {
+  describe('Search Functionality', () => {
     beforeEach(async () => {
       await page.click('[data-view="curation"]');
       await page.waitForTimeout(1000);

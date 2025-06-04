@@ -8,7 +8,7 @@ const { spawn } = require('child_process');
 const path = require('path');
 const { waitForServer, killProcess } = require('../../helpers/server');
 
-describe.skip('Curation Dashboard UI E2E Tests', () => {
+describe('Curation Dashboard UI E2E Tests', () => {
   let browser;
   let context;
   let page;

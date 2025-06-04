@@ -252,20 +252,20 @@ router.post('/bulk', async (req, res) => {
         let updateData = { curatorId, lastModifiedAt: new Date() };
         
         switch (action) {
-          case 'approve':
-            updateData.curationStatus = 'approved';
-            updateData.status = 'published';
-            updateData.curationNotes = reason || 'Bulk approved';
-            break;
-          case 'reject':
-            updateData.curationStatus = 'rejected';
-            updateData.status = 'rejected';
-            updateData.curationNotes = reason || 'Bulk rejected';
-            break;
-          case 'move_to_review':
-            updateData.curationStatus = 'in_review';
-            updateData.curationNotes = reason || 'Moved to review';
-            break;
+        case 'approve':
+          updateData.curationStatus = 'approved';
+          updateData.status = 'published';
+          updateData.curationNotes = reason || 'Bulk approved';
+          break;
+        case 'reject':
+          updateData.curationStatus = 'rejected';
+          updateData.status = 'rejected';
+          updateData.curationNotes = reason || 'Bulk rejected';
+          break;
+        case 'move_to_review':
+          updateData.curationStatus = 'in_review';
+          updateData.curationNotes = reason || 'Moved to review';
+          break;
         }
         
         const updatedDoc = await documentDAO.update(itemId, updateData);
