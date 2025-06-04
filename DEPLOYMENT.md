@@ -136,6 +136,10 @@ REDIS_URL=redis://redis:6379
 
 2. **Run database migrations**:
    ```bash
+   # Check migration status
+   docker-compose exec api npm run db:migrate:status
+   
+   # Run pending migrations
    docker-compose exec api npm run db:migrate
    ```
 

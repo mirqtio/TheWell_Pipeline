@@ -1,8 +1,11 @@
 const EventEmitter = require('events');
+const { v4: uuidv4 } = require('uuid');
+const logger = require('../utils/logger');
 
 /**
  * Document Visibility Management System
  * Handles document visibility states, access controls, and workflow integration
+ * Now uses ORM models instead of raw SQL for better consistency
  */
 class VisibilityManager extends EventEmitter {
   constructor(options = {}) {
@@ -10,14 +13,18 @@ class VisibilityManager extends EventEmitter {
     
     this.options = {
       defaultVisibility: 'internal',
-      allowedVisibilities: ['internal', 'external', 'restricted', 'public'],
+      allowedVisibilities: ['internal', 'external', 'restricted', 'public', 'private', 'draft', 'archived'],
       requireApprovalFor: ['external', 'public'],
       ...options
     };
 
-    this.visibilityRules = new Map();
-    this.accessPolicies = new Map();
-    this.pendingApprovals = new Map();
+    // ORM models should be injected
+    this.models = options.models || {};
+    this.sequelize = options.sequelize;
+    
+    if (!this.models.DocumentVisibility || !this.models.VisibilityApproval || !this.models.VisibilityAuditLog) {
+      logger.warn('VisibilityManager initialized without ORM models - some features will be limited');
+    }
   }
 
   /**
@@ -28,6 +35,7 @@ class VisibilityManager extends EventEmitter {
     EXTERNAL: 'external',     // Visible to external partners
     RESTRICTED: 'restricted', // Requires special permissions
     PUBLIC: 'public',         // Publicly accessible
+    PRIVATE: 'private',       // Private documents
     DRAFT: 'draft',          // Work in progress
     ARCHIVED: 'archived'      // Historical/inactive
   };
@@ -48,46 +56,83 @@ class VisibilityManager extends EventEmitter {
   async setDocumentVisibility(documentId, visibility, metadata = {}) {
     this._validateVisibility(visibility);
 
-    const visibilityData = {
-      documentId,
-      visibility,
-      previousVisibility: await this.getDocumentVisibility(documentId),
-      setBy: metadata.userId || 'system',
-      setAt: new Date().toISOString(),
-      reason: metadata.reason || 'Manual update',
-      approvalRequired: this._requiresApproval(visibility),
-      metadata
-    };
+    const transaction = this.sequelize ? await this.sequelize.transaction() : null;
 
-    // Check if approval is required
-    if (visibilityData.approvalRequired) {
-      return await this._requestApproval(visibilityData);
+    try {
+      // Get current visibility
+      const currentVisibility = await this.getDocumentVisibility(documentId);
+      
+      // Check if approval is required
+      if (this._requiresApproval(visibility)) {
+        const approval = await this._requestApproval(
+          documentId,
+          visibility,
+          currentVisibility?.visibility || this.options.defaultVisibility,
+          metadata,
+          transaction
+        );
+        
+        if (transaction) await transaction.commit();
+        return approval;
+      }
+
+      // Apply visibility immediately
+      const result = await this._applyVisibility(
+        documentId,
+        visibility,
+        currentVisibility?.visibility,
+        metadata,
+        transaction
+      );
+      
+      if (transaction) await transaction.commit();
+      return result;
+      
+    } catch (error) {
+      if (transaction) await transaction.rollback();
+      this.emit('error', { 
+        type: 'visibility_update_failed', 
+        documentId, 
+        error: error.message 
+      });
+      throw error;
     }
-
-    // Apply visibility immediately
-    return await this._applyVisibility(visibilityData);
   }
 
   /**
    * Get document visibility state
    */
   async getDocumentVisibility(documentId) {
-    try {
-      // In a real implementation, this would query the database
-      // For now, return default visibility
+    if (!this.models.DocumentVisibility) {
+      // Fallback for when models aren't available
       return {
         documentId,
         visibility: this.options.defaultVisibility,
         setBy: 'system',
-        setAt: new Date().toISOString(),
-        approvalStatus: 'approved'
+        setAt: new Date(),
+        reason: 'Default visibility'
       };
-    } catch (error) {
-      this.emit('error', { 
-        type: 'visibility_query_failed', 
-        documentId, 
-        error: error.message 
+    }
+
+    try {
+      const visibility = await this.models.DocumentVisibility.findOne({
+        where: { documentId }
       });
+
+      if (!visibility) {
+        // Create default visibility record
+        return await this.models.DocumentVisibility.create({
+          documentId,
+          visibility: this.options.defaultVisibility,
+          setBy: 'system',
+          setAt: new Date(),
+          reason: 'Initial visibility'
+        });
+      }
+
+      return visibility;
+    } catch (error) {
+      logger.error('Failed to get document visibility:', error);
       throw error;
     }
   }
@@ -95,322 +140,396 @@ class VisibilityManager extends EventEmitter {
   /**
    * Check if user has access to document
    */
-  async checkAccess(documentId, userId, accessLevel = VisibilityManager.ACCESS_LEVELS.READ) {
+  async checkAccess(documentId, userId, requiredLevel = VisibilityManager.ACCESS_LEVELS.READ) {
     try {
       const visibility = await this.getDocumentVisibility(documentId);
-      const userPermissions = await this.getUserPermissions(userId);
+      
+      if (!visibility) {
+        return false;
+      }
 
-      return this._evaluateAccess(visibility, userPermissions, accessLevel);
+      // Public documents are accessible to everyone
+      if (visibility.visibility === 'public') {
+        return true;
+      }
+
+      // Private documents require explicit permission
+      if (visibility.visibility === 'private') {
+        // Check user permissions - would need UserPermission model
+        return false;
+      }
+
+      // Internal documents are accessible to authenticated users
+      if (visibility.visibility === 'internal' && userId) {
+        return true;
+      }
+
+      // For other visibility levels, check specific permissions
+      return this._checkUserPermissions(userId, visibility.visibility, requiredLevel);
+      
     } catch (error) {
-      this.emit('error', { 
-        type: 'access_check_failed', 
-        documentId, 
-        userId, 
-        error: error.message 
-      });
+      logger.error('Access check failed:', error);
       return false;
     }
   }
 
   /**
-   * Bulk update document visibilities
+   * Request approval for visibility change
    */
-  async bulkUpdateVisibility(updates, metadata = {}) {
-    const results = [];
-    const errors = [];
-
-    for (const update of updates) {
-      try {
-        const result = await this.setDocumentVisibility(
-          update.documentId, 
-          update.visibility, 
-          { ...metadata, ...update.metadata }
-        );
-        results.push(result);
-      } catch (error) {
-        errors.push({
-          documentId: update.documentId,
-          error: error.message
-        });
-      }
+  async _requestApproval(documentId, requestedVisibility, currentVisibility, metadata, transaction) {
+    if (!this.models.VisibilityApproval) {
+      throw new Error('VisibilityApproval model not available');
     }
 
-    this.emit('bulkUpdate', { 
-      successful: results.length, 
-      failed: errors.length, 
-      errors 
-    });
-
-    return { results, errors };
-  }
-
-  /**
-   * Get documents pending approval
-   */
-  async getPendingApprovals(filters = {}) {
-    const pending = Array.from(this.pendingApprovals.values());
+    const approvalId = uuidv4();
     
-    let filtered = pending;
-    
-    if (filters.visibility) {
-      filtered = filtered.filter(item => item.visibility === filters.visibility);
-    }
-    
-    if (filters.requestedBy) {
-      filtered = filtered.filter(item => item.setBy === filters.requestedBy);
-    }
-    
-    if (filters.since) {
-      const since = new Date(filters.since);
-      filtered = filtered.filter(item => new Date(item.setAt) >= since);
-    }
-
-    return filtered.sort((a, b) => new Date(b.setAt) - new Date(a.setAt));
-  }
-
-  /**
-   * Approve visibility change
-   */
-  async approveVisibilityChange(approvalId, approvedBy, notes = '') {
-    const approval = this.pendingApprovals.get(approvalId);
-    
-    if (!approval) {
-      throw new Error(`Approval request ${approvalId} not found`);
-    }
-
-    const approvalData = {
-      ...approval,
-      approvedBy,
-      approvedAt: new Date().toISOString(),
-      approvalNotes: notes,
-      status: 'approved'
-    };
-
-    // Apply the visibility change
-    const result = await this._applyVisibility(approvalData);
-    
-    // Remove from pending approvals
-    this.pendingApprovals.delete(approvalId);
-
-    this.emit('visibilityApproved', approvalData);
-    
-    return result;
-  }
-
-  /**
-   * Reject visibility change
-   */
-  async rejectVisibilityChange(approvalId, rejectedBy, reason = '') {
-    const approval = this.pendingApprovals.get(approvalId);
-    
-    if (!approval) {
-      throw new Error(`Approval request ${approvalId} not found`);
-    }
-
-    const rejectionData = {
-      ...approval,
-      rejectedBy,
-      rejectedAt: new Date().toISOString(),
-      rejectionReason: reason,
-      status: 'rejected'
-    };
-
-    // Remove from pending approvals
-    this.pendingApprovals.delete(approvalId);
-
-    this.emit('visibilityRejected', rejectionData);
-    
-    return rejectionData;
-  }
-
-  /**
-   * Add visibility rule
-   */
-  addVisibilityRule(ruleId, rule) {
-    this._validateRule(rule);
-    this.visibilityRules.set(ruleId, {
-      ...rule,
-      createdAt: new Date().toISOString()
-    });
-    
-    this.emit('ruleAdded', { ruleId, rule });
-  }
-
-  /**
-   * Remove visibility rule
-   */
-  removeVisibilityRule(ruleId) {
-    const removed = this.visibilityRules.delete(ruleId);
-    if (removed) {
-      this.emit('ruleRemoved', { ruleId });
-    }
-    return removed;
-  }
-
-  /**
-   * Get user permissions
-   */
-  async getUserPermissions(userId) {
-    // In a real implementation, this would query user roles/permissions
-    // For now, return basic permissions
-    return {
-      userId,
-      roles: ['reviewer'],
-      permissions: [
-        VisibilityManager.ACCESS_LEVELS.READ,
-        VisibilityManager.ACCESS_LEVELS.WRITE
-      ],
-      visibilityLevels: ['internal', 'external']
-    };
-  }
-
-  /**
-   * Apply visibility rules to document
-   */
-  async applyVisibilityRules(documentId, documentMetadata) {
-    const applicableRules = this._findApplicableRules(documentMetadata);
-    
-    if (applicableRules.length === 0) {
-      return this.options.defaultVisibility;
-    }
-
-    // Apply rules in priority order
-    const sortedRules = applicableRules.sort((a, b) => (b.priority || 0) - (a.priority || 0));
-    
-    for (const rule of sortedRules) {
-      if (this._evaluateRuleConditions(rule, documentMetadata)) {
-        this.emit('ruleApplied', { 
-          documentId, 
-          ruleId: rule.id, 
-          visibility: rule.visibility 
-        });
-        
-        return rule.visibility;
-      }
-    }
-
-    return this.options.defaultVisibility;
-  }
-
-  /**
-   * Private methods
-   */
-
-  _validateVisibility(visibility) {
-    if (!this.options.allowedVisibilities.includes(visibility)) {
-      throw new Error(`Invalid visibility: ${visibility}. Allowed: ${this.options.allowedVisibilities.join(', ')}`);
-    }
-  }
-
-  _requiresApproval(visibility) {
-    return this.options.requireApprovalFor.includes(visibility);
-  }
-
-  async _requestApproval(visibilityData) {
-    const approvalId = `approval_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-    
-    const approvalRequest = {
-      ...visibilityData,
+    const approval = await this.models.VisibilityApproval.create({
       approvalId,
+      documentId,
+      requestedVisibility,
+      currentVisibility,
+      requestedBy: metadata.userId || 'system',
+      requestedAt: new Date(),
+      reason: metadata.reason || 'Visibility change requested',
       status: 'pending',
-      requestedAt: new Date().toISOString()
-    };
+      metadata: metadata
+    }, { transaction });
 
-    this.pendingApprovals.set(approvalId, approvalRequest);
-    
-    this.emit('approvalRequested', approvalRequest);
-    
+    // Log the request
+    await this._logVisibilityChange(
+      documentId,
+      'approval_requested',
+      {
+        approvalId,
+        requestedVisibility,
+        currentVisibility,
+        requestedBy: metadata.userId
+      },
+      transaction
+    );
+
+    this.emit('approval_requested', {
+      approvalId,
+      documentId,
+      requestedVisibility,
+      currentVisibility,
+      requestedBy: metadata.userId
+    });
+
     return {
       success: true,
       approvalId,
       status: 'pending_approval',
-      message: `Visibility change to '${visibilityData.visibility}' requires approval`
+      message: `Visibility change to '${requestedVisibility}' requires approval`
     };
   }
 
-  async _applyVisibility(visibilityData) {
+  /**
+   * Apply visibility change immediately
+   */
+  async _applyVisibility(documentId, visibility, previousVisibility, metadata, transaction) {
+    if (!this.models.DocumentVisibility) {
+      throw new Error('DocumentVisibility model not available');
+    }
+
+    // Update or create visibility record
+    const [visibilityRecord, created] = await this.models.DocumentVisibility.findOrCreate({
+      where: { documentId },
+      defaults: {
+        documentId,
+        visibility,
+        previousVisibility,
+        setBy: metadata.userId || 'system',
+        setAt: new Date(),
+        reason: metadata.reason || 'Visibility updated',
+        metadata
+      },
+      transaction
+    });
+
+    if (!created) {
+      await visibilityRecord.updateVisibility(
+        visibility,
+        metadata.userId || 'system',
+        metadata.reason || 'Visibility updated'
+      );
+    }
+
+    // Update the main document table if needed
+    if (this.models.Document) {
+      await this.models.Document.update(
+        { visibility },
+        { 
+          where: { id: documentId },
+          transaction
+        }
+      );
+    }
+
+    // Log the change
+    await this._logVisibilityChange(
+      documentId,
+      'visibility_changed',
+      {
+        visibility,
+        previousVisibility,
+        setBy: metadata.userId
+      },
+      transaction
+    );
+
+    this.emit('visibility_changed', {
+      documentId,
+      visibility,
+      previousVisibility,
+      setBy: metadata.userId
+    });
+
+    return {
+      success: true,
+      documentId,
+      visibility,
+      previousVisibility,
+      message: `Visibility changed to '${visibility}'`
+    };
+  }
+
+  /**
+   * Approve visibility change request
+   */
+  async approveVisibilityChange(approvalId, reviewedBy, reviewNotes = '') {
+    if (!this.models.VisibilityApproval) {
+      throw new Error('VisibilityApproval model not available');
+    }
+
+    const transaction = this.sequelize ? await this.sequelize.transaction() : null;
+
     try {
-      // In a real implementation, this would update the database
-      // For now, emit the change event
-      
-      this.emit('visibilityChanged', {
-        documentId: visibilityData.documentId,
-        oldVisibility: visibilityData.previousVisibility?.visibility,
-        newVisibility: visibilityData.visibility,
-        changedBy: visibilityData.setBy,
-        changedAt: visibilityData.setAt,
-        reason: visibilityData.reason
+      const approval = await this.models.VisibilityApproval.findOne({
+        where: { approvalId }
       });
 
-      return {
-        success: true,
-        documentId: visibilityData.documentId,
-        visibility: visibilityData.visibility,
-        appliedAt: new Date().toISOString()
-      };
-    } catch (error) {
-      this.emit('error', { 
-        type: 'visibility_apply_failed', 
-        documentId: visibilityData.documentId, 
-        error: error.message 
+      if (!approval) {
+        throw new Error('Approval request not found');
+      }
+
+      if (!approval.isPending()) {
+        throw new Error('Approval request is not pending');
+      }
+
+      // Update approval status
+      await approval.approve(reviewedBy, reviewNotes);
+
+      // Apply the visibility change
+      const result = await this._applyVisibility(
+        approval.documentId,
+        approval.requestedVisibility,
+        approval.currentVisibility,
+        {
+          userId: reviewedBy,
+          reason: `Approved: ${reviewNotes}`,
+          approvalId
+        },
+        transaction
+      );
+
+      if (transaction) await transaction.commit();
+
+      this.emit('approval_completed', {
+        approvalId,
+        documentId: approval.documentId,
+        status: 'approved',
+        reviewedBy
       });
+
+      return result;
+
+    } catch (error) {
+      if (transaction) await transaction.rollback();
       throw error;
     }
   }
 
-  _evaluateAccess(visibility, userPermissions, accessLevel) {
-    // Check if user has required access level
-    if (!userPermissions.permissions.includes(accessLevel)) {
-      return false;
+  /**
+   * Reject visibility change request
+   */
+  async rejectVisibilityChange(approvalId, reviewedBy, reviewNotes = '') {
+    if (!this.models.VisibilityApproval) {
+      throw new Error('VisibilityApproval model not available');
     }
 
-    // Check if user can access this visibility level
-    if (!userPermissions.visibilityLevels.includes(visibility.visibility)) {
-      return false;
+    const approval = await this.models.VisibilityApproval.findOne({
+      where: { approvalId }
+    });
+
+    if (!approval) {
+      throw new Error('Approval request not found');
     }
 
-    return true;
+    if (!approval.isPending()) {
+      throw new Error('Approval request is not pending');
+    }
+
+    await approval.reject(reviewedBy, reviewNotes);
+
+    await this._logVisibilityChange(
+      approval.documentId,
+      'approval_rejected',
+      {
+        approvalId,
+        rejectedBy: reviewedBy,
+        reason: reviewNotes
+      }
+    );
+
+    this.emit('approval_completed', {
+      approvalId,
+      documentId: approval.documentId,
+      status: 'rejected',
+      reviewedBy
+    });
+
+    return {
+      success: true,
+      approvalId,
+      status: 'rejected',
+      message: 'Visibility change request rejected'
+    };
   }
 
-  _validateRule(rule) {
-    if (!rule.conditions || !rule.visibility) {
-      throw new Error('Rule must have conditions and visibility');
+  /**
+   * Get pending approval requests
+   */
+  async getPendingApprovals(filters = {}) {
+    if (!this.models.VisibilityApproval) {
+      return [];
+    }
+
+    const whereClause = { status: 'pending' };
+    
+    if (filters.documentId) {
+      whereClause.documentId = filters.documentId;
     }
     
-    this._validateVisibility(rule.visibility);
-  }
+    if (filters.requestedBy) {
+      whereClause.requestedBy = filters.requestedBy;
+    }
 
-  _findApplicableRules(documentMetadata) {
-    return Array.from(this.visibilityRules.values()).filter(rule => {
-      return this._ruleMatchesDocument(rule, documentMetadata);
+    return await this.models.VisibilityApproval.findAll({
+      where: whereClause,
+      order: [['requestedAt', 'ASC']]
     });
   }
 
-  _ruleMatchesDocument(rule, documentMetadata) {
-    // Simple rule matching - can be extended for complex conditions
-    if (rule.conditions.sourceType && documentMetadata.sourceType !== rule.conditions.sourceType) {
-      return false;
-    }
-    
-    if (rule.conditions.fileType && documentMetadata.fileType !== rule.conditions.fileType) {
-      return false;
-    }
-    
-    if (rule.conditions.tags && rule.conditions.tags.length > 0) {
-      const documentTags = documentMetadata.tags || [];
-      const hasRequiredTags = rule.conditions.tags.every(tag => documentTags.includes(tag));
-      if (!hasRequiredTags) {
-        return false;
-      }
+  /**
+   * Log visibility changes for audit trail
+   */
+  async _logVisibilityChange(documentId, action, details, transaction) {
+    if (!this.models.VisibilityAuditLog) {
+      logger.warn('VisibilityAuditLog model not available - skipping audit log');
+      return;
     }
 
-    return true;
+    try {
+      await this.models.VisibilityAuditLog.create({
+        entityType: 'document',
+        entityId: documentId,
+        action,
+        performedBy: details.setBy || details.requestedBy || details.rejectedBy || 'system',
+        details,
+        ipAddress: details.ipAddress,
+        userAgent: details.userAgent,
+        timestamp: new Date()
+      }, { transaction });
+    } catch (error) {
+      logger.error('Failed to log visibility change:', error);
+      // Don't throw - audit logging failure shouldn't break the operation
+    }
   }
 
-  _evaluateRuleConditions(_rule, _documentMetadata) {
-    // Additional condition evaluation logic
-    // For now, if the rule matches the document, conditions are met
-    return true;
+  /**
+   * Validate visibility value
+   */
+  _validateVisibility(visibility) {
+    if (!this.options.allowedVisibilities.includes(visibility)) {
+      throw new Error(`Invalid visibility: ${visibility}. Allowed values: ${this.options.allowedVisibilities.join(', ')}`);
+    }
+  }
+
+  /**
+   * Check if visibility change requires approval
+   */
+  _requiresApproval(visibility) {
+    return this.options.requireApprovalFor.includes(visibility);
+  }
+
+  /**
+   * Check user permissions for visibility level
+   */
+  async _checkUserPermissions(userId, visibility, requiredLevel) {
+    // This would check against UserPermission model
+    // For now, return basic logic
+    if (!userId) return false;
+    
+    // Simplified permission check
+    switch (visibility) {
+    case 'external':
+      return requiredLevel === 'read';
+    case 'restricted':
+      return false; // Would check user groups
+    default:
+      return true;
+    }
+  }
+
+  /**
+   * Get visibility statistics
+   */
+  async getVisibilityStats() {
+    if (!this.models.DocumentVisibility) {
+      return {};
+    }
+
+    const stats = await this.models.DocumentVisibility.findAll({
+      attributes: [
+        'visibility',
+        [this.sequelize.fn('COUNT', '*'), 'count']
+      ],
+      group: ['visibility']
+    });
+
+    return stats.reduce((acc, stat) => {
+      acc[stat.visibility] = parseInt(stat.dataValues.count);
+      return acc;
+    }, {});
+  }
+
+  /**
+   * Initialize visibility for a batch of documents
+   */
+  async initializeDocumentVisibility(documentIds, visibility = null) {
+    if (!this.models.DocumentVisibility || !Array.isArray(documentIds) || documentIds.length === 0) {
+      return;
+    }
+
+    const visibilityRecords = documentIds.map(documentId => ({
+      documentId,
+      visibility: visibility || this.options.defaultVisibility,
+      setBy: 'system',
+      setAt: new Date(),
+      reason: 'Initial visibility assignment'
+    }));
+
+    try {
+      await this.models.DocumentVisibility.bulkCreate(visibilityRecords, {
+        ignoreDuplicates: true
+      });
+      
+      logger.info(`Initialized visibility for ${documentIds.length} documents`);
+    } catch (error) {
+      logger.error('Failed to initialize document visibility:', error);
+      throw error;
+    }
   }
 }
 

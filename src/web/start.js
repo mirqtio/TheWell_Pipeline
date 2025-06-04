@@ -7,7 +7,11 @@
 const path = require('path'); // eslint-disable-line no-unused-vars
 const ManualReviewServer = require('./server');
 const logger = require('../utils/logger');
-const SourceReliabilityService = require('../services/SourceReliabilityService'); // eslint-disable-line no-unused-vars
+const SourceReliabilityService = require('../services/SourceReliabilityService');
+const QueueManager = require('../ingestion/queue/QueueManager');
+const IngestionEngine = require('../ingestion/IngestionEngine');
+const DatabaseManager = require('../database/DatabaseManager');
+const ConfigManager = require('../config/ConfigManager');
 
 // Mock dependencies for development
 class MockQueueManager {
@@ -344,10 +348,56 @@ class MockSourceReliabilityService {
 
 async function startWebServer() {
   try {
-    // Initialize mock dependencies
-    const queueManager = new MockQueueManager();
-    const ingestionEngine = new MockIngestionEngine();
-    const sourceReliabilityService = new MockSourceReliabilityService();
+    const isProduction = process.env.NODE_ENV === 'production';
+    let queueManager, ingestionEngine, sourceReliabilityService;
+    let databaseManager; // Declare at function scope for cleanup
+
+    if (isProduction) {
+      logger.info('Initializing production services...');
+      
+      // Initialize real dependencies for production
+      databaseManager = new DatabaseManager({
+        host: process.env.DB_HOST || 'postgres',
+        port: parseInt(process.env.DB_PORT || '5432'),
+        database: process.env.DB_NAME || 'thewell_prod',
+        username: process.env.DB_USER || 'thewell',
+        password: process.env.DB_PASSWORD || process.env.POSTGRES_PASSWORD
+      });
+      await databaseManager.initialize();
+      
+      const configManager = new ConfigManager({
+        configDir: process.env.CONFIG_DIR || '/app/config',
+        watchForChanges: true
+      });
+      await configManager.loadConfigs();
+      
+      queueManager = new QueueManager({
+        redis: {
+          host: process.env.REDIS_HOST || 'redis',
+          port: parseInt(process.env.REDIS_PORT || '6379'),
+          password: process.env.REDIS_PASSWORD
+        }
+      });
+      await queueManager.initialize();
+      
+      ingestionEngine = new IngestionEngine({
+        queueManager,
+        databaseManager,
+        configManager
+      });
+      await ingestionEngine.initialize();
+      
+      sourceReliabilityService = new SourceReliabilityService({
+        databaseManager
+      });
+    } else {
+      logger.info('Using mock services for development...');
+      
+      // Initialize mock dependencies for development
+      queueManager = new MockQueueManager();
+      ingestionEngine = new MockIngestionEngine();
+      sourceReliabilityService = new MockSourceReliabilityService();
+    }
 
     logger.info('Starting TheWell Pipeline Manual Review Web Interface...');
 
@@ -375,21 +425,38 @@ async function startWebServer() {
     logger.info('  - GET  /api/jobs/*    - Jobs API');
 
     // Graceful shutdown
-    process.on('SIGTERM', () => {
-      logger.info('Received SIGTERM, shutting down gracefully...');
-      webServer.shutdown().then(() => {
+    const gracefulShutdown = async (signal) => {
+      logger.info(`Received ${signal}, shutting down gracefully...`);
+      
+      try {
+        await webServer.shutdown();
         logger.info('Web server closed');
+        
+        if (isProduction) {
+          // Cleanup production services
+          if (queueManager && typeof queueManager.close === 'function') {
+            await queueManager.close();
+            logger.info('Queue manager closed');
+          }
+          if (ingestionEngine && typeof ingestionEngine.stop === 'function') {
+            await ingestionEngine.stop();
+            logger.info('Ingestion engine stopped');
+          }
+          if (databaseManager && typeof databaseManager.close === 'function') {
+            await databaseManager.close();
+            logger.info('Database manager closed');
+          }
+        }
+        
         process.exit(0);
-      });
-    });
+      } catch (error) {
+        logger.error('Error during shutdown:', error);
+        process.exit(1);
+      }
+    };
 
-    process.on('SIGINT', () => {
-      logger.info('Received SIGINT, shutting down gracefully...');
-      webServer.shutdown().then(() => {
-        logger.info('Web server closed');
-        process.exit(0);
-      });
-    });
+    process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
+    process.on('SIGINT', () => gracefulShutdown('SIGINT'));
 
   } catch (error) {
     logger.error('Failed to start web server:', error);
