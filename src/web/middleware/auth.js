@@ -22,9 +22,11 @@ async function authMiddleware(req, res, next) {
     // Check for API key in header or query parameter
     const apiKey = req.headers['x-api-key'] || req.query.apiKey;
     const expectedApiKey = process.env.REVIEW_API_KEY || 'dev-review-key';
+    const testApiKey = 'test-api-key'; // For test environments
 
-    // In development or test mode, allow bypass with mock user
-    if ((process.env.NODE_ENV === 'development' || process.env.NODE_ENV === 'test') && !apiKey) {
+    // In development mode or E2E test mode, allow bypass with mock user
+    // Only bypass in E2E tests (when server is spawned), not unit tests
+    if ((process.env.NODE_ENV === 'development' || process.env.E2E_TEST_MODE === 'true') && !apiKey) {
       logger.warn(`Authentication bypassed in ${process.env.NODE_ENV} mode`);
       req.user = {
         id: 'dev-user-123',
@@ -37,8 +39,11 @@ async function authMiddleware(req, res, next) {
       return next();
     }
 
-    // Validate API key
-    if (!apiKey || apiKey !== expectedApiKey) {
+    // Validate API key - accept test key in test mode
+    const isValidKey = apiKey === expectedApiKey || 
+                      (process.env.NODE_ENV === 'test' && apiKey === testApiKey);
+    
+    if (!apiKey || !isValidKey) {
       logger.warn('Authentication failed', {
         ip: req.ip,
         userAgent: req.get('User-Agent'),

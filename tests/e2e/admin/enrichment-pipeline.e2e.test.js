@@ -23,6 +23,7 @@ describe('Enrichment Pipeline E2E Tests', () => {
         ...process.env,
         WEB_PORT: 3099,
         NODE_ENV: 'test',
+        E2E_TEST_MODE: 'true',
         REDIS_DB: '15' // Use separate Redis DB for E2E tests
       },
       stdio: ['pipe', 'pipe', 'pipe']
