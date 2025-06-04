@@ -1037,25 +1037,6 @@ class ManualReviewApp {
     }
   }
 
-  /**
-   * Trigger pull to refresh action
-   */
-  async triggerPullToRefresh() {
-    await this.refreshCurrentView();
-    this.hidePullToRefresh();
-  }
-
-  /**
-   * Hide pull to refresh indicator
-   */
-  hidePullToRefresh() {
-    const indicator = document.getElementById('pull-to-refresh');
-    if (indicator) {
-      indicator.style.opacity = '0';
-      indicator.style.transform = 'translateY(-50px)';
-      setTimeout(() => indicator.remove(), 300);
-    }
-  }
 
   /**
    * ========================================
@@ -1167,61 +1148,7 @@ class ManualReviewApp {
     this.setLoadingState(component, isLoading);
   }
 
-  /**
-   * Set loading state for components
-   */
-  setLoadingState(component, isLoading) {
-    if (isLoading) {
-      this.loadingStates.add(component);
-    } else {
-      this.loadingStates.delete(component);
-    }
-    
-    // Update UI loading indicators
-    const loadingElement = document.getElementById(`${component}-loading`);
-    if (loadingElement) {
-      loadingElement.style.display = isLoading ? 'block' : 'none';
-    }
-  }
 
-  /**
-   * Show toast notification
-   */
-  showToast(message, type = 'info') {
-    // Create toast element
-    const toast = document.createElement('div');
-    toast.className = `toast align-items-center text-white bg-${type === 'error' ? 'danger' : type === 'warning' ? 'warning' : type === 'success' ? 'success' : 'primary'} border-0`;
-    toast.setAttribute('role', 'alert');
-    toast.innerHTML = `
-      <div class="d-flex">
-        <div class="toast-body">
-          ${this.escapeHtml(message)}
-        </div>
-        <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
-      </div>
-    `;
-
-    // Add to container
-    let container = document.getElementById('toast-container');
-    if (!container) {
-      container = document.createElement('div');
-      container.id = 'toast-container';
-      container.className = 'toast-container position-fixed top-0 end-0 p-3';
-      container.style.zIndex = '1055';
-      document.body.appendChild(container);
-    }
-
-    container.appendChild(toast);
-
-    // Show toast
-    const bsToast = new bootstrap.Toast(toast);
-    bsToast.show();
-
-    // Remove from DOM after hiding
-    toast.addEventListener('hidden.bs.toast', () => {
-      toast.remove();
-    });
-  }
 
   /**
    * Escape HTML to prevent XSS

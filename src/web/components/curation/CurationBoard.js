@@ -272,7 +272,7 @@ const CurationBoard = ({ user, onItemUpdate }) => {
 };
 
 // Item Detail Modal Component
-const ItemDetailModal = ({ item, user, onClose, onUpdate }) => {
+const ItemDetailModal = ({ item, user, onClose, onUpdate }) => { // eslint-disable-line no-unused-vars
   const [decision, setDecision] = useState(''); // eslint-disable-line no-unused-vars
   const [notes, setNotes] = useState('');
   const [editedContent, setEditedContent] = useState(item.content || '');

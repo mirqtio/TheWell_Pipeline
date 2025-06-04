@@ -251,7 +251,7 @@ class AlertManager extends EventEmitter {
   }
 
   async sendWebhookNotification(channel, notification) {
-    const _payload = {
+    const payload = {
       alert: notification.alert,
       timestamp: new Date().toISOString(),
       severity: notification.alert.severity,
@@ -259,7 +259,7 @@ class AlertManager extends EventEmitter {
     };
 
     // Implementation would use HTTP client to send webhook
-    logger.info(`Webhook notification sent to ${channel.url}: ${notification.alert.title}`);
+    logger.info(`Webhook notification sent to ${channel.url}: ${notification.alert.title}`, { payload });
   }
 
   async sendEmailNotification(channel, notification) {

@@ -458,7 +458,6 @@ class LLMProviderManager {
     try {
       const {
         promptVersion = 'latest',
-        provider: _provider = null,
         taskType = 'enrichment',
         ...executeOptions
       } = options;

@@ -339,7 +339,7 @@ class DatabaseOptimizer {
     }
 
     const conditions = [];
-    for (const [key, _value] of Object.entries(filters.metadata)) {
+    for (const [key] of Object.entries(filters.metadata)) {
       conditions.push(`d.metadata->>'${key}' = $${this.getNextParamIndex(filters, `metadata_${key}`)}`);
     }
 

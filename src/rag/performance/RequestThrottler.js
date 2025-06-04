@@ -426,7 +426,7 @@ class RequestThrottler {
     }
 
     // Clear all active request timeouts
-    for (const [_requestId, request] of this.activeRequests.entries()) {
+    for (const [, request] of this.activeRequests.entries()) {
       if (request.timeout) {
         clearTimeout(request.timeout);
       }
