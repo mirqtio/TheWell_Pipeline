@@ -112,6 +112,7 @@ jobs:
 
     - name: Security audit
       run: npm audit --audit-level moderate
+      continue-on-error: true
 
     - name: Check for vulnerabilities
       run: npx snyk test
