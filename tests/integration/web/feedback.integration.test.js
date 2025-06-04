@@ -37,6 +37,7 @@ let skipIfNoDatabase = process.env.SKIP_DB_TESTS === 'true';
       await databaseManager.initialize();
     } catch (error) {
       console.log('Database not available, skipping feedback integration tests:', error.message);
+      skipIfNoDatabase = true;
       return;
     }
     
@@ -103,9 +104,12 @@ let skipIfNoDatabase = process.env.SKIP_DB_TESTS === 'true';
     await databaseManager.close();
   });
 
+
   afterEach(async () => {
     // Clean up feedback entries after each test
-    await databaseManager.query('DELETE FROM feedback WHERE document_id = $1', [testDocumentId]);
+    if (databaseManager && testDocumentId) {
+      await databaseManager.query('DELETE FROM feedback WHERE document_id = $1', [testDocumentId]);
+    }
   });
 
   describe('POST /api/feedback', () => {
