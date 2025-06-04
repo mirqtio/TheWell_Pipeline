@@ -70,7 +70,7 @@ describe('DocumentRetriever', () => {
 
       expect(EmbeddingService).toHaveBeenCalledWith({
         apiKey: 'test-api-key',
-        model: 'text-embedding-ada-002'
+        model: 'text-embedding-3-small'
       });
       expect(documentRetriever.embeddingService).toBe(mockEmbeddingService);
     });

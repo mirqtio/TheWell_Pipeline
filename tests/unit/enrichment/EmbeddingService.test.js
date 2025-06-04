@@ -30,7 +30,7 @@ describe('EmbeddingService', () => {
       embeddingService = new EmbeddingService({ apiKey: mockApiKey });
 
       expect(embeddingService.config.provider).toBe('openai');
-      expect(embeddingService.config.model).toBe('text-embedding-ada-002');
+      expect(embeddingService.config.model).toBe('text-embedding-3-small');
       expect(embeddingService.config.maxRetries).toBe(3);
       expect(embeddingService.config.timeout).toBe(30000);
       expect(embeddingService.apiKey).toBe(mockApiKey);
@@ -82,7 +82,7 @@ describe('EmbeddingService', () => {
             'Content-Type': 'application/json'
           },
           body: JSON.stringify({
-            model: 'text-embedding-ada-002',
+            model: 'text-embedding-3-small',
             input: 'test text',
             encoding_format: 'float'
           })
@@ -269,10 +269,10 @@ describe('EmbeddingService', () => {
 
     it('should calculate costs correctly', () => {
       const cost1k = embeddingService.calculateCost(1000);
-      expect(cost1k).toBe(0.0001); // text-embedding-ada-002 cost
+      expect(cost1k).toBe(0.00002); // text-embedding-3-small cost
 
       const cost500 = embeddingService.calculateCost(500);
-      expect(cost500).toBe(0.00005);
+      expect(cost500).toBe(0.00001);
 
       const cost3Large = embeddingService.calculateCost(1000, 'text-embedding-3-large');
       expect(cost3Large).toBe(0.00013);
@@ -298,7 +298,7 @@ describe('EmbeddingService', () => {
 
       expect(status).toEqual({
         provider: 'openai',
-        model: 'text-embedding-ada-002',
+        model: 'text-embedding-3-small',
         dimensions: 1536,
         ready: true,
         supportedModels: [

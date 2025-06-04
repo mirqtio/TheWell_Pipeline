@@ -41,8 +41,8 @@ CREATE TABLE documents (
     language VARCHAR(10),
     
     -- Vector embeddings for semantic similarity search
-    embedding vector(1536), -- OpenAI ada-002 embedding dimension
-    embedding_model VARCHAR(100) DEFAULT 'text-embedding-ada-002',
+    embedding vector(1536), -- OpenAI text-embedding-3-small dimension
+    embedding_model VARCHAR(100) DEFAULT 'text-embedding-3-small',
     
     -- Visibility and quality controls
     visibility VARCHAR(20) DEFAULT 'internal', -- 'internal', 'external', 'private', 'public'

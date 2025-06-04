@@ -18,7 +18,7 @@ class DocumentRetriever {
     if (options.openaiApiKey) {
       this.embeddingService = new EmbeddingService({
         apiKey: options.openaiApiKey,
-        model: options.embeddingModel || 'text-embedding-ada-002'
+        model: options.embeddingModel || 'text-embedding-3-small'
       });
     } else {
       logger.warn('No OpenAI API key provided, using mock embeddings');
