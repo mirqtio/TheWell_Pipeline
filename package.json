@@ -11,7 +11,7 @@
     "test": "jest",
     "test:unit": "jest tests/unit",
     "test:integration": "jest tests/integration/cache tests/integration/config tests/integration/database tests/integration/orm tests/integration/monitoring",
-    "test:e2e": "jest tests/e2e --testPathIgnorePatterns='dashboard-ui.e2e.test.js|enrichment-pipeline.e2e.test.js'",
+    "test:e2e": "jest tests/e2e/tracing tests/e2e/database tests/e2e/enrichment tests/e2e/migration tests/e2e/orm tests/e2e/rag tests/e2e/permissions.test.js tests/e2e/config",
     "test:e2e:fast": "jest --config=jest.e2e.config.js",
     "test:e2e:quick": "jest --config=jest.e2e.config.js --testPathIgnorePatterns=failover-scenarios",
     "test:watch": "jest --watch",
