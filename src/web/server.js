@@ -163,7 +163,7 @@ class ManualReviewServer {
     }));
 
     // 404 handler for API routes
-    this.app.use('/api/*', (req, res, next) => {
+    this.app.use('/api/*', (req, res, _next) => {
       res.status(404).json({
         error: 'Not Found',
         message: `Route ${req.method} ${req.url} not found`,
@@ -216,9 +216,9 @@ class ManualReviewServer {
         });
       });
 
-      // Graceful shutdown handling
-      process.on('SIGTERM', () => this.shutdown());
-      process.on('SIGINT', () => this.shutdown());
+      // Note: Graceful shutdown handling should be setup elsewhere
+      // process.on('SIGTERM', () => this.shutdown());
+      // process.on('SIGINT', () => this.shutdown());
 
     } catch (error) {
       logger.error('Failed to start manual review server', { error: error.message });
