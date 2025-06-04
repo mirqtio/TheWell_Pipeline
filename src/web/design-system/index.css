@@ -1,0 +1,120 @@
+/**
+ * Design System Entry Point
+ * Imports all design system styles in the correct order
+ */
+
+/* 1. Design Tokens - CSS Custom Properties */
+@import './tokens.css';
+
+/* 2. Base Styles - Resets and foundational styles */
+@import './base.css';
+
+/* 3. Component Library - Reusable component styles */
+@import './components.css';
+
+/* 4. Animations - Motion and micro-interactions */
+@import './animations.css';
+
+/**
+ * Design System Usage Guide
+ * 
+ * This design system provides:
+ * 
+ * 1. Consistent Design Tokens:
+ *    - Colors: --color-primary-500, --color-success-600, etc.
+ *    - Typography: --font-size-base, --font-weight-medium, etc.
+ *    - Spacing: --space-4, --space-8, etc.
+ *    - Shadows: --shadow-md, --shadow-lg, etc.
+ * 
+ * 2. Component Classes:
+ *    - Buttons: .btn, .btn-primary, .btn-sm, etc.
+ *    - Forms: .form-input, .form-textarea, .form-select
+ *    - Cards: .card, .card-header, .card-body
+ *    - Badges: .badge, .badge-success, .badge-warning
+ *    - Alerts: .alert, .alert-success, .alert-error
+ * 
+ * 3. Utility Classes:
+ *    - Text: .text-primary, .text-lg, .font-semibold
+ *    - Spacing: .m-4, .p-6, .px-8, .py-2
+ *    - Layout: .flex, .items-center, .justify-between
+ *    - Colors: .bg-primary-500, .text-success-600
+ * 
+ * 4. Animation Classes:
+ *    - Entrances: .animate-fadeIn, .animate-scaleIn
+ *    - Interactions: .hover-lift, .hover-grow
+ *    - Loading: .animate-pulse, .animate-spin
+ * 
+ * Usage Examples:
+ * 
+ * <!-- Primary Button -->
+ * <button class="btn btn-primary">
+ *   Save Changes
+ * </button>
+ * 
+ * <!-- Form Input with Error State -->
+ * <input class="form-input error" type="email" placeholder="Email">
+ * 
+ * <!-- Success Alert -->
+ * <div class="alert alert-success">
+ *   <div class="alert-title">Success!</div>
+ *   <div class="alert-description">Your changes have been saved.</div>
+ * </div>
+ * 
+ * <!-- Card Component -->
+ * <div class="card">
+ *   <div class="card-header">
+ *     <h3 class="card-title">Document Review</h3>
+ *     <span class="badge badge-warning">Pending</span>
+ *   </div>
+ *   <div class="card-body">
+ *     <p>Document content goes here...</p>
+ *   </div>
+ *   <div class="card-footer">
+ *     <button class="btn btn-success btn-sm">Approve</button>
+ *     <button class="btn btn-error btn-sm">Reject</button>
+ *   </div>
+ * </div>
+ * 
+ * <!-- Status Indicator -->
+ * <div class="status-indicator status-approved">
+ *   <div class="status-dot"></div>
+ *   Approved
+ * </div>
+ * 
+ * <!-- Animated Entry -->
+ * <div class="animate-fadeInUp">
+ *   <h2>Welcome to the Dashboard</h2>
+ * </div>
+ * 
+ * Customization:
+ * 
+ * You can customize the design system by overriding CSS custom properties:
+ * 
+ * :root {
+ *   --color-primary-600: #your-brand-color;
+ *   --font-family-sans: 'Your Custom Font', sans-serif;
+ *   --radius-md: 12px; // More rounded corners
+ * }
+ * 
+ * Dark Mode:
+ * 
+ * Dark mode is supported via CSS custom properties and the .dark class:
+ * 
+ * <body class="dark">
+ *   <!-- Your content automatically uses dark mode colors -->
+ * </body>
+ * 
+ * Accessibility:
+ * 
+ * - All components include proper focus states
+ * - Colors meet WCAG contrast requirements
+ * - Animations respect prefers-reduced-motion
+ * - Screen reader utilities are available (.sr-only)
+ * 
+ * Performance:
+ * 
+ * - Uses CSS custom properties for efficient theme switching
+ * - Minimal specificity for easy overrides
+ * - Optimized animations with hardware acceleration
+ * - Tree-shakeable component classes
+ */

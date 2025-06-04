@@ -40,6 +40,104 @@ class AuditService {
   }
 
   /**
+   * Initialize service dependencies (ORM models)
+   */
+  async initialize(ormManager) {
+    if (ormManager) {
+      this.ormManager = ormManager;
+      this.AuditLog = ormManager.getModel('AuditLog');
+    }
+  }
+
+  /**
+   * Generic audit action logging method
+   * Provides compatibility with existing route implementations
+   */
+  async logAction(actionData) {
+    const {
+      action,
+      entityType,
+      entityId,
+      userId,
+      details = {}
+    } = actionData;
+
+    if (action.startsWith('curation_')) {
+      return this.logCurationAction(action, entityId, {
+        entityType,
+        userId: userId || this.context.userId,
+        ...details
+      });
+    }
+
+    // Generic action logging
+    try {
+      const auditData = {
+        tableName: entityType || 'generic',
+        operation: action.toUpperCase(),
+        recordId: entityId,
+        newValues: {
+          action,
+          entityType,
+          entityId,
+          timestamp: new Date().toISOString(),
+          ...details
+        },
+        userId: userId || this.context.userId,
+        sessionId: this.context.sessionId,
+        ipAddress: this.context.ipAddress,
+        userAgent: this.context.userAgent
+      };
+
+      // Fallback to direct logging if ORM not available
+      if (!this.AuditLog) {
+        logger.info('Audit action (no persistence)', auditData.newValues);
+        return { id: 'mock-audit-' + Date.now(), ...auditData };
+      }
+
+      const auditEntry = await this.AuditLog.create(auditData);
+      
+      logger.info('Generic action logged', {
+        auditId: auditEntry.id,
+        action,
+        entityType,
+        entityId,
+        userId: userId || this.context.userId
+      });
+
+      return auditEntry;
+    } catch (error) {
+      logger.error('Failed to log generic action', {
+        error: error.message,
+        action,
+        entityType,
+        entityId,
+        userId: userId || this.context.userId
+      });
+      throw error;
+    }
+  }
+
+  /**
+   * Get audit trail for any entity (alias for getDocumentAuditTrail)
+   */
+  async getEntityAuditTrail(entityType, entityId, options = {}) {
+    return this.getDocumentAuditTrail(entityId, options);
+  }
+
+  /**
+   * Log a generic event (compatibility method)
+   */
+  async logEvent(eventType, eventData = {}) {
+    return this.logAction({
+      action: eventType,
+      entityType: 'system_event',
+      entityId: eventData.sourceId || null,
+      details: eventData
+    });
+  }
+
+  /**
    * Log a curation workflow action
    */
   async logCurationAction(action, documentId, details = {}) {
@@ -59,6 +157,12 @@ class AuditService {
         ipAddress: this.context.ipAddress,
         userAgent: this.context.userAgent
       };
+
+      // Fallback to direct logging if ORM not available
+      if (!this.AuditLog) {
+        logger.info('Curation action (no persistence)', auditData.newValues);
+        return { id: 'mock-audit-' + Date.now(), ...auditData };
+      }
 
       const auditEntry = await this.AuditLog.create(auditData);
       
@@ -195,6 +299,12 @@ class AuditService {
         endDate,
         actions = null
       } = options;
+
+      // Fallback if ORM not available
+      if (!this.AuditLog) {
+        logger.warn('AuditLog model not initialized, returning empty audit trail');
+        return [];
+      }
 
       const whereClause = {
         recordId: documentId

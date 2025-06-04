@@ -24,6 +24,8 @@ const visibilityRoutes = require('./routes/visibility');
 const feedbackRoutes = require('./routes/feedback');
 const ragRoutes = require('./routes/rag');
 const reliabilityRoutes = require('./routes/reliability');
+const curationRoutes = require('./routes/curation');
+const adminRoutes = require('./routes/admin');
 
 // Import middleware
 const authMiddleware = require('./middleware/auth');
@@ -116,6 +118,8 @@ app.use('/api/v1/jobs', jobRoutes);
 app.use('/api/v1', apiRoutes);
 app.use('/api/v1/visibility', visibilityRoutes);
 app.use('/api/v1/feedback', feedbackRoutes);
+app.use('/api/v1/curation', curationRoutes);
+app.use('/api/v1/admin', adminRoutes);
 
 // Initialize SourceReliabilityService for production use
 let sourceReliabilityService = global.testSourceReliabilityService;

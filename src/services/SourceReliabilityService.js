@@ -676,6 +676,55 @@ class SourceReliabilityService {
   }
 
   /**
+   * Update source reliability based on curation decision
+   * @param {string} sourceId - Source identifier
+   * @param {Object} decisionData - Curation decision data
+   */
+  async updateSourceReliability(sourceId, decisionData) {
+    if (!this.isInitialized) {
+      throw new Error('SourceReliabilityService not initialized');
+    }
+
+    try {
+      const { decision, documentId, curatorId, timestamp } = decisionData;
+      
+      // Record the curation decision for future score calculations
+      const query = `
+        INSERT INTO source_curation_decisions (
+          source_id, document_id, curator_id, decision, 
+          created_at
+        ) VALUES ($1, $2, $3, $4, $5)
+      `;
+      
+      await this.databaseManager.query(query, [
+        sourceId,
+        documentId,
+        curatorId,
+        decision.toLowerCase(),
+        timestamp || new Date()
+      ]);
+
+      // Trigger recalculation of reliability score
+      await this.calculateReliabilityScore(sourceId);
+
+      logger.info('Source reliability updated', {
+        sourceId,
+        decision,
+        documentId,
+        curatorId
+      });
+
+    } catch (error) {
+      logger.error('Failed to update source reliability', {
+        sourceId,
+        error: error.message,
+        decisionData
+      });
+      // Don't throw to avoid blocking the curation workflow
+    }
+  }
+
+  /**
    * Normalize a score to 0-1 range
    * @param {number} value - Value to normalize
    * @param {number} min - Minimum possible value

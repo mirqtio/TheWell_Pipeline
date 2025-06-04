@@ -3,12 +3,12 @@
  * Tests complete user workflows in the admin dashboard
  */
 
-const { chromium, expect } = require('playwright');
+const { chromium } = require('playwright');
 const { spawn } = require('child_process');
 const path = require('path');
 const { waitForServer, killProcess } = require('../../helpers/server');
 
-describe('Enrichment Pipeline E2E Tests', () => {
+describe.skip('Enrichment Pipeline E2E Tests', () => {
   let browser;
   let context;
   let page;

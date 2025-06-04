@@ -50,10 +50,21 @@ let skipIfNoDatabase = process.env.SKIP_DB_TESTS === 'true';
     
     feedbackDAO = new FeedbackDAO(databaseManager);
 
-    // Set up Express app
+    // Set up Express app with proper middleware
     app = express();
     app.use(express.json());
     app.set('feedbackDAO', feedbackDAO);
+    
+    // Add basic auth middleware for testing
+    app.use((req, res, next) => {
+      req.user = {
+        id: 'test-user',
+        role: 'admin',
+        permissions: ['read', 'write']
+      };
+      next();
+    });
+    
     app.use('/api/feedback', feedbackRoutes);
 
     // Create test document
@@ -114,6 +125,9 @@ let skipIfNoDatabase = process.env.SKIP_DB_TESTS === 'true';
 
   describe('POST /api/feedback', () => {
     it('should create new feedback entry', async () => {
+      if (skipIfNoDatabase) {
+        return;
+      }
       const feedbackData = {
         documentId: testDocumentId,
         appId: 'test-app',
@@ -142,6 +156,9 @@ let skipIfNoDatabase = process.env.SKIP_DB_TESTS === 'true';
     });
 
     it('should return 400 for missing required fields', async () => {
+      if (skipIfNoDatabase) {
+        return;
+      }
       const response = await request(app)
         .post('/api/feedback')
         .send({
@@ -157,6 +174,9 @@ let skipIfNoDatabase = process.env.SKIP_DB_TESTS === 'true';
 
   describe('GET /api/feedback/:id', () => {
     beforeEach(async () => {
+      if (skipIfNoDatabase) {
+        return;
+      }
       const feedback = await feedbackDAO.createFeedback({
         documentId: testDocumentId,
         appId: 'test-app',
@@ -169,6 +189,9 @@ let skipIfNoDatabase = process.env.SKIP_DB_TESTS === 'true';
     });
 
     it('should retrieve feedback by ID', async () => {
+      if (skipIfNoDatabase) {
+        return;
+      }
       const response = await request(app)
         .get(`/api/feedback/${testFeedbackId}`)
         .expect(200);
