@@ -141,7 +141,7 @@ class FeedbackProcessor extends EventEmitter {
               feedbackItems[j].content
             );
             
-            if (similarity > 0.7) {
+            if (similarity > 0.3) {
               const trendKey = `trend_${i}_${j}`;
               if (!trends.has(trendKey)) {
                 trends.set(trendKey, {
@@ -188,9 +188,13 @@ class FeedbackProcessor extends EventEmitter {
       // Store for pattern analysis
       this.feedbackQueue.push(enrichedFeedback);
       
-      // Real-time processing
+      // Always check for trending patterns
+      await this.updateTrendingPatterns(enrichedFeedback);
+      
+      // Real-time processing for immediate issues and insights
       if (this.config.enableRealTimeProcessing) {
-        await this.processRealTime(enrichedFeedback);
+        await this.detectImmediateIssues(enrichedFeedback);
+        await this.generateRealTimeInsights(enrichedFeedback);
       }
       
       // Track performance
@@ -211,7 +215,7 @@ class FeedbackProcessor extends EventEmitter {
     const required = ['type', 'content', 'sessionId'];
     
     for (const field of required) {
-      if (!feedbackData[field]) {
+      if (feedbackData[field] === undefined || feedbackData[field] === null) {
         throw new Error(`Missing required field: ${field}`);
       }
     }
@@ -304,7 +308,7 @@ class FeedbackProcessor extends EventEmitter {
     const issues = [];
     
     // Check for negative sentiment with high magnitude
-    if (feedback.sentiment && feedback.sentiment.score < -0.5 && feedback.sentiment.magnitude > 0.7) {
+    if (feedback.sentiment && feedback.sentiment.score < -0.2 && feedback.sentiment.magnitude > 1.5) {
       issues.push({
         type: 'high_negative_sentiment',
         severity: 'high',
@@ -378,7 +382,7 @@ class FeedbackProcessor extends EventEmitter {
     }
   }
 
-  findSimilarFeedback(feedback, threshold = 0.7) {
+  findSimilarFeedback(feedback, threshold = 0.3) {
     return this.feedbackQueue.filter(existingFeedback => {
       if (existingFeedback.id === feedback.id) return false;
       
@@ -396,9 +400,9 @@ class FeedbackProcessor extends EventEmitter {
     const avgSentiment = allFeedback.reduce((sum, fb) => sum + (fb.sentiment?.score || 0), 0) / allFeedback.length;
     const frequency = allFeedback.length;
     
-    if (avgSentiment < -0.5 && frequency > 10) return 'critical';
-    if (avgSentiment < -0.3 && frequency > 5) return 'high';
-    if (avgSentiment < 0 && frequency > 3) return 'medium';
+    if (avgSentiment < -0.5 && frequency >= 10) return 'critical';
+    if (avgSentiment < -0.3 && frequency >= 5) return 'high';
+    if (avgSentiment < 0 && frequency >= 3) return 'medium';
     
     return 'low';
   }
@@ -474,7 +478,9 @@ class FeedbackProcessor extends EventEmitter {
   }
 
   async processBatch() {
-    if (this.feedbackQueue.length === 0) return;
+    if (this.feedbackQueue.length === 0) {
+      return;
+    }
     
     try {
       const batch = this.feedbackQueue.splice(0, this.config.batchSize);
@@ -497,6 +503,22 @@ class FeedbackProcessor extends EventEmitter {
       });
     } catch (error) {
       logger.error('Error processing feedback batch:', error);
+    }
+  }
+
+  async updatePatterns(batch) {
+    // Update feedback patterns based on batch analysis
+    for (const feedback of batch) {
+      // Create pattern for individual feedback item
+      const pattern = {
+        commonWords: feedback.content.toLowerCase().split(/\s+/).slice(0, 5),
+        commonTopics: feedback.topics?.map(t => t.topic) || [],
+        frequency: 1,
+        avgSentiment: feedback.sentiment?.score || 0
+      };
+      
+      const patternKey = this.generatePatternKey(pattern);
+      this.feedbackPatterns.set(patternKey, pattern);
     }
   }
 
@@ -571,10 +593,18 @@ class FeedbackProcessor extends EventEmitter {
     return `trend_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
   }
 
+  generatePatternKey(pattern) {
+    const typeKey = pattern.commonTopics?.join('_') || 'general';
+    return `pattern_${typeKey}_${Date.now()}`;
+  }
+
   updatePerformanceMetrics(processingTime) {
+    const currentTotal = this.performanceMetrics.totalProcessed;
     this.performanceMetrics.totalProcessed++;
+    
+    // Calculate proper running average
     this.performanceMetrics.averageResponseTime = 
-      (this.performanceMetrics.averageResponseTime + processingTime) / 2;
+      (this.performanceMetrics.averageResponseTime * currentTotal + processingTime) / this.performanceMetrics.totalProcessed;
   }
 
   findCommonWords(texts) {
