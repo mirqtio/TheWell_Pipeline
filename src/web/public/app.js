@@ -1038,28 +1038,6 @@ class ManualReviewApp {
   }
 
   /**
-   * Show pull to refresh indicator
-   */
-  showPullToRefresh(distance, threshold) {
-    let indicator = document.getElementById('pull-to-refresh');
-    if (!indicator) {
-      indicator = document.createElement('div');
-      indicator.id = 'pull-to-refresh';
-      indicator.className = 'pull-to-refresh-indicator';
-      indicator.innerHTML = '<i class="bi bi-arrow-down-circle"></i><span>Pull to refresh</span>';
-      document.body.appendChild(indicator);
-    }
-
-    const progress = Math.min(distance / threshold, 1);
-    indicator.style.opacity = progress;
-    indicator.style.transform = `translateY(${Math.min(distance * 0.5, 50)}px)`;
-    
-    if (progress >= 1) {
-      indicator.innerHTML = '<i class="bi bi-arrow-clockwise"></i><span>Release to refresh</span>';
-    }
-  }
-
-  /**
    * Trigger pull to refresh action
    */
   async triggerPullToRefresh() {

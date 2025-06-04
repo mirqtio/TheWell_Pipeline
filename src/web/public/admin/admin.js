@@ -836,7 +836,7 @@ class AdminDashboard {
     // Activity Chart
     const activityCtx = document.getElementById('activityChart');
     if (activityCtx) {
-      this.charts.activity = new Chart(activityCtx, {
+      this.charts.activity = new Chart(activityCtx, { // eslint-disable-line no-undef
         type: 'line',
         data: {
           labels: ['00:00', '04:00', '08:00', '12:00', '16:00', '20:00'],
@@ -869,7 +869,7 @@ class AdminDashboard {
     // Provider Chart
     const providerCtx = document.getElementById('providerChart');
     if (providerCtx) {
-      this.charts.provider = new Chart(providerCtx, {
+      this.charts.provider = new Chart(providerCtx, { // eslint-disable-line no-undef
         type: 'doughnut',
         data: {
           labels: ['OpenAI', 'Anthropic', 'Local'],
