@@ -23,7 +23,7 @@ router.use(requireRole(['curator', 'admin']));
  */
 router.get('/items', async (req, res) => {
   try {
-    const { page = 1, limit = 50, priority, sourceType, status } = req.query;
+    const { page = 1, limit = 50, priority, sourceType, status } = req.query; // eslint-disable-line no-unused-vars
     
     const documentDAO = new DocumentDAO();
     

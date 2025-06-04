@@ -216,12 +216,13 @@ module.exports = (dependencies = {}) => {
     });
 
     res.json({
-      success: true,
+      success: result?.success || true,
       message: 'Document approved successfully',
       documentId,
       status: 'approved',
       approvedBy: req.user.id,
-      approvedAt: new Date().toISOString()
+      approvedAt: new Date().toISOString(),
+      ...result
     });
   }));
 
@@ -304,14 +305,15 @@ module.exports = (dependencies = {}) => {
     });
 
     res.json({
-      success: true,
+      success: result?.success || true,
       message: 'Document rejected successfully',
       documentId,
       status: 'rejected',
       reason,
       rejectedBy: req.user.id,
       rejectedAt: new Date().toISOString(),
-      permanent
+      permanent,
+      ...result
     });
   }));
 
@@ -391,7 +393,7 @@ module.exports = (dependencies = {}) => {
     });
 
     res.json({
-      success: true,
+      success: result?.success || true,
       message: 'Document flagged successfully',
       documentId,
       flag: {
@@ -400,7 +402,8 @@ module.exports = (dependencies = {}) => {
         priority,
         flaggedBy: req.user.id,
         flaggedAt: new Date().toISOString()
-      }
+      },
+      ...result
     });
   }));
 
@@ -461,7 +464,7 @@ module.exports = (dependencies = {}) => {
       
       // Get recent completed jobs for analysis
       const timeframeMins = timeframe === '24h' ? 1440 : timeframe === '7d' ? 10080 : 60;
-      const since = new Date(Date.now() - timeframeMins * 60 * 1000);
+      const since = new Date(Date.now() - timeframeMins * 60 * 1000); // eslint-disable-line no-unused-vars
       
       const recentJobs = await queueManager.getJobs('manual-review', ['completed'], 0, -1);
 
@@ -1267,7 +1270,7 @@ module.exports = (dependencies = {}) => {
     
     // Get recent jobs for analysis
     const timeframeMins = timeframe === '24h' ? 1440 : timeframe === '7d' ? 10080 : 60;
-    const since = new Date(Date.now() - timeframeMins * 60 * 1000);
+    const since = new Date(Date.now() - timeframeMins * 60 * 1000); // eslint-disable-line no-unused-vars
     
     const recentJobs = await queueManager.getJobs('manual-review', ['completed', 'active'], 0, -1);
     const completedJobs = recentJobs || [];

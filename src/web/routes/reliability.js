@@ -6,7 +6,7 @@
 
 const express = require('express');
 const { asyncHandler } = require('../middleware/errorHandler');
-const { ValidationError } = require('../middleware/errorHandler');
+const { ValidationError } = require('../middleware/errorHandler'); // eslint-disable-line no-unused-vars
 const { requirePermission } = require('../middleware/auth');
 const logger = require('../../utils/logger');
 

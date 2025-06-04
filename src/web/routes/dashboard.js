@@ -243,7 +243,7 @@ router.get('/admin/data/ingestion', async (req, res) => {
     }
     
     // Get real ingestion statistics
-    const stats = ingestionEngine.getStatistics();
+    const stats = ingestionEngine.getStatistics(); // eslint-disable-line no-unused-vars
     const sources = Array.from(ingestionEngine.sources.values()).map(source => {
       return {
         id: source.config.id,

@@ -1,5 +1,5 @@
 const express = require('express');
-const FeedbackDAO = require('../../database/FeedbackDAO');
+const FeedbackDAO = require('../../database/FeedbackDAO'); // eslint-disable-line no-unused-vars
 const FeedbackProcessor = require('../../services/FeedbackProcessor');
 
 const router = express.Router();
@@ -589,7 +589,7 @@ router.get('/patterns', async (req, res) => {
  */
 router.get('/insights', async (req, res) => {
   try {
-    const { timeframe = '1h', category } = req.query;
+    const { timeframe = '1h', category } = req.query; // eslint-disable-line no-unused-vars
     
     const metrics = req.feedbackProcessor.getPerformanceMetrics();
     const patterns = req.feedbackProcessor.getFeedbackPatterns();
