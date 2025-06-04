@@ -19,6 +19,7 @@ const JobDependency = require('./JobDependency');
 const JobLog = require('./JobLog');
 const Source = require('./Source');
 const VisibilityAuditLog = require('./VisibilityAuditLog');
+const VisibilityApproval = require('./VisibilityApproval');
 const VisibilityRule = require('./VisibilityRule');
 
 module.exports = {
@@ -35,5 +36,6 @@ module.exports = {
   JobLog,
   Source,
   VisibilityAuditLog,
+  VisibilityApproval,
   VisibilityRule
 };

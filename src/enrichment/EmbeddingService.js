@@ -11,7 +11,7 @@ class EmbeddingService {
   constructor(config = {}) {
     this.config = {
       provider: 'openai',
-      model: 'text-embedding-ada-002',
+      model: 'text-embedding-3-small',
       maxRetries: 3,
       timeout: 30000,
       ...config

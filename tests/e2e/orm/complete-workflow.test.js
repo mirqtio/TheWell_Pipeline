@@ -200,7 +200,7 @@ describe('ORM Complete Workflow E2E', () => {
         config: {
           document_id: document.id,
           provider: 'openai',
-          model: 'text-embedding-ada-002'
+          model: 'text-embedding-3-small'
         },
         priority: 3
       });
@@ -384,7 +384,7 @@ describe('ORM Complete Workflow E2E', () => {
         unit_type: 'documents',
         metadata: {
           provider: 'openai',
-          model: 'text-embedding-ada-002',
+          model: 'text-embedding-3-small',
           job_id: testData.enrichmentJobId
         }
       });

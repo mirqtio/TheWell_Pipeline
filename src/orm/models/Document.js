@@ -117,7 +117,7 @@ module.exports = (sequelize, DataTypes) => {
     embeddingModel: {
       type: DataTypes.STRING(100),
       field: 'embedding_model',
-      defaultValue: 'text-embedding-ada-002'
+      defaultValue: 'text-embedding-3-small'
     },
     visibility: {
       type: DataTypes.STRING(20),

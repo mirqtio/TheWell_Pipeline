@@ -4,13 +4,66 @@ This document provides comprehensive instructions for deploying TheWell Pipeline
 
 ## Table of Contents
 
-1. [Prerequisites](#prerequisites)
-2. [Environment Configuration](#environment-configuration)
-3. [Development Deployment](#development-deployment)
-4. [Production Deployment](#production-deployment)
-5. [Monitoring Setup](#monitoring-setup)
-6. [Maintenance Operations](#maintenance-operations)
-7. [Troubleshooting](#troubleshooting)
+1. [Quick Start](#quick-start)
+2. [Prerequisites](#prerequisites)
+3. [Environment Configuration](#environment-configuration)
+4. [Development Deployment](#development-deployment)
+5. [Production Deployment](#production-deployment)
+6. [Monitoring Setup](#monitoring-setup)
+7. [Maintenance Operations](#maintenance-operations)
+8. [Troubleshooting](#troubleshooting)
+
+## Quick Start
+
+### Fastest Path to Production
+
+1. **Install prerequisites**:
+   ```bash
+   # Install Docker and Docker Compose
+   curl -fsSL https://get.docker.com -o get-docker.sh
+   sudo sh get-docker.sh
+   sudo usermod -aG docker $USER
+   
+   # Install required tools
+   sudo apt-get update && sudo apt-get install -y curl jq openssl
+   ```
+
+2. **Clone and configure**:
+   ```bash
+   git clone https://github.com/your-org/TheWell_Pipeline.git
+   cd TheWell_Pipeline
+   
+   # Generate secure environment file
+   cat > .env.production << EOF
+   NODE_ENV=production
+   POSTGRES_PASSWORD=$(openssl rand -base64 32)
+   GRAFANA_ADMIN_PASSWORD=$(openssl rand -base64 32)
+   JWT_SECRET=$(openssl rand -base64 32)
+   OPENAI_API_KEY=your_openai_api_key_here
+   ANTHROPIC_API_KEY=your_anthropic_api_key_here
+   EOF
+   ```
+
+3. **Run automated setup**:
+   ```bash
+   # Dry run to preview changes
+   sudo ./scripts/setup-production.sh --dry-run
+   
+   # Execute production setup
+   sudo ./scripts/setup-production.sh
+   ```
+
+4. **Verify installation**:
+   ```bash
+   curl -f http://localhost:3000/health
+   docker-compose -f docker-compose.production.yml ps
+   ```
+
+5. **Access points**:
+   - API: http://localhost:3000
+   - API Docs: http://localhost:3000/api-docs
+   - Grafana: http://localhost:3001 (admin/[your_password])
+   - Prometheus: http://localhost:9090
 
 ## Prerequisites
 
@@ -29,12 +82,24 @@ Create the following environment files:
 
 ```bash
 # .env.production
+NODE_ENV=production
 POSTGRES_PASSWORD=your_secure_postgres_password
 GRAFANA_ADMIN_PASSWORD=your_grafana_admin_password
 JWT_SECRET=your_jwt_secret_key
 OPENAI_API_KEY=your_openai_api_key
 ANTHROPIC_API_KEY=your_anthropic_api_key
+LOG_LEVEL=info
+
+# Database URLs (automatically configured)
+DATABASE_URL=postgresql://thewell:${POSTGRES_PASSWORD}@postgres:5432/thewell_prod
+REDIS_URL=redis://redis:6379
 ```
+
+### Additional Tools Required
+
+- **curl**: For API testing and health checks
+- **jq**: For JSON parsing in scripts
+- **openssl**: For generating secure passwords
 
 ## Environment Configuration
 
@@ -71,6 +136,10 @@ ANTHROPIC_API_KEY=your_anthropic_api_key
 
 2. **Run database migrations**:
    ```bash
+   # Check migration status
+   docker-compose exec api npm run db:migrate:status
+   
+   # Run pending migrations
    docker-compose exec api npm run db:migrate
    ```
 
@@ -81,43 +150,82 @@ ANTHROPIC_API_KEY=your_anthropic_api_key
 
 ## Production Deployment
 
-### Option 1: Docker Compose (Single Server)
+### Option 1: Automated Setup Script (Recommended)
+
+The automated setup script handles all deployment steps including validation, backup, SSL setup, and health checks:
+
+```bash
+# View available options
+./scripts/setup-production.sh --help
+
+# Run with specific options
+./scripts/setup-production.sh \
+  --environment production \
+  --deploy-dir /opt/thewell-pipeline \
+  --auto-migrate \
+  --dry-run  # Remove --dry-run to execute
+
+# Quick deployment (skip backup and tests)
+./scripts/setup-production.sh -b -t -m
+```
+
+### Option 2: Manual Docker Compose Deployment
 
 1. **Prepare environment**:
    ```bash
    # Create production directory
-   mkdir -p /opt/thewell-pipeline
+   sudo mkdir -p /opt/thewell-pipeline
    cd /opt/thewell-pipeline
    
    # Copy production files
-   scp docker-compose.production.yml server:/opt/thewell-pipeline/
-   scp -r infrastructure/ server:/opt/thewell-pipeline/
+   cp docker-compose.production.yml /opt/thewell-pipeline/
+   cp -r infrastructure/ /opt/thewell-pipeline/
+   cp .env.production /opt/thewell-pipeline/
    ```
 
 2. **Configure SSL certificates**:
    ```bash
-   # Place SSL certificates
-   mkdir -p infrastructure/ssl
-   cp your-certificate.crt infrastructure/ssl/thewell.crt
-   cp your-private-key.key infrastructure/ssl/thewell.key
+   # For self-signed certificates (development)
+   sudo mkdir -p infrastructure/ssl
+   sudo openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
+     -keyout infrastructure/ssl/thewell.key \
+     -out infrastructure/ssl/thewell.crt \
+     -subj "/C=US/ST=State/L=City/O=Organization/CN=localhost"
+   
+   # For production certificates
+   sudo cp your-certificate.crt infrastructure/ssl/thewell.crt
+   sudo cp your-private-key.key infrastructure/ssl/thewell.key
+   sudo chmod 600 infrastructure/ssl/thewell.key
    ```
 
 3. **Deploy the stack**:
    ```bash
-   # Set environment variables
-   export POSTGRES_PASSWORD=your_secure_password
-   export GRAFANA_ADMIN_PASSWORD=your_grafana_password
+   # Load environment variables
+   source .env.production
    
-   # Deploy
+   # Start infrastructure services first
+   docker-compose -f docker-compose.production.yml up -d postgres redis prometheus grafana
+   
+   # Wait for database readiness
+   sleep 30
+   
+   # Initialize database
+   docker-compose -f docker-compose.production.yml exec api npm run db:migrate
+   
+   # Start all services
    docker-compose -f docker-compose.production.yml up -d
    ```
 
-4. **Initialize database**:
+4. **Configure data sources**:
    ```bash
-   docker-compose -f docker-compose.production.yml exec api npm run db:migrate
+   # Edit sources configuration
+   sudo nano /opt/thewell-pipeline/config/sources.json
+   
+   # Restart to apply changes
+   docker-compose -f docker-compose.production.yml restart api
    ```
 
-### Option 2: Kubernetes Deployment
+### Option 3: Kubernetes Deployment
 
 1. **Prepare Kubernetes manifests**:
    ```bash
@@ -143,7 +251,7 @@ ANTHROPIC_API_KEY=your_anthropic_api_key
    kubectl apply -f k8s/monitoring/
    ```
 
-### Option 3: AWS ECS Deployment
+### Option 4: AWS ECS Deployment
 
 The CI/CD pipeline automatically deploys to ECS when:
 - Pushing to `develop` branch → Development environment
@@ -412,6 +520,60 @@ proxy_buffers 16 8k;
 3. Update credentials
 4. Review and patch vulnerabilities
 
+## Post-Deployment Configuration
+
+### Essential Configuration Steps
+
+1. **Update API Keys**:
+   ```bash
+   # Edit production environment file
+   sudo nano /opt/thewell-pipeline/.env.production
+   # Add your actual OpenAI and Anthropic API keys
+   ```
+
+2. **Configure Data Sources**:
+   ```bash
+   # Edit sources configuration
+   sudo nano /opt/thewell-pipeline/config/sources.json
+   # Add your actual data sources following the examples
+   ```
+
+3. **Set Up Automated Backups**:
+   ```bash
+   # Add backup cron job
+   echo "0 2 * * * /opt/thewell-pipeline/scripts/backup.sh" | sudo crontab -
+   ```
+
+4. **Configure Domain and SSL**:
+   ```bash
+   # For Let's Encrypt SSL
+   sudo certbot --nginx -d your-domain.com
+   ```
+
+5. **Initial Data Ingestion**:
+   ```bash
+   # Start ingestion process
+   docker-compose -f docker-compose.production.yml exec api npm run ingestion:start
+   
+   # Monitor ingestion
+   docker-compose -f docker-compose.production.yml logs -f worker
+   ```
+
+### Quick Validation Commands
+
+```bash
+# Test RAG search functionality
+curl -X POST http://localhost:3000/api/rag/search \
+  -H "Content-Type: application/json" \
+  -d '{"query": "test query"}'
+
+# Check system metrics
+curl http://localhost:9090/api/v1/query?query=up
+
+# View API documentation
+open http://localhost:3000/api-docs
+```
+
 ## Contact Information
 
 - **DevOps Team**: devops@company.com
@@ -421,4 +583,4 @@ proxy_buffers 16 8k;
 
 ---
 
-*Last updated: December 2024*
+*Last updated: January 2025*

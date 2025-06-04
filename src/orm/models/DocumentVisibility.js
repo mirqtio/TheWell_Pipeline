@@ -9,56 +9,37 @@ module.exports = (sequelize, DataTypes) => {
       primaryKey: true
     },
     documentId: {
-      type: DataTypes.UUID,
+      type: DataTypes.STRING(255),
       allowNull: false,
       field: 'document_id',
+      unique: true,
       references: {
         model: 'documents',
         key: 'id'
       }
     },
-    visibilityLevel: {
-      type: DataTypes.STRING(20),
+    visibility: {
+      type: DataTypes.STRING(50),
       allowNull: false,
       defaultValue: 'internal',
-      field: 'visibility_level',
+      field: 'visibility',
       validate: {
-        isIn: [['public', 'internal', 'private', 'restricted', 'draft', 'archived']]
+        isIn: [['public', 'internal', 'external', 'private', 'restricted', 'draft', 'archived']]
       }
     },
-    accessGroups: {
-      type: DataTypes.ARRAY(DataTypes.TEXT),
-      field: 'access_groups',
-      defaultValue: [],
-      validate: {
-        isValidGroups(value) {
-          if (!Array.isArray(value)) {
-            throw new Error('Access groups must be an array');
-          }
-        }
-      }
+    previousVisibility: {
+      type: DataTypes.STRING(50),
+      field: 'previous_visibility'
     },
-    accessLevel: {
-      type: DataTypes.STRING(20),
-      allowNull: false,
-      defaultValue: 'read',
-      field: 'access_level',
-      validate: {
-        isIn: [['read', 'write', 'admin', 'approve']]
-      }
-    },
-    approvalRequired: {
-      type: DataTypes.BOOLEAN,
-      defaultValue: false,
-      field: 'approval_required'
-    },
-    approvedBy: {
+    setBy: {
       type: DataTypes.STRING(255),
-      field: 'approved_by'
+      allowNull: false,
+      field: 'set_by'
     },
-    approvedAt: {
+    setAt: {
       type: DataTypes.DATE,
-      field: 'approved_at'
+      defaultValue: DataTypes.NOW,
+      field: 'set_at'
     },
     reason: {
       type: DataTypes.TEXT
@@ -92,16 +73,13 @@ module.exports = (sequelize, DataTypes) => {
         fields: ['document_id']
       },
       {
-        fields: ['visibility_level']
+        fields: ['visibility']
       },
       {
-        fields: ['access_level']
+        fields: ['set_by']
       },
       {
-        fields: ['approval_required']
-      },
-      {
-        fields: ['approved_by']
+        fields: ['set_at']
       },
       {
         fields: ['created_at']
@@ -116,71 +94,34 @@ module.exports = (sequelize, DataTypes) => {
 
   // Instance methods
   DocumentVisibility.prototype.isPublic = function() {
-    return this.visibilityLevel === 'public';
+    return this.visibility === 'public';
   };
 
   DocumentVisibility.prototype.isPrivate = function() {
-    return this.visibilityLevel === 'private';
+    return this.visibility === 'private';
   };
 
   DocumentVisibility.prototype.isRestricted = function() {
-    return this.visibilityLevel === 'restricted';
+    return this.visibility === 'restricted';
+  };
+  
+  DocumentVisibility.prototype.isExternal = function() {
+    return this.visibility === 'external';
   };
 
-  DocumentVisibility.prototype.requiresApproval = function() {
-    return this.approvalRequired;
+
+  DocumentVisibility.prototype.requiresApproval = function(newVisibility) {
+    // External and public visibility changes require approval
+    const requiresApprovalLevels = ['external', 'public'];
+    return requiresApprovalLevels.includes(newVisibility);
   };
 
-  DocumentVisibility.prototype.isApproved = function() {
-    return this.approvedBy !== null && this.approvedAt !== null;
-  };
-
-  DocumentVisibility.prototype.approve = async function(approvedBy) {
-    this.approvedBy = approvedBy;
-    this.approvedAt = new Date();
-    this.updatedAt = new Date();
-    return this.save();
-  };
-
-  DocumentVisibility.prototype.hasAccess = function(userGroups = [], requiredLevel = 'read') {
-    // Public documents are accessible to everyone
-    if (this.visibilityLevel === 'public') {
-      return true;
-    }
-
-    // Private documents require specific access
-    if (this.visibilityLevel === 'private') {
-      return false;
-    }
-
-    // Check if user has required access level
-    const accessLevels = ['read', 'write', 'admin', 'approve'];
-    const userLevelIndex = accessLevels.indexOf(this.accessLevel);
-    const requiredLevelIndex = accessLevels.indexOf(requiredLevel);
-    
-    if (userLevelIndex < requiredLevelIndex) {
-      return false;
-    }
-
-    // Check group access for restricted documents
-    if (this.visibilityLevel === 'restricted' && this.accessGroups.length > 0) {
-      return userGroups.some(group => this.accessGroups.includes(group));
-    }
-
-    return true;
-  };
-
-  DocumentVisibility.prototype.addAccessGroup = async function(group) {
-    if (!this.accessGroups.includes(group)) {
-      this.accessGroups = [...this.accessGroups, group];
-      this.updatedAt = new Date();
-      return this.save();
-    }
-    return this;
-  };
-
-  DocumentVisibility.prototype.removeAccessGroup = async function(group) {
-    this.accessGroups = this.accessGroups.filter(g => g !== group);
+  DocumentVisibility.prototype.updateVisibility = async function(newVisibility, setBy, reason) {
+    this.previousVisibility = this.visibility;
+    this.visibility = newVisibility;
+    this.setBy = setBy;
+    this.setAt = new Date();
+    this.reason = reason;
     this.updatedAt = new Date();
     return this.save();
   };
@@ -192,52 +133,27 @@ module.exports = (sequelize, DataTypes) => {
     });
   };
 
-  DocumentVisibility.findByVisibilityLevel = function(visibilityLevel) {
+  DocumentVisibility.findByVisibility = function(visibility) {
     return this.findAll({
-      where: { visibilityLevel }
+      where: { visibility }
     });
   };
 
-  DocumentVisibility.findPendingApproval = function() {
+
+  DocumentVisibility.findBySetBy = function(setBy) {
+    return this.findAll({
+      where: { setBy }
+    });
+  };
+
+  DocumentVisibility.findRecentChanges = function(since) {
     return this.findAll({
       where: {
-        approvalRequired: true,
-        approvedBy: null
+        setAt: {
+          [sequelize.Sequelize.Op.gte]: since
+        }
       },
-      order: [['createdAt', 'ASC']]
-    });
-  };
-
-  DocumentVisibility.findByAccessGroup = function(group) {
-    return this.findAll({
-      where: {
-        accessGroups: {
-          [sequelize.Sequelize.Op.contains]: [group]
-        }
-      }
-    });
-  };
-
-  DocumentVisibility.findAccessibleDocuments = function(userGroups = [], _accessLevel = 'read') {
-    const whereClause = {
-      [sequelize.Sequelize.Op.or]: [
-        { visibilityLevel: 'public' },
-        { visibilityLevel: 'internal' }
-      ]
-    };
-
-    // Add restricted documents that user has access to
-    if (userGroups.length > 0) {
-      whereClause[sequelize.Sequelize.Op.or].push({
-        visibilityLevel: 'restricted',
-        accessGroups: {
-          [sequelize.Sequelize.Op.overlap]: userGroups
-        }
-      });
-    }
-
-    return this.findAll({
-      where: whereClause
+      order: [['setAt', 'DESC']]
     });
   };
 

@@ -103,7 +103,7 @@ describe('EmbeddingCache', () => {
 
     test('should cache document embedding', async () => {
       const documentId = 'doc123';
-      const model = 'text-embedding-ada-002';
+      const model = 'text-embedding-3-small';
       const embedding = [0.1, 0.2, 0.3, 0.4];
       const metadata = { dimensions: 4 };
       
@@ -131,7 +131,7 @@ describe('EmbeddingCache', () => {
 
     test('should get cached document embedding', async () => {
       const documentId = 'doc123';
-      const model = 'text-embedding-ada-002';
+      const model = 'text-embedding-3-small';
       const cachedData = {
         documentId,
         model,
@@ -188,7 +188,7 @@ describe('EmbeddingCache', () => {
 
     test('should cache text embedding', async () => {
       const text = 'sample text';
-      const model = 'text-embedding-ada-002';
+      const model = 'text-embedding-3-small';
       const embedding = [0.1, 0.2, 0.3];
       
       mockCacheManager.set.mockResolvedValue();
@@ -213,7 +213,7 @@ describe('EmbeddingCache', () => {
 
     test('should get cached text embedding', async () => {
       const text = 'sample text';
-      const model = 'text-embedding-ada-002';
+      const model = 'text-embedding-3-small';
       const cachedData = {
         text,
         model,
@@ -238,7 +238,7 @@ describe('EmbeddingCache', () => {
 
     test('should generate consistent keys for same text and model', () => {
       const text = 'sample text';
-      const model = 'text-embedding-ada-002';
+      const model = 'text-embedding-3-small';
       
       const key1 = embeddingCache.generateTextEmbeddingKey(text, model);
       const key2 = embeddingCache.generateTextEmbeddingKey(text, model);
@@ -247,7 +247,7 @@ describe('EmbeddingCache', () => {
     });
 
     test('should generate different keys for different text', () => {
-      const model = 'text-embedding-ada-002';
+      const model = 'text-embedding-3-small';
       
       const key1 = embeddingCache.generateTextEmbeddingKey('text 1', model);
       const key2 = embeddingCache.generateTextEmbeddingKey('text 2', model);
@@ -264,7 +264,7 @@ describe('EmbeddingCache', () => {
     test('should cache similarity results', async () => {
       const queryEmbedding = [0.1, 0.2, 0.3];
       const documentIds = ['doc1', 'doc2'];
-      const model = 'text-embedding-ada-002';
+      const model = 'text-embedding-3-small';
       const results = [
         { documentId: 'doc1', similarity: 0.95 },
         { documentId: 'doc2', similarity: 0.87 }
@@ -299,7 +299,7 @@ describe('EmbeddingCache', () => {
     test('should get cached similarity results', async () => {
       const queryEmbedding = [0.1, 0.2, 0.3];
       const documentIds = ['doc1', 'doc2'];
-      const model = 'text-embedding-ada-002';
+      const model = 'text-embedding-3-small';
       const cachedData = {
         queryEmbedding,
         documentIds,
@@ -399,11 +399,11 @@ describe('EmbeddingCache', () => {
     test('should invalidate embeddings by model', async () => {
       mockCacheManager.clear.mockResolvedValue(5);
       
-      const count = await embeddingCache.invalidateEmbeddingsByModel('text-embedding-ada-002');
+      const count = await embeddingCache.invalidateEmbeddingsByModel('text-embedding-3-small');
       
       expect(count).toBe(5);
       expect(mockCacheManager.clear).toHaveBeenCalledWith(
-        expect.stringContaining('text-embedding-ada-002')
+        expect.stringContaining('text-embedding-3-small')
       );
     });
 
