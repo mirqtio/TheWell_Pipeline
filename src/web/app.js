@@ -29,6 +29,7 @@ const adminRoutes = require('./routes/admin');
 const usersRoutes = require('./routes/users');
 const rolesRoutes = require('./routes/roles');
 const versioningRoutes = require('./routes/versioning');
+const entitiesRoutes = require('./routes/entities');
 
 // Import middleware
 const authMiddleware = require('./middleware/auth');
@@ -145,6 +146,7 @@ app.use('/api/v1/admin', adminRoutes);
 app.use('/api/v1/users', usersRoutes);
 app.use('/api/v1/roles', rolesRoutes);
 app.use('/api/v1', versioningRoutes);
+app.use('/api/v1/entities', entitiesRoutes);
 
 // Initialize SourceReliabilityService for production use
 let sourceReliabilityService = global.testSourceReliabilityService;

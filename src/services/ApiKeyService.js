@@ -7,9 +7,21 @@ const logger = require('../utils/logger');
  */
 class ApiKeyService {
   constructor(database = null) {
-    this.db = database || DatabaseManager.getInstance().getDatabase();
+    this.db = database;
     this.keyPrefix = process.env.API_KEY_PREFIX || 'sk_';
     this.keyLength = 32; // 256 bits
+    
+    // Lazy load database if not provided
+    if (!this.db) {
+      this._getDb = () => {
+        if (!this.db) {
+          this.db = DatabaseManager.getInstance().getDatabase();
+        }
+        return this.db;
+      };
+    } else {
+      this._getDb = () => this.db;
+    }
   }
   
   /**
@@ -47,7 +59,7 @@ class ApiKeyService {
         : null;
       
       // Store in database
-      const result = await this.db.query(`
+      const result = await this._getDb().query(`
         INSERT INTO api_keys (user_id, key_hash, key_prefix, name, expires_at, metadata)
         VALUES ($1, $2, $3, $4, $5, $6)
         RETURNING id, key_prefix, created_at
@@ -94,7 +106,7 @@ class ApiKeyService {
       
       const keyHash = this.hashKey(apiKey);
       
-      const result = await this.db.query(`
+      const result = await this._getDb().query(`
         SELECT id, expires_at, is_active
         FROM api_keys
         WHERE key_hash = $1
@@ -117,7 +129,7 @@ class ApiKeyService {
       }
       
       // Update last used timestamp
-      this.db.query(`
+      this._getDb().query(`
         UPDATE api_keys 
         SET last_used_at = NOW() 
         WHERE id = $1
@@ -140,7 +152,7 @@ class ApiKeyService {
     try {
       const keyHash = this.hashKey(apiKey);
       
-      const result = await this.db.query(`
+      const result = await this._getDb().query(`
         SELECT 
           u.id AS user_id,
           u.email AS user_email,
@@ -256,7 +268,7 @@ class ApiKeyService {
    */
   async revokeApiKey(keyId, revokedByUserId) {
     try {
-      const result = await this.db.query(`
+      const result = await this._getDb().query(`
         UPDATE api_keys
         SET is_active = FALSE, 
             updated_at = NOW(),
@@ -327,7 +339,7 @@ class ApiKeyService {
     try {
       const keyHash = this.hashKey(apiKey);
       
-      await this.db.query(`
+      await this._getDb().query(`
         UPDATE api_keys
         SET last_used_at = NOW()
         WHERE key_hash = $1
@@ -344,7 +356,7 @@ class ApiKeyService {
    */
   async cleanupExpiredKeys() {
     try {
-      const result = await this.db.query(`
+      const result = await this._getDb().query(`
         UPDATE api_keys
         SET is_active = FALSE
         WHERE expires_at < NOW() AND is_active = TRUE

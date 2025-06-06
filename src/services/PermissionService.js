@@ -6,10 +6,22 @@ const logger = require('../utils/logger');
  */
 class PermissionService {
   constructor(database = null, options = {}) {
-    this.db = database || DatabaseManager.getInstance().getDatabase();
+    this.db = database;
     this.enableAuditLog = options.enableAuditLog || false;
     this.cache = new Map();
     this.cacheTTL = options.cacheTTL || 5 * 60 * 1000; // 5 minutes
+    
+    // Lazy load database if not provided
+    if (!this.db) {
+      this._getDb = () => {
+        if (!this.db) {
+          this.db = DatabaseManager.getInstance().getDatabase();
+        }
+        return this.db;
+      };
+    } else {
+      this._getDb = () => this.db;
+    }
     
     // System roles that cannot be modified
     this.systemRoles = ['admin', 'analyst', 'researcher', 'reviewer', 'viewer'];
@@ -53,7 +65,7 @@ class PermissionService {
       }
       
       // Use database function
-      const result = await this.db.query(
+      const result = await this._getDb().query(
         'SELECT check_permission($1, $2, $3)',
         [userId, resource, action]
       );
@@ -84,7 +96,7 @@ class PermissionService {
    */
   async getUserPermissions(userId) {
     try {
-      const result = await this.db.query(`
+      const result = await this._getDb().query(`
         SELECT r.permissions
         FROM users u
         JOIN roles r ON u.role_id = r.id
@@ -126,7 +138,7 @@ class PermissionService {
         ? 'SELECT permissions FROM roles WHERE id = $1'
         : 'SELECT permissions FROM roles WHERE name = $1';
       
-      const result = await this.db.query(query, [roleNameOrId]);
+      const result = await this._getDb().query(query, [roleNameOrId]);
       
       if (result.rows.length === 0) {
         return [];
@@ -175,7 +187,7 @@ class PermissionService {
       }
       
       // Update user's role
-      const result = await this.db.query(`
+      const result = await this._getDb().query(`
         UPDATE users
         SET role_id = $2, updated_at = NOW()
         WHERE id = $1
@@ -221,7 +233,7 @@ class PermissionService {
         }
       }
       
-      const result = await this.db.query(`
+      const result = await this._getDb().query(`
         INSERT INTO roles (name, description, permissions, is_system)
         VALUES ($1, $2, $3, FALSE)
         RETURNING id, name, description, permissions
@@ -267,7 +279,7 @@ class PermissionService {
       }
       
       // Update permissions
-      const result = await this.db.query(`
+      const result = await this._getDb().query(`
         UPDATE roles
         SET permissions = $2, updated_at = NOW()
         WHERE id = $1
@@ -310,7 +322,7 @@ class PermissionService {
       }
       
       // Delete role (users will have role_id set to NULL due to ON DELETE SET NULL)
-      await this.db.query('DELETE FROM roles WHERE id = $1', [roleId]);
+      await this._getDb().query('DELETE FROM roles WHERE id = $1', [roleId]);
       
       logger.info('Role deleted', {
         roleId,
@@ -330,7 +342,7 @@ class PermissionService {
    */
   async listRoles() {
     try {
-      const result = await this.db.query(`
+      const result = await this._getDb().query(`
         SELECT 
           r.id, 
           r.name, 
@@ -399,7 +411,7 @@ class PermissionService {
    */
   async clearRoleCache(roleId) {
     // Get all users with this role
-    const result = await this.db.query(
+    const result = await this._getDb().query(
       'SELECT id FROM users WHERE role_id = $1',
       [roleId]
     );
@@ -414,7 +426,7 @@ class PermissionService {
    */
   async logPermissionCheck(userId, resource, action, granted) {
     try {
-      await this.db.query(`
+      await this._getDb().query(`
         INSERT INTO rbac_audit_log (user_id, action, resource_type, resource_id, new_value)
         VALUES ($1, $2, $3, $4, $5)
       `, [
