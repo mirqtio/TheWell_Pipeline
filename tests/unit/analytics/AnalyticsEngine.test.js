@@ -4,49 +4,40 @@ const { EventEmitter } = require('events');
 
 // Mock dependencies
 jest.mock('ioredis', () => require('ioredis-mock'));
-jest.mock('pg', () => {
-  const mockClient = {
-    query: jest.fn().mockResolvedValue({ rows: [] }),
-    release: jest.fn()
-  };
-  
-  return {
-    Pool: jest.fn().mockImplementation(() => ({
-      connect: jest.fn().mockResolvedValue(mockClient),
-      end: jest.fn().mockResolvedValue(undefined),
-      query: jest.fn().mockResolvedValue({ rows: [] })
-    }))
-  };
-});
+
+const mockClient = {
+  query: jest.fn(),
+  release: jest.fn()
+};
+
+const mockPool = {
+  connect: jest.fn().mockResolvedValue(mockClient),
+  end: jest.fn().mockResolvedValue(undefined),
+  query: jest.fn()
+};
+
+jest.mock('pg', () => ({
+  Pool: jest.fn(() => mockPool)
+}));
 
 describe('AnalyticsEngine', () => {
   let analyticsEngine;
-  let mockPool;
-  let mockClient;
 
   beforeEach(async () => {
     jest.clearAllMocks();
     
-    // Get mock instances
-    const { Pool } = require('pg');
-    mockPool = new Pool();
-    mockClient = {
-      query: jest.fn().mockResolvedValue({ rows: [] }),
-      release: jest.fn()
-    };
-    mockPool.connect.mockResolvedValue(mockClient);
-    
-    // Mock the pool's query method for loadBaselineStats
+    // Reset mock implementations
+    mockClient.query.mockResolvedValue({ rows: [] });
+    mockClient.release.mockResolvedValue();
     mockPool.query.mockResolvedValue({ rows: [] });
+    mockPool.connect.mockResolvedValue(mockClient);
+    mockPool.end.mockResolvedValue();
     
     analyticsEngine = new AnalyticsEngine({
       windowSizes: [60, 300], // 1m, 5m for testing
       aggregationInterval: 100, // Fast for testing
       anomalyThreshold: 2 // Lower threshold for testing
     });
-    
-    // Store reference to the actual pool for expectations
-    mockPool = analyticsEngine.pool;
   });
 
   afterEach(async () => {
@@ -216,6 +207,12 @@ describe('AnalyticsEngine', () => {
       };
       const tags = { service: 'test' };
 
+      // Mock the query responses in order
+      mockClient.query.mockResolvedValueOnce({ rows: [] })  // BEGIN
+        .mockResolvedValueOnce({ rows: [] })  // INSERT
+        .mockResolvedValueOnce({ rows: [] })  // COMMIT
+        .mockResolvedValueOnce({ rows: [] }); // Any cleanup
+
       await analyticsEngine.storeAggregations(metric, aggregations, tags);
 
       expect(mockPool.connect).toHaveBeenCalled();
@@ -257,7 +254,11 @@ describe('AnalyticsEngine', () => {
     });
 
     test('should load baseline stats from database', async () => {
-      mockPool.query.mockResolvedValueOnce({
+      // Create a new engine instance to test loadBaselineStats
+      const newEngine = new AnalyticsEngine();
+      
+      // Mock the query result before initialization
+      mockClient.query.mockResolvedValueOnce({
         rows: [
           {
             metric_name: 'test.metric',
@@ -268,16 +269,18 @@ describe('AnalyticsEngine', () => {
           }
         ]
       });
+      
+      await newEngine.loadBaselineStats();
 
-      await analyticsEngine.loadBaselineStats();
-
-      const metricKey = analyticsEngine.getMetricKey('test.metric', { service: 'test' });
-      const baseline = analyticsEngine.baselineStats.get(metricKey);
+      const metricKey = newEngine.getMetricKey('test.metric', { service: 'test' });
+      const baseline = newEngine.baselineStats.get(metricKey);
       
       expect(baseline).toBeDefined();
       expect(baseline.count).toBe(100);
       expect(baseline.mean).toBe(50.5);
       expect(baseline.stdDev).toBe(5.2);
+      
+      await newEngine.shutdown();
     });
   });
 
@@ -293,11 +296,17 @@ describe('AnalyticsEngine', () => {
         aggregation: 'avg'
       };
 
-      mockClient.query.mockResolvedValueOnce({
-        rows: [
-          { time_bucket: new Date(), value: 10 },
-          { time_bucket: new Date(), value: 20 }
-        ]
+      // Mock the specific query response
+      mockClient.query.mockImplementationOnce((sql) => {
+        if (sql.includes('SELECT')) {
+          return Promise.resolve({
+            rows: [
+              { time_bucket: new Date(), value: 10, count: 5, min: 8, max: 12, p95: 11, p99: 12 },
+              { time_bucket: new Date(), value: 20, count: 10, min: 18, max: 22, p95: 21, p99: 22 }
+            ]
+          });
+        }
+        return Promise.resolve({ rows: [] });
       });
 
       const result = await analyticsEngine.processQuery(query);
@@ -350,10 +359,16 @@ describe('AnalyticsEngine', () => {
 
   describe('Public API', () => {
     test('should get metric history', async () => {
-      mockClient.query.mockResolvedValueOnce({
-        rows: [
-          { time_bucket: new Date(), avg: 10, min: 5, max: 15 }
-        ]
+      // Mock the query to return metric history data
+      mockClient.query.mockImplementationOnce((sql) => {
+        if (sql.includes('SELECT')) {
+          return Promise.resolve({
+            rows: [
+              { time_bucket: new Date(), avg: 10, min: 5, max: 15 }
+            ]
+          });
+        }
+        return Promise.resolve({ rows: [] });
       });
 
       const history = await analyticsEngine.getMetricHistory(

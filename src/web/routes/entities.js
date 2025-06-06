@@ -10,44 +10,6 @@ const entityService = new EntityExtractionService();
 const documentDAO = new DocumentDAO();
 
 /**
- * @route POST /api/v1/entities/extract/:documentId
- * @desc Extract entities from a specific document
- * @access Private - requires documents:read permission
- */
-router.post('/extract/:documentId',
-  requireAuth(),
-  requirePermission('documents', 'read'),
-  async (req, res) => {
-    try {
-      const documentId = parseInt(req.params.documentId);
-      
-      // Get document
-      const document = await documentDAO.getById(documentId);
-      if (!document) {
-        return res.status(404).json({
-          success: false,
-          error: 'Document not found'
-        });
-      }
-      
-      // Process document
-      const result = await entityService.processDocument(document);
-      
-      res.json({
-        success: true,
-        data: result
-      });
-    } catch (error) {
-      logger.error('Entity extraction failed:', error);
-      res.status(500).json({
-        success: false,
-        error: 'Failed to extract entities'
-      });
-    }
-  }
-);
-
-/**
  * @route POST /api/v1/entities/extract/batch
  * @desc Extract entities from multiple documents
  * @access Private - requires documents:read permission
@@ -94,6 +56,44 @@ router.post('/extract/batch',
       res.status(500).json({
         success: false,
         error: 'Failed to process batch'
+      });
+    }
+  }
+);
+
+/**
+ * @route POST /api/v1/entities/extract/:documentId
+ * @desc Extract entities from a specific document
+ * @access Private - requires documents:read permission
+ */
+router.post('/extract/:documentId',
+  requireAuth(),
+  requirePermission('documents', 'read'),
+  async (req, res) => {
+    try {
+      const documentId = parseInt(req.params.documentId);
+      
+      // Get document
+      const document = await documentDAO.getById(documentId);
+      if (!document) {
+        return res.status(404).json({
+          success: false,
+          error: 'Document not found'
+        });
+      }
+      
+      // Process document
+      const result = await entityService.processDocument(document);
+      
+      res.json({
+        success: true,
+        data: result
+      });
+    } catch (error) {
+      logger.error('Entity extraction failed:', error);
+      res.status(500).json({
+        success: false,
+        error: 'Failed to extract entities'
       });
     }
   }

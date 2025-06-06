@@ -17,23 +17,23 @@ describe('RBAC Middleware', () => {
     
     const EventEmitter = require('events');
 
-jest.mock('../../../src/database/DatabaseManager', () => ({
-  getInstance: jest.fn(() => ({
-    query: jest.fn().mockResolvedValue({ rows: [], rowCount: 0 }),
-    connect: jest.fn().mockResolvedValue({
-      query: jest.fn().mockResolvedValue({ rows: [], rowCount: 0 }),
-      release: jest.fn()
-    }),
-    transaction: jest.fn((callback) => {
-      const mockTrx = {
+    jest.mock('../../../src/database/DatabaseManager', () => ({
+      getInstance: jest.fn(() => ({
         query: jest.fn().mockResolvedValue({ rows: [], rowCount: 0 }),
-        commit: jest.fn(),
-        rollback: jest.fn()
-      };
-      return callback(mockTrx);
-    })
-  }))
-}));
+        connect: jest.fn().mockResolvedValue({
+          query: jest.fn().mockResolvedValue({ rows: [], rowCount: 0 }),
+          release: jest.fn()
+        }),
+        transaction: jest.fn((callback) => {
+          const mockTrx = {
+            query: jest.fn().mockResolvedValue({ rows: [], rowCount: 0 }),
+            commit: jest.fn(),
+            rollback: jest.fn()
+          };
+          return callback(mockTrx);
+        })
+      }))
+    }));
     res = Object.assign(new EventEmitter(), {
       status: jest.fn().mockReturnThis(),
       json: jest.fn(),

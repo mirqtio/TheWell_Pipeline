@@ -4,7 +4,7 @@ const express = require('express');
 // Create mocks before modules are loaded
 const mockEntityService = {
   processDocument: jest.fn(),
-  processBatch: jest.fn(),
+  processBatch: jest.fn().mockResolvedValue([]),
   getDocumentEntities: jest.fn(),
   searchEntities: jest.fn(),
   getEntityStatistics: jest.fn(),
@@ -40,7 +40,7 @@ jest.mock('../../../../src/web/middleware/rbac', () => ({
 // NOW load the routes after mocks are set up
 const entitiesRoutes = require('../../../../src/web/routes/entities');
 
-jest.mock('../../../src/database/DatabaseManager', () => ({
+jest.mock('../../../../src/database/DatabaseManager', () => ({
   getInstance: jest.fn(() => ({
     query: jest.fn().mockResolvedValue({ rows: [], rowCount: 0 }),
     connect: jest.fn().mockResolvedValue({
@@ -259,13 +259,15 @@ describe('Entity Extraction Routes', () => {
         { success: true, jobId: 2, entityCounts: { PERSON: 2 } }
       ];
       
+      // Reset mocks before test
+      jest.clearAllMocks();
+      
       mockDocumentDAO.getById
         .mockResolvedValueOnce(mockDocs[0])
         .mockResolvedValueOnce(mockDocs[1]);
       
-      // Mock processBatch directly since it's what the route calls
-      // Override the implementation completely
-      mockEntityService.processBatch = jest.fn().mockResolvedValue(mockResults);
+      // Configure processBatch to return the expected array
+      mockEntityService.processBatch.mockImplementation(() => Promise.resolve(mockResults));
       
       const response = await request(app)
         .post('/api/v1/entities/extract/batch')
