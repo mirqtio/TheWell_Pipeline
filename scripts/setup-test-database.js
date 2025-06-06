@@ -214,7 +214,7 @@ async function setupTestDatabase() {
         VALUES ('Test Document 2 by User', $1, 'report');
       `, [defaultSourceId]);
     }
-    console.log('Sample documents seeded (if applicable).');
+    console.log('✅ Sample documents seeded (if applicable).');
 
     // Retrieve document IDs
     const doc1Result = await pool.query("SELECT id FROM documents WHERE title = 'Test Document 1 by Admin';");
@@ -235,7 +235,7 @@ async function setupTestDatabase() {
         VALUES ('analysis', 'pending', $1, $2);
       `, ['{"name":"Test Job 2 - Analysis", "param":"value2"}', defaultSourceId]);
     }
-    console.log('Sample jobs seeded (if applicable).');
+    console.log('✅ Sample jobs seeded (if applicable).');
 
   } catch (error) {
     console.error('❌ Error setting up test database:', error.message);
