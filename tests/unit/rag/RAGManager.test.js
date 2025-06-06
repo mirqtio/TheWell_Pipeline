@@ -9,6 +9,22 @@ jest.mock('../../../src/rag/components/InputProcessor');
 jest.mock('../../../src/rag/components/DocumentRetriever');
 jest.mock('../../../src/rag/components/ResponseGenerator');
 jest.mock('../../../src/rag/components/OutputFormatter');
+// Mock pg module
+jest.mock('pg', () => {
+  const mockPool = {
+    query: jest.fn().mockResolvedValue({ rows: [], rowCount: 0 }),
+    connect: jest.fn().mockResolvedValue({
+      query: jest.fn().mockResolvedValue({ rows: [], rowCount: 0 }),
+      release: jest.fn()
+    }),
+    end: jest.fn().mockResolvedValue(undefined),
+    on: jest.fn()
+  };
+  
+  return {
+    Pool: jest.fn(() => mockPool)
+  };
+});
 jest.mock('../../../src/tracing', () => ({
   RAGTracing: jest.fn().mockImplementation(() => ({
     traceRAGQuery: jest.fn().mockImplementation((query, metadata, operation) => {

@@ -9,6 +9,22 @@ const CacheManager = require('../../../src/cache/CacheManager');
 // Mock dependencies
 jest.mock('../../../src/enrichment/EmbeddingService');
 jest.mock('../../../src/cache/CacheManager');
+// Mock pg module
+jest.mock('pg', () => {
+  const mockPool = {
+    query: jest.fn().mockResolvedValue({ rows: [], rowCount: 0 }),
+    connect: jest.fn().mockResolvedValue({
+      query: jest.fn().mockResolvedValue({ rows: [], rowCount: 0 }),
+      release: jest.fn()
+    }),
+    end: jest.fn().mockResolvedValue(undefined),
+    on: jest.fn()
+  };
+  
+  return {
+    Pool: jest.fn(() => mockPool)
+  };
+});
 jest.mock('../../../src/utils/logger', () => ({
   info: jest.fn(),
   error: jest.fn(),

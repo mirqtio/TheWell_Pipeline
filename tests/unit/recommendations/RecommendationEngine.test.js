@@ -7,6 +7,22 @@ const { Document, UserInteraction } = require('../../../src/orm/models');
 
 jest.mock('../../../src/orm/models');
 jest.mock('../../../src/utils/logger');
+// Mock pg module
+jest.mock('pg', () => {
+  const mockPool = {
+    query: jest.fn().mockResolvedValue({ rows: [], rowCount: 0 }),
+    connect: jest.fn().mockResolvedValue({
+      query: jest.fn().mockResolvedValue({ rows: [], rowCount: 0 }),
+      release: jest.fn()
+    }),
+    end: jest.fn().mockResolvedValue(undefined),
+    on: jest.fn()
+  };
+  
+  return {
+    Pool: jest.fn(() => mockPool)
+  };
+});
 
 describe('RecommendationEngine', () => {
   let engine;
