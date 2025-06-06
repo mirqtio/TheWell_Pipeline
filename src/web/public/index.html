@@ -47,6 +47,11 @@
                             <i class="bi bi-graph-up"></i> Statistics
                         </a>
                     </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#" data-view="monitoring">
+                            <i class="bi bi-activity"></i> Monitoring
+                        </a>
+                    </li>
                 </ul>
                 <div class="navbar-nav">
                     <div class="nav-item">
@@ -62,6 +67,7 @@
                 </div>
             </div>
         </div>
+
     </nav>
 
     <!-- Main Content -->
@@ -523,6 +529,19 @@
                         </div>
                     </div>
                 </div>
+            </div>
+        </div>
+        
+        <!-- Monitoring View -->
+        <div id="monitoring-view" class="view-content" style="display: none;">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                 <h2><i class="bi bi-activity"></i> System Monitoring</h2>
+                 <button class="btn btn-outline-primary" onclick="app.refreshCurrentView()">
+                    <i class="bi bi-arrow-clockwise"></i> Refresh
+                </button>
+            </div>
+            <div id="monitoring-view-content">
+                <p>Loading monitoring data...</p>
             </div>
         </div>
     </div>

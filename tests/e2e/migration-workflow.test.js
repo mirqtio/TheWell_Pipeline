@@ -7,6 +7,7 @@ const path = require('path');
 
 // Unmock pg for E2E tests - we need real database connections
 jest.unmock('pg');
+jest.unmock('../../src/database/MigrationManager'); // Ensure we use the actual MigrationManager
 
 describe('End-to-End Migration Workflow Tests', () => {
   let migrationManager;
@@ -192,6 +193,16 @@ DROP TABLE IF EXISTS audit_log;`;
 
       // Step 4: Apply all migrations
       console.log('Step 4: Applying migrations...');
+      // **** BEGIN NEW DIAGNOSTIC ****
+      try {
+        const extCheckClient = await db.getClient();
+        const extResult = await extCheckClient.query("SELECT oid FROM pg_extension WHERE extname = 'vector';");
+        console.error(`DIAGNOSTIC: Vector extension check before migrate (lifecycle test): ${JSON.stringify(extResult.rows)}`);
+        extCheckClient.release();
+      } catch (diagErr) {
+        console.error(`DIAGNOSTIC: Vector extension check FAILED (lifecycle test): ${diagErr.message}`);
+      }
+      // **** END NEW DIAGNOSTIC ****
       await migrationManager.migrate();
             
       // Verify all migrations were applied
@@ -456,6 +467,16 @@ ALTER TABLE integrity_test DROP COLUMN IF EXISTS active;`;
       await fs.writeFile(path.join(testMigrationsPath, '0002_modify_schema.sql'), modificationMigration);
             
       // Apply migrations
+      // **** BEGIN NEW DIAGNOSTIC ****
+      try {
+        const extCheckClient = await db.getClient();
+        const extResult = await extCheckClient.query("SELECT oid FROM pg_extension WHERE extname = 'vector';");
+        console.error(`DIAGNOSTIC: Vector extension check before migrate (integrity test): ${JSON.stringify(extResult.rows)}`);
+        extCheckClient.release();
+      } catch (diagErr) {
+        console.error(`DIAGNOSTIC: Vector extension check FAILED (integrity test): ${diagErr.message}`);
+      }
+      // **** END NEW DIAGNOSTIC ****
       await migrationManager.migrate();
             
       // Verify data integrity

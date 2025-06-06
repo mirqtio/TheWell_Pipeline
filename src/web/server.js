@@ -71,6 +71,7 @@ class ManualReviewServer {
 
     // Static files
     this.app.use(express.static(path.join(__dirname, 'public')));
+    this.app.use('/design-system', express.static(path.join(__dirname, 'design-system')));
 
     // Request logging
     this.app.use((req, res, next) => {

@@ -10,24 +10,22 @@ jest.unmock('pg');
 let skipIfNoDatabase = process.env.SKIP_DB_TESTS === 'true';
 
 const request = require('supertest');
-const ManualReviewServer = require('../../../src/web/server');
+const app = require('../../../src/web/app');
 const DatabaseManager = require('../../../src/database/DatabaseManager');
 
 describe('Feedback Workflows E2E Tests', () => {
   let server;
-  let app;
   let databaseManager;
   let testDocumentId;
-  let serverInstance;
 
   beforeAll(async () => {
     // Set up test database - use same config as database integration tests
     databaseManager = new DatabaseManager({
-      host: process.env.TEST_DB_HOST || 'localhost',
-      port: process.env.TEST_DB_PORT || 5432,
-      database: process.env.TEST_DB_NAME || 'thewell_pipeline_test',
-      user: process.env.TEST_DB_USER || 'charlieirwin',
-      password: process.env.TEST_DB_PASSWORD || 'password'
+      host: process.env.DB_HOST || 'localhost',
+      port: parseInt(process.env.DB_PORT || '5432'),
+      database: process.env.DB_NAME || 'thewell_test',
+      user: process.env.DB_USER || 'thewell_test',
+      password: process.env.DB_PASSWORD || 'thewell_test_password'
     });
 
     await databaseManager.initialize();
@@ -36,8 +34,12 @@ describe('Feedback Workflows E2E Tests', () => {
     try {
       await databaseManager.applySchema();
     } catch (error) {
-      // Schema might already exist, ignore errors
+      // Schema might already exist, try running the setup script
       console.log('Schema application warning:', error.message);
+      
+      // Run the test database setup
+      const { setupTestSchema } = require('../../helpers/setup-test-db');
+      await setupTestSchema();
     }
 
     // Create test document
@@ -63,17 +65,14 @@ describe('Feedback Workflows E2E Tests', () => {
 
     // Set environment for development mode (bypass auth)
     process.env.NODE_ENV = 'development';
-    process.env.WEB_PORT = '0'; // Use dynamic port
-
-    server = new ManualReviewServer({
-      port: 0,
-      queueManager: mockQueueManager,
-      ingestionEngine: mockIngestionEngine,
-      databaseManager: databaseManager
-    });
-
-    serverInstance = await server.start();
-    app = server.app;
+    
+    // Set up app dependencies
+    app.set('databaseManager', databaseManager);
+    app.set('feedbackDAO', require('../../../src/database/FeedbackDAO'));
+    
+    // Start server
+    const port = 3456; // Use specific port for this test
+    server = app.listen(port);
   });
 
   afterAll(async () => {
@@ -84,8 +83,8 @@ describe('Feedback Workflows E2E Tests', () => {
       await databaseManager.query('DELETE FROM documents WHERE id = $1', [testDocumentId]);
     }
 
-    if (serverInstance) {
-      await server.stop();
+    if (server) {
+      await new Promise((resolve) => server.close(resolve));
     }
     
     await databaseManager.close();

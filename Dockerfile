@@ -1,17 +1,24 @@
 # Multi-stage build for TheWell Pipeline
 
 # Base stage with dependencies
-FROM node:20-alpine AS base
+FROM node:20-bookworm AS base
 
 # Set working directory
 WORKDIR /app
 
 # Install system dependencies for PostgreSQL client and other tools
 RUN echo "Installing system dependencies..." && \
-    apk add --no-cache \
+    apt-get update && apt-get install -y --no-install-recommends \
+    build-essential \
+    python3 \
     postgresql-client \
     curl \
-    bash && \
+    bash \
+    chromium \
+    # NSS, freetype, harfbuzz, ttf-freefont are typically dependencies of chromium on Debian
+    # Add them explicitly if needed, but chromium package should pull them.
+    # libnss3 libfreetype6 libharfbuzz-icu0 fonts-freefont-ttf
+    && apt-get clean && rm -rf /var/lib/apt/lists/* && \
     echo "System dependencies installed successfully"
 
 # Copy package files
@@ -32,20 +39,40 @@ COPY tests/ ./tests/
 # Production stage
 FROM base AS production
 
-# Install only production dependencies
+# Define a shared path for Playwright browsers
+ENV PLAYWRIGHT_BROWSERS_PATH=/opt/pw-browsers
+RUN mkdir -p ${PLAYWRIGHT_BROWSERS_PATH} # Create directory as root
+
 RUN echo "Installing production dependencies..." && \
-    npm ci --only=production --verbose && \
+    npm ci --verbose && \
     npm cache clean --force && \
     echo "Production dependencies installed successfully"
 
-# Copy application source (no tests in production)
+# Install Playwright browsers and their system dependencies (as root)
+RUN echo "Installing Playwright browsers and dependencies..." && \
+    npx playwright install --with-deps && \
+    echo "Playwright browsers and dependencies installed successfully"
+
+# Ensure the installed browsers are accessible by changing permissions AFTER installation
+RUN echo "Setting permissions for Playwright browsers..." && \
+    chmod -R 777 ${PLAYWRIGHT_BROWSERS_PATH} && \
+    echo "Permissions set for Playwright browsers."
+
+# Copy application source
 COPY src/ ./src/
 COPY config/ ./config/
+COPY scripts/ ./scripts/
+COPY tests/ ./tests/
+COPY .sequelizerc ./.sequelizerc
+COPY jest.e2e.config.js ./jest.e2e.config.js
+COPY jest.e2e.setup.js ./jest.e2e.setup.js
+COPY jest.setup.js ./jest.setup.js
+COPY playwright.config.js ./playwright.config.js
 
 # Create non-root user for security
 RUN echo "Creating non-root user..." && \
-    addgroup -g 1001 -S nodejs && \
-    adduser -S thewell -u 1001 -G nodejs && \
+    addgroup --system --gid 1001 nodejs && \
+    adduser --system --uid 1001 --ingroup nodejs --no-create-home --shell /bin/false thewell && \
     echo "Non-root user created successfully"
 
 # Change ownership of app directory

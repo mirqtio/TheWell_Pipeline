@@ -87,19 +87,31 @@ class QueueManager extends EventEmitter {
       // Connect to Redis
       await this.redisClient.connect();
 
+      // Determine Redis options for Bull queue
+      let bullRedisOptions;
+      if (process.env.REDIS_URL) {
+      bullRedisOptions = process.env.REDIS_URL;
+      logger.info(`QueueManager: Using REDIS_URL for Bull queue: ${process.env.REDIS_URL}`);
+      } else {
+      // Fallback to structured config if REDIS_URL is not set
+      bullRedisOptions = finalConfig.redis;
+      logger.warn('QueueManager: REDIS_URL not set for Bull. Falling back to structured redis config. Check environment variables if this is unexpected.', 
+              { bullRedisHost: finalConfig.redis.host, bullRedisPort: finalConfig.redis.port });
+      }
+
       // Create ingestion queue
-      const ingestionQueue = new Queue(
-        finalConfig.queues.ingestion.name,
-        {
-          redis: redisConfig,
-          defaultJobOptions: {
-            attempts: finalConfig.queues.ingestion.attempts,
-            backoff: finalConfig.queues.ingestion.backoff,
-            removeOnComplete: 100, // Keep last 100 completed jobs
-            removeOnFail: 50 // Keep last 50 failed jobs
-          }
+    const ingestionQueue = new Queue(
+      finalConfig.queues.ingestion.name,
+      {
+        redis: bullRedisOptions, // Use the determined options
+        defaultJobOptions: {
+          attempts: finalConfig.queues.ingestion.attempts,
+          backoff: finalConfig.queues.ingestion.backoff,
+          removeOnComplete: 100, // Keep last 100 completed jobs
+          removeOnFail: 50 // Keep last 50 failed jobs
         }
-      );
+      }
+    );
 
       // Set up event listeners
       this._setupQueueEventListeners(ingestionQueue);

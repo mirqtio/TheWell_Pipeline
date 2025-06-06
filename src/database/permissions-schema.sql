@@ -6,7 +6,7 @@
 -- =====================================================
 
 -- Users: Core user management
-CREATE TABLE users (
+CREATE TABLE IF NOT EXISTS users (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     username VARCHAR(255) NOT NULL UNIQUE,
     email VARCHAR(255) NOT NULL UNIQUE,
@@ -32,7 +32,7 @@ CREATE TABLE users (
 );
 
 -- Roles: Define user roles with hierarchical structure
-CREATE TABLE roles (
+CREATE TABLE IF NOT EXISTS roles (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     name VARCHAR(100) NOT NULL UNIQUE,
     display_name VARCHAR(255) NOT NULL,
@@ -52,7 +52,7 @@ CREATE TABLE roles (
 );
 
 -- User Roles: Many-to-many relationship between users and roles
-CREATE TABLE user_roles (
+CREATE TABLE IF NOT EXISTS user_roles (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     user_id UUID REFERENCES users(id) ON DELETE CASCADE,
     role_id UUID REFERENCES roles(id) ON DELETE CASCADE,
@@ -73,7 +73,7 @@ CREATE TABLE user_roles (
 -- =====================================================
 
 -- Permissions: Define granular permissions
-CREATE TABLE permissions (
+CREATE TABLE IF NOT EXISTS permissions (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     name VARCHAR(100) NOT NULL UNIQUE,
     display_name VARCHAR(255) NOT NULL,
@@ -93,7 +93,7 @@ CREATE TABLE permissions (
 );
 
 -- Role Permissions: Assign permissions to roles
-CREATE TABLE role_permissions (
+CREATE TABLE IF NOT EXISTS role_permissions (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     role_id UUID REFERENCES roles(id) ON DELETE CASCADE,
     permission_id UUID REFERENCES permissions(id) ON DELETE CASCADE,
@@ -110,7 +110,7 @@ CREATE TABLE role_permissions (
 );
 
 -- User Permissions: Direct user permissions (overrides role permissions)
-CREATE TABLE user_permissions (
+CREATE TABLE IF NOT EXISTS user_permissions (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     user_id UUID REFERENCES users(id) ON DELETE CASCADE,
     permission_id UUID REFERENCES permissions(id) ON DELETE CASCADE,
@@ -135,7 +135,7 @@ CREATE TABLE user_permissions (
 -- =====================================================
 
 -- Document Access Policies: Define access rules for documents
-CREATE TABLE document_access_policies (
+CREATE TABLE IF NOT EXISTS document_access_policies (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     document_id UUID REFERENCES documents(id) ON DELETE CASCADE,
     
@@ -176,7 +176,7 @@ CREATE TABLE document_access_policies (
 );
 
 -- Document Access Grants: Explicit access grants for documents
-CREATE TABLE document_access_grants (
+CREATE TABLE IF NOT EXISTS document_access_grants (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     document_id UUID REFERENCES documents(id) ON DELETE CASCADE,
     
@@ -301,64 +301,64 @@ CREATE TABLE permission_checks (
 -- =====================================================
 
 -- User indexes
-CREATE INDEX idx_users_username ON users(username);
-CREATE INDEX idx_users_email ON users(email);
-CREATE INDEX idx_users_external_id ON users(external_id);
-CREATE INDEX idx_users_status ON users(status);
+CREATE INDEX IF NOT EXISTS idx_users_username ON users(username);
+CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
+CREATE INDEX IF NOT EXISTS idx_users_external_id ON users(external_id);
+CREATE INDEX IF NOT EXISTS idx_users_status ON users(status);
 
 -- Role indexes
-CREATE INDEX idx_roles_name ON roles(name);
-CREATE INDEX idx_roles_parent_role_id ON roles(parent_role_id);
-CREATE INDEX idx_roles_level ON roles(level);
+CREATE INDEX IF NOT EXISTS idx_roles_name ON roles(name);
+CREATE INDEX IF NOT EXISTS idx_roles_parent_role_id ON roles(parent_role_id);
+CREATE INDEX IF NOT EXISTS idx_roles_level ON roles(level);
 
 -- User roles indexes
-CREATE INDEX idx_user_roles_user_id ON user_roles(user_id);
-CREATE INDEX idx_user_roles_role_id ON user_roles(role_id);
-CREATE INDEX idx_user_roles_active ON user_roles(is_active);
+CREATE INDEX IF NOT EXISTS idx_user_roles_user_id ON user_roles(user_id);
+CREATE INDEX IF NOT EXISTS idx_user_roles_role_id ON user_roles(role_id);
+CREATE INDEX IF NOT EXISTS idx_user_roles_active ON user_roles(is_active);
 
 -- Permission indexes
-CREATE INDEX idx_permissions_name ON permissions(name);
-CREATE INDEX idx_permissions_category ON permissions(category);
-CREATE INDEX idx_permissions_resource_type ON permissions(resource_type);
+CREATE INDEX IF NOT EXISTS idx_permissions_name ON permissions(name);
+CREATE INDEX IF NOT EXISTS idx_permissions_category ON permissions(category);
+CREATE INDEX IF NOT EXISTS idx_permissions_resource_type ON permissions(resource_type);
 
 -- Role permissions indexes
-CREATE INDEX idx_role_permissions_role_id ON role_permissions(role_id);
-CREATE INDEX idx_role_permissions_permission_id ON role_permissions(permission_id);
-CREATE INDEX idx_role_permissions_resource ON role_permissions(resource_type, resource_id);
+CREATE INDEX IF NOT EXISTS idx_role_permissions_role_id ON role_permissions(role_id);
+CREATE INDEX IF NOT EXISTS idx_role_permissions_permission_id ON role_permissions(permission_id);
+CREATE INDEX IF NOT EXISTS idx_role_permissions_resource ON role_permissions(resource_type, resource_id);
 
 -- User permissions indexes
-CREATE INDEX idx_user_permissions_user_id ON user_permissions(user_id);
-CREATE INDEX idx_user_permissions_permission_id ON user_permissions(permission_id);
-CREATE INDEX idx_user_permissions_resource ON user_permissions(resource_type, resource_id);
-CREATE INDEX idx_user_permissions_granted ON user_permissions(is_granted);
+CREATE INDEX IF NOT EXISTS idx_user_permissions_user_id ON user_permissions(user_id);
+CREATE INDEX IF NOT EXISTS idx_user_permissions_permission_id ON user_permissions(permission_id);
+CREATE INDEX IF NOT EXISTS idx_user_permissions_resource ON user_permissions(resource_type, resource_id);
+CREATE INDEX IF NOT EXISTS idx_user_permissions_granted ON user_permissions(is_granted);
 
 -- Document access policy indexes
-CREATE INDEX idx_document_access_policies_document_id ON document_access_policies(document_id);
-CREATE INDEX idx_document_access_policies_access_level ON document_access_policies(access_level);
-CREATE INDEX idx_document_access_policies_owner_id ON document_access_policies(owner_id);
-CREATE INDEX idx_document_access_policies_classification ON document_access_policies(classification);
+CREATE INDEX IF NOT EXISTS idx_document_access_policies_document_id ON document_access_policies(document_id);
+CREATE INDEX IF NOT EXISTS idx_document_access_policies_access_level ON document_access_policies(access_level);
+CREATE INDEX IF NOT EXISTS idx_document_access_policies_owner_id ON document_access_policies(owner_id);
+CREATE INDEX IF NOT EXISTS idx_document_access_policies_classification ON document_access_policies(classification);
 
 -- Document access grants indexes
-CREATE INDEX idx_document_access_grants_document_id ON document_access_grants(document_id);
-CREATE INDEX idx_document_access_grants_user_id ON document_access_grants(user_id);
-CREATE INDEX idx_document_access_grants_role_id ON document_access_grants(role_id);
-CREATE INDEX idx_document_access_grants_active ON document_access_grants(is_active);
-CREATE INDEX idx_document_access_grants_expires ON document_access_grants(expires_at);
+CREATE INDEX IF NOT EXISTS idx_document_access_grants_document_id ON document_access_grants(document_id);
+CREATE INDEX IF NOT EXISTS idx_document_access_grants_user_id ON document_access_grants(user_id);
+CREATE INDEX IF NOT EXISTS idx_document_access_grants_role_id ON document_access_grants(role_id);
+CREATE INDEX IF NOT EXISTS idx_document_access_grants_active ON document_access_grants(is_active);
+CREATE INDEX IF NOT EXISTS idx_document_access_grants_expires ON document_access_grants(expires_at);
 
 -- Source access policy indexes
-CREATE INDEX idx_source_access_policies_source_id ON source_access_policies(source_id);
-CREATE INDEX idx_source_access_policies_access_level ON source_access_policies(access_level);
+CREATE INDEX IF NOT EXISTS idx_source_access_policies_source_id ON source_access_policies(source_id);
+CREATE INDEX IF NOT EXISTS idx_source_access_policies_access_level ON source_access_policies(access_level);
 
 -- Access logs indexes
-CREATE INDEX idx_access_logs_user_id ON access_logs(user_id);
-CREATE INDEX idx_access_logs_resource ON access_logs(resource_type, resource_id);
-CREATE INDEX idx_access_logs_accessed_at ON access_logs(accessed_at);
-CREATE INDEX idx_access_logs_access_granted ON access_logs(access_granted);
-CREATE INDEX idx_access_logs_trace_id ON access_logs(trace_id);
+CREATE INDEX IF NOT EXISTS idx_access_logs_user_id ON access_logs(user_id);
+CREATE INDEX IF NOT EXISTS idx_access_logs_resource ON access_logs(resource_type, resource_id);
+CREATE INDEX IF NOT EXISTS idx_access_logs_accessed_at ON access_logs(accessed_at);
+CREATE INDEX IF NOT EXISTS idx_access_logs_access_granted ON access_logs(access_granted);
+CREATE INDEX IF NOT EXISTS idx_access_logs_trace_id ON access_logs(trace_id);
 
 -- Permission checks indexes
-CREATE INDEX idx_permission_checks_user_id ON permission_checks(user_id);
-CREATE INDEX idx_permission_checks_expires_at ON permission_checks(expires_at);
+CREATE INDEX IF NOT EXISTS idx_permission_checks_user_id ON permission_checks(user_id);
+CREATE INDEX IF NOT EXISTS idx_permission_checks_expires_at ON permission_checks(expires_at);
 
 -- =====================================================
 -- TRIGGERS AND FUNCTIONS

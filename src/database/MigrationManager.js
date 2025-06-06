@@ -89,116 +89,159 @@ class MigrationManager {
   }
 
   /**
-     * Parse migration file to extract forward and rollback scripts
-     */
-  parseMigrationFile(content) {
-    const lines = content.split('\n');
-    let forwardScript = [];
-    let rollbackScript = [];
-    let currentSection = 'forward';
-        
-    for (const line of lines) {
-      const trimmed = line.trim();
-            
-      if (trimmed === '-- ROLLBACK') {
-        currentSection = 'rollback';
-        continue;
-      }
-            
-      if (currentSection === 'forward') {
-        forwardScript.push(line);
-      } else if (currentSection === 'rollback') {
-        rollbackScript.push(line);
-      }
-    }
-        
-    return {
-      forward: forwardScript.join('\n').trim(),
-      rollback: rollbackScript.join('\n').trim()
-    };
-  }
-
-  /**
      * Apply a single migration
      */
-  async applyMigration(migration) {
-    const filePath = path.join(this.migrationsPath, migration.filename);
-    const content = await fs.readFile(filePath, 'utf8');
-    const checksum = this.calculateChecksum(content);
-    const { forward, rollback } = this.parseMigrationFile(content);
-        
-    // Start transaction
-    const client = await this.db.getClient();
-        
+  async applyMigration(version, name, forwardScript, rollbackScript = '') {
+    const checksum = this.calculateChecksum(forwardScript || '');
+    const usesConcurrently = forwardScript && forwardScript.toUpperCase().includes('CREATE INDEX CONCURRENTLY');
+
+    let client = await this.db.getClient();
+
     try {
-      await client.query('BEGIN');
-            
-      // Apply forward migration
-      if (forward) {
-        await client.query(forward);
+      if (usesConcurrently) {
+        // For scripts with CREATE INDEX CONCURRENTLY:
+        // 1. Ensure the client is not in a transaction.
+        try {
+          await client.query('ROLLBACK'); // End any existing transaction
+        } catch (e) { /* Ignore if no transaction active */ }
+        try {
+          await client.query('COMMIT');
+        console.error(`[Migration ${version} (${name})] COMMIT Non-Concurrent Transaction`);
+        console.log(`[Migration ${version} (${name})] COMMIT transaction`); // Attempt to clear any aborted transaction state
+        } catch (e) { /* Ignore if no transaction or already committed */ }
+
+        // 2. Run the main script (index creation) outside an explicit transaction, statement by statement.
+        if (forwardScript) {
+          const statements = forwardScript.split(';')
+            .map(stmt => stmt.trim())
+            .filter(stmt => stmt.length > 0);
+          
+          for (const stmt of statements) {
+            // Add back the semicolon if it's a complete statement, though pg might not need it for single statements.
+            // However, CREATE INDEX CONCURRENTLY must be the only statement in its batch.
+            console.log(`[Migration ${version} (${name})] Executing statement ${statements.indexOf(stmt) + 1}/${statements.length}: ${stmt.substring(0, 100)}...`);
+            try {
+              console.error(`[Migration ${version} (${name})] Executing NC Stmt ${statements.indexOf(stmt) + 1}/${statements.length}: ${stmt.substring(0, 150).replace(/\n/g, ' ')}...`);
+            try {
+              await client.query(stmt);
+              console.error(`[Migration ${version} (${name})] NC Stmt ${statements.indexOf(stmt) + 1} executed successfully.`);
+            } catch (stmtError) {
+              console.error(`[Migration ${version} (${name})] ERROR executing NC Stmt ${statements.indexOf(stmt) + 1}: ${stmtError.message}`);
+              console.error(`[Migration ${version} (${name})] Failing NC Stmt: ${stmt}`);
+              throw stmtError;
+            }
+              console.log(`[Migration ${version} (${name})] Statement ${statements.indexOf(stmt) + 1} executed successfully.`);
+            } catch (stmtError) {
+              console.error(`[Migration ${version} (${name})] ERROR executing statement ${statements.indexOf(stmt) + 1}: ${stmtError.message}`);
+              console.error(`[Migration ${version} (${name})] Failing statement: ${stmt}`);
+              throw stmtError; // Re-throw to be caught by the outer try/catch
+            } 
+          }
+        }
+        client.release(); // Release this client
+
+        // 3. Record the migration in its own, new transaction with a fresh client.
+        client = await this.db.getClient(); // Acquire a fresh client
+        await client.query('BEGIN');
+        console.error(`[Migration ${version} (${name})] BEGIN Non-Concurrent Transaction`);
+        console.log(`[Migration ${version} (${name})] BEGIN transaction`);
+        await client.query(
+          `INSERT INTO ${this.migrationTableName} (version, name, rollback_script, checksum) 
+                   VALUES ($1, $2, $3, $4)`,
+          [version, name, rollbackScript, checksum]
+        );
+        await client.query('COMMIT');
+      } else {
+        // Original behavior: wrap DDL and recording in a single transaction.
+        await client.query('BEGIN');
+        console.error(`[Migration ${version} (${name})] BEGIN Non-Concurrent Transaction`);
+        if (forwardScript) {
+          console.error(`[Migration ${version} (${name})] Executing Non-Concurrent Script (first 300 chars): ${forwardScript.substring(0, 300).replace(/\n/g, ' ')}...`);
+          try {
+            await client.query(forwardScript);
+            console.error(`[Migration ${version} (${name})] Non-Concurrent Script executed successfully.`);
+          } catch (scriptError) {
+            console.error(`[Migration ${version} (${name})] ERROR executing Non-Concurrent Script: ${scriptError.message}`);
+            const scriptToLog = forwardScript.length > 1000 ? forwardScript.substring(0, 1000) + '... (truncated)' : forwardScript;
+            console.error(`[Migration ${version} (${name})] Failing Non-Concurrent Script: ${scriptToLog}`);
+            throw scriptError;
+          }
+        }
+        await client.query(
+          `INSERT INTO ${this.migrationTableName} (version, name, rollback_script, checksum) 
+                   VALUES ($1, $2, $3, $4)`,
+          [version, name, rollbackScript, checksum]
+        );
+        await client.query('COMMIT');
+        console.error(`[Migration ${version} (${name})] COMMIT Non-Concurrent Transaction`);
+
+        // **** BEGIN NEW DIAGNOSTIC ****
+        try {
+          if (forwardScript && forwardScript.includes('CREATE TABLE e2e_test_documents')) {
+            const checkResult = await client.query("SELECT to_regclass('public.e2e_test_documents');");
+            console.error(`[Migration ${version} (${name})] POST-COMMIT CHECK for e2e_test_documents: ${JSON.stringify(checkResult.rows[0])}`);
+          }
+          if (forwardScript && forwardScript.includes('CREATE TABLE integrity_test')) {
+            const checkResult = await client.query("SELECT to_regclass('public.integrity_test');");
+            console.error(`[Migration ${version} (${name})] POST-COMMIT CHECK for integrity_test: ${JSON.stringify(checkResult.rows[0])}`);
+          }
+        } catch (diagError) {
+          console.error(`[Migration ${version} (${name})] POST-COMMIT DIAGNOSTIC QUERY FAILED: ${diagError.message}`);
+        }
+        // **** END NEW DIAGNOSTIC ****
+
+        try {
+          await client.query('DISCARD ALL;');
+          console.error(`[Migration ${version} (${name})] Session state discarded after non-concurrent commit.`);
+        } catch (discardError) {
+          console.error(`[Migration ${version} (${name})] FAILED to DISCARD ALL: ${discardError.message}`);
+          // Decide if this should be a fatal error for the migration
+        }
       }
-            
-      // Record migration
-      await client.query(
-        `INSERT INTO ${this.migrationTableName} (version, name, rollback_script, checksum) 
-                 VALUES ($1, $2, $3, $4)`,
-        [migration.version, migration.name, rollback, checksum]
-      );
-            
-      await client.query('COMMIT');
-            
-      console.log(`Applied migration ${migration.version}: ${migration.name}`);
-            
+      console.error(`[Migration ${version} (${name})] Successfully applied and recorded.`);
     } catch (error) {
-      await client.query('ROLLBACK');
-      throw new Error(`Failed to apply migration ${migration.version}: ${error.message}`);
+      // Attempt to rollback only if we explicitly started a transaction for non-concurrent or recording part.
+      if (client && client.activeQuery === null) { // Check if client is not busy and can issue rollback
+         try {
+            // For concurrent, the recording part is in its own transaction.
+            // For non-concurrent, the whole thing is in one transaction.
+            await client.query('ROLLBACK');
+         } catch (rbError) {
+            console.error(`Rollback attempt failed for ${version} (${name}): ${rbError.message}`);
+         }
+      }
+      console.error(`[Migration ${version} (${name})] Overall failure: ${error.message}`);
+      throw new Error(`Failed to apply migration ${version} (${name}): ${error.message}`);
     } finally {
-      client.release();
+      if (client) {
+        client.release();
+      }
     }
   }
 
   /**
      * Rollback a single migration
      */
-  async rollbackMigration(version) {
-    const applied = await this.getAppliedMigrations();
-    const migration = applied.find(m => m.version === version);
-        
-    if (!migration) {
-      throw new Error(`Migration ${version} not found in applied migrations`);
+  async rollbackMigration(version, name, rollbackScriptContent) {
+    if (!rollbackScriptContent || rollbackScriptContent.trim() === '') {
+      throw new Error(`Empty rollback script provided for migration ${version} (${name})`);
     }
-        
-    const result = await this.db.query(
-      `SELECT rollback_script FROM ${this.migrationTableName} WHERE version = $1`,
-      [version]
-    );
-        
-    if (result.rows.length === 0) {
-      throw new Error(`No rollback script found for migration ${version}`);
-    }
-        
-    const rollbackScript = result.rows[0].rollback_script;
-        
-    if (!rollbackScript || rollbackScript.trim() === '') {
-      throw new Error(`Empty rollback script for migration ${version}`);
-    }
-        
-    // Start transaction
+
     const client = await this.db.getClient();
-        
     try {
       await client.query('BEGIN');
-            
+      
       // Apply rollback script
-      await client.query(rollbackScript);
-            
+      await client.query(rollbackScriptContent);
+      
       // Remove migration record
       await client.query(
         `DELETE FROM ${this.migrationTableName} WHERE version = $1`,
         [version]
       );
-            
+      
       await client.query('COMMIT');
+      console.log(`Rolled back migration ${version}: ${name}`);
             
       console.log(`Rolled back migration ${version}`);
             
@@ -224,7 +267,11 @@ class MigrationManager {
     console.log(`Applying ${pending.length} pending migrations...`);
         
     for (const migration of pending) {
-      await this.applyMigration(migration);
+      const scriptContent = await fs.readFile(path.join(this.migrationsPath, migration.filename), 'utf-8');
+      await this.applyMigration(migration.version, migration.name, scriptContent);
+      // DIAGNOSTIC DELAY
+      console.error(`[MigrationManager.migrate] DIAGNOSTIC: Pausing for 200ms after applying ${migration.version}`);
+      await new Promise(resolve => setTimeout(resolve, 200));
     }
         
     console.log('All migrations applied successfully');

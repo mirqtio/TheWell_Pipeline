@@ -75,6 +75,41 @@ async function setupTestDatabase() {
 
     console.log('✅ Basic tables created');
 
+    // Drop all tables managed by permissions-schema.sql to ensure a clean slate
+    console.log('Dropping permissions-related tables before applying schema...');
+    const tablesToDrop = [
+      'access_logs',
+      'permission_checks',
+      'document_access_grants',
+      'user_permissions',
+      'role_permissions',
+      'source_access_policies',
+      'document_access_policies',
+      'users', // users must be dropped before roles/permissions if not using CASCADE properly elsewhere for them
+      'permissions',
+      'roles'      
+    ];
+    // Drop in specific order to handle dependencies if CASCADE isn't fully effective or if we want to be super sure
+    // For example, user_permissions references users and permissions.
+    // role_permissions references roles and permissions.
+    // document_access_grants references users, roles, document_access_policies
+    // access_logs references users
+    // permission_checks references users
+
+    // Simplified: Drop with CASCADE, order less critical but still good to be mindful.
+    // Drop dependent tables first or ensure CASCADE handles it.
+    await pool.query('DROP TABLE IF EXISTS access_logs CASCADE;');
+    await pool.query('DROP TABLE IF EXISTS permission_checks CASCADE;');
+    await pool.query('DROP TABLE IF EXISTS document_access_grants CASCADE;');
+    await pool.query('DROP TABLE IF EXISTS user_permissions CASCADE;');
+    await pool.query('DROP TABLE IF EXISTS role_permissions CASCADE;');
+    await pool.query('DROP TABLE IF EXISTS source_access_policies CASCADE;');
+    await pool.query('DROP TABLE IF EXISTS document_access_policies CASCADE;');
+    await pool.query('DROP TABLE IF EXISTS users CASCADE;'); 
+    await pool.query('DROP TABLE IF EXISTS permissions CASCADE;');
+    await pool.query('DROP TABLE IF EXISTS roles CASCADE;');
+    console.log('Permissions-related tables dropped.');
+
     // Apply permissions schema
     const permissionsSchemaPath = path.join(__dirname, '../src/database/permissions-schema.sql');
     const permissionsSchema = fs.readFileSync(permissionsSchemaPath, 'utf8');
@@ -90,8 +125,115 @@ async function setupTestDatabase() {
       WHERE table_schema = 'public' 
       ORDER BY table_name
     `);
-    
     console.log('Created tables:', result.rows.map(r => r.table_name).join(', '));
+
+    // Seed a test admin user and assign admin role
+    console.log('Seeding test admin user...');
+    const testUserUsername = 'testadmin';
+    const testUserEmail = 'testadmin@example.com';
+    // IMPORTANT: This is a placeholder hash. Replace with a real bcrypt hash if needed for auth during tests.
+    const testUserPasswordHash = '$2b$10$DUMMYBCRYPTHASHFORTESTING123.'; // Example dummy hash 
+    const testUserExternalId = 'testadmin-external-id';
+
+    await pool.query(`
+      INSERT INTO users (username, email, password_hash, external_id, first_name, last_name, email_verified, status)
+      VALUES ($1, $2, $3, $4, 'Test', 'Admin', true, 'active')
+      ON CONFLICT (username) DO NOTHING;
+    `, [testUserUsername, testUserEmail, testUserPasswordHash, testUserExternalId]);
+
+    await pool.query(`
+      INSERT INTO users (username, email, password_hash, external_id, first_name, last_name, email_verified, status)
+      VALUES ('testuser', 'testuser@example.com', $1, 'testuser-external-id', 'Test', 'User', true, 'active')
+      ON CONFLICT (username) DO NOTHING;
+    `, [testUserPasswordHash]); // Re-using hash for simplicity
+
+    console.log('Test users inserted (if not already present).');
+
+    // Retrieve role IDs
+    const adminRoleResult = await pool.query("SELECT id FROM roles WHERE name = 'admin';");
+    const userRoleResult = await pool.query("SELECT id FROM roles WHERE name = 'user';");
+    const adminRoleId = adminRoleResult.rows[0]?.id;
+    const userRoleId = userRoleResult.rows[0]?.id;
+
+    // Retrieve user IDs
+    const testAdminUserResult = await pool.query("SELECT id FROM users WHERE username = $1;", [testUserUsername]);
+    const testUserResult = await pool.query("SELECT id FROM users WHERE username = 'testuser';");
+    const testAdminUserId = testAdminUserResult.rows[0]?.id;
+    const testUserId = testUserResult.rows[0]?.id;
+
+    if (testAdminUserId && adminRoleId) {
+      await pool.query(`
+        INSERT INTO user_roles (user_id, role_id)
+        VALUES ($1, $2)
+        ON CONFLICT (user_id, role_id) DO NOTHING;
+      `, [testAdminUserId, adminRoleId]);
+      console.log('Test admin user assigned admin role (if not already assigned).');
+    } else {
+      console.log('Could not find testadmin user or admin role to assign.');
+    }
+
+    if (testUserId && userRoleId) {
+      await pool.query(`
+        INSERT INTO user_roles (user_id, role_id)
+        VALUES ($1, $2)
+        ON CONFLICT (user_id, role_id) DO NOTHING;
+      `, [testUserId, userRoleId]);
+      console.log('Test user assigned user role (if not already assigned).');
+    } else {
+      console.log('Could not find testuser or user role to assign.');
+    }
+
+    // Seed sample sources if not present
+    await pool.query(`
+      INSERT INTO sources (name, type, config)
+      SELECT 'Default Source', 'local_folder', '{}'::jsonb
+      /* FROM users u WHERE u.username = $1 */ /* We are not linking to a user here anymore */
+      ON CONFLICT (name) DO NOTHING;
+    ` /*, [testUserUsername] */); // Parameter no longer needed
+    console.log('Default Source seeded (if not already present).');
+
+    // Retrieve Default Source ID
+    const defaultSourceResult = await pool.query("SELECT id FROM sources WHERE name = 'Default Source';");
+    const defaultSourceId = defaultSourceResult.rows[0]?.id;
+
+    // Seed sample documents
+    if (defaultSourceId && testAdminUserId) {
+      console.log('Seeding sample documents for admin...');
+      await pool.query(`
+        INSERT INTO documents (title, source_id, content_type, author, published_at)
+        VALUES ('Test Document 1 by Admin', $1, 'article', $2, NOW());
+      `, [defaultSourceId, testUserUsername]);
+    }
+
+    if (defaultSourceId && testUserId) {
+      console.log('Seeding sample documents for user...');
+      await pool.query(`
+        INSERT INTO documents (title, source_id, content_type, author, published_at)
+        VALUES ('Test Document 2 by User', $1, 'report', $2, NOW());
+      `, [defaultSourceId, 'testuser']);
+    }
+    console.log('Sample documents seeded (if applicable).');
+
+    // Retrieve document IDs
+    const doc1Result = await pool.query("SELECT id FROM documents WHERE title = 'Test Document 1 by Admin';");
+    const doc1Id = doc1Result.rows[0]?.id;
+
+    // Seed sample jobs
+    if (testAdminUserId && defaultSourceId && doc1Id) {
+      console.log('Seeding sample jobs...');
+      await pool.query(`
+        INSERT INTO jobs (job_type, status, payload, source_id, document_id)
+        VALUES ('ingestion', 'completed', $1, $2, $3); 
+      `, ['{"name":"Test Job 1 - Ingestion", "param":"value1"}', defaultSourceId, doc1Id]);
+    }
+
+    if (testUserId && defaultSourceId) {
+      await pool.query(`
+        INSERT INTO jobs (job_type, status, payload, source_id)
+        VALUES ('analysis', 'pending', $1, $2);
+      `, ['{"name":"Test Job 2 - Analysis", "param":"value2"}', defaultSourceId]);
+    }
+    console.log('Sample jobs seeded (if applicable).');
 
   } catch (error) {
     console.error('❌ Error setting up test database:', error.message);

@@ -53,25 +53,25 @@ CREATE INDEX IF NOT EXISTS idx_visibility_approvals_requested_by ON visibility_a
 CREATE INDEX IF NOT EXISTS idx_visibility_approvals_requested_at ON visibility_approvals (requested_at);
 
 -- Visibility rules table
-CREATE TABLE IF NOT EXISTS visibility_rules (
-    id SERIAL PRIMARY KEY,
-    rule_id VARCHAR(255) NOT NULL UNIQUE,
-    name VARCHAR(255) NOT NULL,
-    description TEXT,
-    conditions JSONB NOT NULL,
-    target_visibility VARCHAR(50) NOT NULL,
-    priority INTEGER DEFAULT 0,
-    active BOOLEAN DEFAULT true,
-    created_by VARCHAR(255) NOT NULL,
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
-);
+-- CREATE TABLE IF NOT EXISTS visibility_rules (
+--     id SERIAL PRIMARY KEY,
+--     rule_id VARCHAR(255) NOT NULL UNIQUE,
+--     name VARCHAR(255) NOT NULL,
+--     description TEXT,
+--     conditions JSONB NOT NULL,
+--     target_visibility VARCHAR(50) NOT NULL,
+--     priority INTEGER DEFAULT 0,
+--     active BOOLEAN DEFAULT true,
+--     created_by VARCHAR(255) NOT NULL,
+--     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+--     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+-- );
 
 -- Indexes for visibility_rules
-CREATE INDEX IF NOT EXISTS idx_visibility_rules_rule_id ON visibility_rules (rule_id);
-CREATE INDEX IF NOT EXISTS idx_visibility_rules_active ON visibility_rules (active);
-CREATE INDEX IF NOT EXISTS idx_visibility_rules_priority ON visibility_rules (priority);
-CREATE INDEX IF NOT EXISTS idx_visibility_rules_target_visibility ON visibility_rules (target_visibility);
+-- CREATE INDEX IF NOT EXISTS idx_visibility_rules_rule_id ON visibility_rules (rule_id);
+-- CREATE INDEX IF NOT EXISTS idx_visibility_rules_active ON visibility_rules (active);
+-- CREATE INDEX IF NOT EXISTS idx_visibility_rules_priority ON visibility_rules (priority);
+-- CREATE INDEX IF NOT EXISTS idx_visibility_rules_target_visibility ON visibility_rules (target_visibility);
 
 -- User permissions table
 CREATE TABLE IF NOT EXISTS user_permissions (
@@ -148,28 +148,32 @@ BEGIN
 END;
 $$ language 'plpgsql';
 
+DROP TRIGGER IF EXISTS update_document_visibility_updated_at ON document_visibility;
 CREATE TRIGGER update_document_visibility_updated_at 
     BEFORE UPDATE ON document_visibility 
     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
+DROP TRIGGER IF EXISTS update_visibility_approvals_updated_at ON visibility_approvals;
 CREATE TRIGGER update_visibility_approvals_updated_at 
     BEFORE UPDATE ON visibility_approvals 
     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
-CREATE TRIGGER update_visibility_rules_updated_at 
-    BEFORE UPDATE ON visibility_rules 
-    FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+-- DROP TRIGGER IF EXISTS update_visibility_rules_updated_at ON visibility_rules;
+-- CREATE TRIGGER update_visibility_rules_updated_at 
+--     BEFORE UPDATE ON visibility_rules 
+--     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
+DROP TRIGGER IF EXISTS update_user_permissions_updated_at ON user_permissions;
 CREATE TRIGGER update_user_permissions_updated_at 
     BEFORE UPDATE ON user_permissions 
     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
 -- Insert default visibility rules
-INSERT INTO visibility_rules (rule_id, name, description, conditions, target_visibility, priority, created_by) VALUES
-('rule_internal_default', 'Internal Default', 'Default visibility for all documents', '{}', 'internal', 0, 'system'),
-('rule_external_policy', 'External Policy Documents', 'Policy documents should be external by default', '{"sourceType": "policy", "fileType": "pdf"}', 'external', 10, 'system'),
-('rule_sensitive_restricted', 'Sensitive Content Restricted', 'Documents tagged as sensitive should be restricted', '{"tags": ["sensitive", "confidential"]}', 'restricted', 20, 'system')
-ON CONFLICT (rule_id) DO NOTHING;
+-- INSERT INTO visibility_rules (rule_id, name, description, conditions, target_visibility, priority, created_by) VALUES
+-- ('rule_internal_default', 'Internal Default', 'Default visibility for all documents', '{}', 'internal', 0, 'system'),
+-- ('rule_external_policy', 'External Policy Documents', 'Policy documents should be external by default', '{"sourceType": "policy", "fileType": "pdf"}', 'external', 10, 'system'),
+-- ('rule_sensitive_restricted', 'Sensitive Content Restricted', 'Documents tagged as sensitive should be restricted', '{"tags": ["sensitive", "confidential"]}', 'restricted', 20, 'system')
+-- ON CONFLICT (rule_id) DO NOTHING;
 
 -- Insert default user permissions
 INSERT INTO user_permissions (user_id, role, permissions, visibility_levels, granted_by) VALUES

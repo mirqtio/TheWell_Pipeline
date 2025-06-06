@@ -99,12 +99,30 @@ app.get('/health', (req, res) => {
 // Swagger documentation (no auth required)
 app.use('/api-docs', serve, setup);
 
-// Apply authentication middleware to all routes except health and api-docs
+// Apply authentication middleware to API routes only
 app.use((req, res, next) => {
-  if (req.path === '/health' || req.path.startsWith('/api-docs')) {
+  // Skip auth for health check, docs, and UI routes
+  if (req.path === '/health' || 
+      req.path.startsWith('/api-docs') || 
+      req.path === '/' ||
+      req.path.startsWith('/static') ||
+      req.path.startsWith('/admin') ||
+      req.path.startsWith('/dashboard') ||
+      req.path.endsWith('.html') ||
+      req.path.endsWith('.css') ||
+      req.path.endsWith('.js') ||
+      req.path.endsWith('.png') ||
+      req.path.endsWith('.jpg') ||
+      req.path.endsWith('.ico')) {
     return next();
   }
-  return authMiddleware(req, res, next);
+  
+  // Only apply auth to API routes
+  if (req.path.startsWith('/api')) {
+    return authMiddleware(req, res, next);
+  }
+  
+  return next();
 });
 
 // Apply request throttling to API routes (except health and docs)

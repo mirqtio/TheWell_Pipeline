@@ -977,6 +977,9 @@ class ManualReviewApp {
     case 'curation':
       await this.loadCurationData();
       break;
+    case 'monitoring': // Added case for monitoring
+      await this.loadMonitoringViewData();
+      break;
     default:
       console.warn(`Unknown view: ${view}`);
     }
@@ -986,14 +989,101 @@ class ManualReviewApp {
    * Load initial application data
    */
   async loadInitialData() {
-    // Load data for the default view (review)
+    // Determine view from URL path or default to review
+    const path = window.location.pathname;
+    if (path.startsWith('/monitoring')) {
+      this.currentView = 'monitoring';
+    } else if (path.startsWith('/jobs')) {
+      this.currentView = 'jobs';
+    } else if (path.startsWith('/stats')) {
+      this.currentView = 'stats';
+    } else if (path.startsWith('/visibility')) {
+      this.currentView = 'visibility';
+    } else if (path.startsWith('/curation')) {
+      this.currentView = 'curation';
+    } else {
+      // Default or /review path
+      this.currentView = 'review'; 
+    }
+    // Update navigation active state based on determined currentView
+    document.querySelectorAll('[data-view]').forEach(link => {
+      link.classList.remove('active');
+      if (link.dataset.view === this.currentView) {
+        link.classList.add('active');
+      }
+    });
     await this.switchView(this.currentView);
+  }
+
+  /**
+   * Load data for the Monitoring view
+   */
+  async loadMonitoringViewData() {
+    console.log('[App.js] loadMonitoringViewData: Called');
+    this.setLoadingState('monitoring-page', true);
+    const monitoringContentElement = document.getElementById('monitoring-view-content');
+    
+    if (monitoringContentElement) {
+      monitoringContentElement.innerHTML = '<h2>System Monitoring</h2><div class="alert alert-info">Loading monitoring data...</div>';
+    }
+    
+    // Attempt to get initial status
+    await this.checkSystemStatus();
+    
+    try {
+      // Fetch system status data
+      const statusResponse = await this.apiCall('/api/status');
+      
+      // Fetch metrics data
+      const metricsResponse = await this.apiCall('/api/metrics?timeframe=1h');
+      
+      // Fetch admin metrics (more comprehensive)
+      const adminMetricsResponse = await this.apiCall('/api/v1/admin/metrics');
+      
+      // Check if we're still on the monitoring view (user might have navigated away)
+      if (this.currentView !== 'monitoring' || !monitoringContentElement) {
+        return;
+      }
+      
+      // Combine all data
+      const monitoringData = {
+        status: statusResponse?.status || {},
+        metrics: metricsResponse?.metrics || {},
+        adminMetrics: adminMetricsResponse?.data || {}
+      };
+      
+      // Render the monitoring dashboard
+      this.renderMonitoringDashboard(monitoringContentElement, monitoringData);
+    } catch (error) {
+      console.error('[App.js] Error loading monitoring data:', error);
+      if (monitoringContentElement && this.currentView === 'monitoring') {
+        monitoringContentElement.innerHTML = `
+          <h2>System Monitoring</h2>
+          <div class="alert alert-danger">
+            <i class="bi bi-exclamation-triangle-fill"></i>
+            Error loading monitoring data: ${error.message || 'Unknown error'}
+          </div>
+          <button class="btn btn-primary mt-3" id="retry-monitoring-btn">
+            <i class="bi bi-arrow-clockwise"></i> Retry
+          </button>
+        `;
+        
+        // Add retry button handler
+        const retryBtn = document.getElementById('retry-monitoring-btn');
+        if (retryBtn) {
+          retryBtn.addEventListener('click', () => this.loadMonitoringViewData());
+        }
+      }
+    } finally {
+      this.setLoadingState('monitoring-page', false);
+    }
   }
 
   /**
    * Load user information
    */
   async loadUserInfo() {
+    console.log('[App.js] loadUserInfo: Called');
     // Placeholder for user info loading
     // In a real implementation, this would fetch user details
     console.log('Loading user info...');
@@ -1003,17 +1093,328 @@ class ManualReviewApp {
    * Check system status
    */
   async checkSystemStatus() {
-    // Placeholder for system status check
-    // In a real implementation, this would check backend health
-    console.log('Checking system status...');
+    console.log('[App.js] checkSystemStatus: Called');
+    const statusElement = document.getElementById('system-status');
+    if (statusElement) statusElement.textContent = 'Connecting...';
+
+    try {
+      const response = await this.apiCall('/api/status');
+      if (response && response.status) {
+        if (statusElement) {
+          statusElement.textContent = 'Connected';
+          statusElement.classList.remove('text-warning', 'text-danger');
+          statusElement.classList.add('text-success');
+        }
+        console.log('[App.js] System Status:', response.status);
+        return response;
+      } else {
+        if (statusElement) {
+          statusElement.textContent = 'Error (API)';
+          statusElement.classList.remove('text-success', 'text-warning');
+          statusElement.classList.add('text-danger');
+        }
+        console.error('[App.js] Failed to get system status:', response?.error || 'Unknown error');
+        return null;
+      }
+    } catch (error) {
+      if (statusElement) {
+        statusElement.textContent = 'Error (Network)';
+        statusElement.classList.remove('text-success', 'text-warning');
+        statusElement.classList.add('text-danger');
+      }
+      console.error('[App.js] Network error checking system status:', error);
+      return null;
+    }
   }
 
   /**
    * Update system status periodically
    */
   async updateSystemStatus() {
-    // Placeholder for periodic status updates
-    console.log('Updating system status...');
+    console.log('[App.js] updateSystemStatus: Called');
+    await this.checkSystemStatus();
+  }
+  
+  /**
+   * Render the monitoring dashboard with the provided data
+   * @param {HTMLElement} container - The container element to render the dashboard into
+   * @param {Object} data - The monitoring data to display
+   */
+  renderMonitoringDashboard(container, data) {
+    console.log('[App.js] renderMonitoringDashboard: Called with data:', data);
+    
+    if (!container) return;
+    
+    // Create the dashboard structure
+    let html = `
+      <h2>System Monitoring</h2>
+      <div class="row mb-4">
+        <div class="col-12">
+          <div class="card">
+            <div class="card-header bg-primary text-white">
+              <h5 class="card-title mb-0">System Overview</h5>
+            </div>
+            <div class="card-body">
+              <div class="row">
+                <div class="col-md-6">
+                  <h6>System Information</h6>
+                  <ul class="list-group">
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                      Uptime
+                      <span class="badge bg-primary rounded-pill">${this.formatUptime(data.status?.uptime || 0)}</span>
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                      Environment
+                      <span class="badge bg-info rounded-pill">${data.status?.environment?.env || 'development'}</span>
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                      Node Version
+                      <span class="badge bg-secondary rounded-pill">${data.status?.environment?.nodeVersion || 'unknown'}</span>
+                    </li>
+                  </ul>
+                </div>
+                <div class="col-md-6">
+                  <h6>Resource Usage</h6>
+                  <ul class="list-group">
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                      Memory Used
+                      <span class="badge bg-warning rounded-pill">${this.formatMemory(data.status?.memory?.heapUsed || 0)}</span>
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                      Memory Total
+                      <span class="badge bg-warning rounded-pill">${this.formatMemory(data.status?.memory?.heapTotal || 0)}</span>
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                      CPU Usage
+                      <span class="badge bg-danger rounded-pill">${data.adminMetrics?.resources?.cpuUsage || 'N/A'}%</span>
+                    </li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <div class="row mb-4">
+        <div class="col-md-6">
+          <div class="card">
+            <div class="card-header bg-success text-white">
+              <h5 class="card-title mb-0">Queue Status</h5>
+            </div>
+            <div class="card-body">
+              <div class="table-responsive">
+                <table class="table table-striped">
+                  <thead>
+                    <tr>
+                      <th>Queue</th>
+                      <th>Waiting</th>
+                      <th>Active</th>
+                      <th>Success Rate</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    ${this.renderQueueRows(data.metrics?.queues || {})}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <div class="col-md-6">
+          <div class="card">
+            <div class="card-header bg-info text-white">
+              <h5 class="card-title mb-0">Performance Metrics</h5>
+            </div>
+            <div class="card-body">
+              <ul class="list-group">
+                <li class="list-group-item d-flex justify-content-between align-items-center">
+                  Avg Response Time
+                  <span class="badge bg-primary rounded-pill">${data.adminMetrics?.performance?.avgResponseTime || 'N/A'} ms</span>
+                </li>
+                <li class="list-group-item d-flex justify-content-between align-items-center">
+                  Requests Per Second
+                  <span class="badge bg-primary rounded-pill">${data.adminMetrics?.performance?.requestsPerSecond || 'N/A'}</span>
+                </li>
+                <li class="list-group-item d-flex justify-content-between align-items-center">
+                  Error Rate
+                  <span class="badge bg-danger rounded-pill">${data.adminMetrics?.performance?.errorRate || 'N/A'}%</span>
+                </li>
+                <li class="list-group-item d-flex justify-content-between align-items-center">
+                  SLO Compliance
+                  <span class="badge bg-success rounded-pill">${data.adminMetrics?.performance?.sloCompliance || 'N/A'}%</span>
+                </li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <div class="row">
+        <div class="col-12">
+          <div class="card">
+            <div class="card-header bg-warning text-dark">
+              <h5 class="card-title mb-0">Services Status</h5>
+            </div>
+            <div class="card-body">
+              <div class="row">
+                <div class="col-md-6">
+                  <h6>Queue Manager</h6>
+                  <ul class="list-group mb-3">
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                      Initialized
+                      <span class="badge ${data.status?.services?.queueManager?.initialized ? 'bg-success' : 'bg-danger'} rounded-pill">
+                        ${data.status?.services?.queueManager?.initialized ? 'Yes' : 'No'}
+                      </span>
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                      Connected
+                      <span class="badge ${data.status?.services?.queueManager?.connected ? 'bg-success' : 'bg-danger'} rounded-pill">
+                        ${data.status?.services?.queueManager?.connected ? 'Yes' : 'No'}
+                      </span>
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                      Queue Count
+                      <span class="badge bg-info rounded-pill">
+                        ${(data.status?.services?.queueManager?.queues || []).length}
+                      </span>
+                    </li>
+                  </ul>
+                </div>
+                <div class="col-md-6">
+                  <h6>Ingestion Engine</h6>
+                  <ul class="list-group mb-3">
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                      Initialized
+                      <span class="badge ${data.status?.services?.ingestionEngine?.initialized ? 'bg-success' : 'bg-danger'} rounded-pill">
+                        ${data.status?.services?.ingestionEngine?.initialized ? 'Yes' : 'No'}
+                      </span>
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                      Running
+                      <span class="badge ${data.status?.services?.ingestionEngine?.running ? 'bg-success' : 'bg-danger'} rounded-pill">
+                        ${data.status?.services?.ingestionEngine?.running ? 'Yes' : 'No'}
+                      </span>
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                      Source Count
+                      <span class="badge bg-info rounded-pill">
+                        ${(data.status?.services?.ingestionEngine?.sources || []).length}
+                      </span>
+                    </li>
+                  </ul>
+                </div>
+              </div>
+              
+              <div class="row">
+                <div class="col-12">
+                  <h6>Database</h6>
+                  <ul class="list-group">
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                      Connection Pool
+                      <span class="badge bg-info rounded-pill">
+                        ${data.adminMetrics?.database?.connectionPoolActive || 0}/${data.adminMetrics?.database?.connectionPoolMax || 0}
+                      </span>
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                      Slow Queries
+                      <span class="badge ${(data.adminMetrics?.database?.slowQueries || 0) > 0 ? 'bg-warning' : 'bg-success'} rounded-pill">
+                        ${data.adminMetrics?.database?.slowQueries || 0}
+                      </span>
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                      Index Usage
+                      <span class="badge bg-success rounded-pill">
+                        ${data.adminMetrics?.database?.indexUsage || 'N/A'}%
+                      </span>
+                    </li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <div class="mt-4 text-center">
+        <button class="btn btn-primary" id="refresh-monitoring-btn">
+          <i class="bi bi-arrow-clockwise"></i> Refresh Data
+        </button>
+      </div>
+    `;
+    
+    // Set the HTML content
+    container.innerHTML = html;
+    
+    // Add refresh button handler
+    const refreshBtn = document.getElementById('refresh-monitoring-btn');
+    if (refreshBtn) {
+      refreshBtn.addEventListener('click', () => this.loadMonitoringViewData());
+    }
+  }
+  
+  /**
+   * Format uptime in a human-readable format
+   * @param {number} seconds - Uptime in seconds
+   * @returns {string} Formatted uptime
+   */
+  formatUptime(seconds) {
+    const days = Math.floor(seconds / 86400);
+    const hours = Math.floor((seconds % 86400) / 3600);
+    const minutes = Math.floor((seconds % 3600) / 60);
+    const remainingSeconds = Math.floor(seconds % 60);
+    
+    let result = '';
+    if (days > 0) result += `${days}d `;
+    if (hours > 0 || days > 0) result += `${hours}h `;
+    if (minutes > 0 || hours > 0 || days > 0) result += `${minutes}m `;
+    result += `${remainingSeconds}s`;
+    
+    return result;
+  }
+  
+  /**
+   * Format memory size in a human-readable format
+   * @param {number} bytes - Memory size in bytes
+   * @returns {string} Formatted memory size
+   */
+  formatMemory(bytes) {
+    if (bytes < 1024) return `${bytes} B`;
+    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(2)} KB`;
+    if (bytes < 1024 * 1024 * 1024) return `${(bytes / (1024 * 1024)).toFixed(2)} MB`;
+    return `${(bytes / (1024 * 1024 * 1024)).toFixed(2)} GB`;
+  }
+  
+  /**
+   * Render table rows for queue status
+   * @param {Object} queues - Queue metrics data
+   * @returns {string} HTML for queue table rows
+   */
+  renderQueueRows(queues) {
+    if (!queues || Object.keys(queues).length === 0) {
+      return '<tr><td colspan="4" class="text-center">No queue data available</td></tr>';
+    }
+    
+    let rows = '';
+    for (const [queueName, queueData] of Object.entries(queues)) {
+      const successRate = queueData.recent?.successRate || 'N/A';
+      const successRateClass = 
+        successRate === 'N/A' ? 'bg-secondary' :
+        parseFloat(successRate) >= 95 ? 'bg-success' :
+        parseFloat(successRate) >= 80 ? 'bg-warning' : 'bg-danger';
+      
+      rows += `
+        <tr>
+          <td>${queueName}</td>
+          <td>${queueData.current?.waiting || 0}</td>
+          <td>${queueData.current?.active || 0}</td>
+          <td><span class="badge ${successRateClass}">${successRate}%</span></td>
+        </tr>
+      `;
+    }
+    
+    return rows;
   }
 
   /**
@@ -1165,19 +1566,30 @@ class ManualReviewApp {
    * Make API call
    */
   async apiCall(url, options = {}) {
-    const defaultOptions = {
-      headers: {
-        'Content-Type': 'application/json',
-        'X-API-Key': this.apiKey
-      }
+    console.log('[App.js] apiCall: Called with URL:', url, 'Options:', JSON.stringify(options));
+    const baseHeaders = {
+      'Content-Type': 'application/json',
     };
 
+    // Determine if the request is to our own API or an external one
+    let isInternalRequest;
+    if (url.startsWith('http://') || url.startsWith('https://')) {
+      // Absolute URL: check if it starts with the application's origin
+      isInternalRequest = url.startsWith(window.location.origin);
+    } else {
+      // Relative URL: assume it's an internal API request
+      isInternalRequest = true;
+    }
+
+    if (isInternalRequest) {
+      baseHeaders['X-API-Key'] = this.apiKey;
+    }
+
     const mergedOptions = {
-      ...defaultOptions,
-      ...options,
+      ...options, // Spread other options first (e.g., method, body)
       headers: {
-        ...defaultOptions.headers,
-        ...options.headers
+        ...baseHeaders,    // Our base headers (with conditional API key)
+        ...options.headers // Specific headers from options, can override base
       }
     };
 

@@ -467,4 +467,4 @@ class AuditService {
 }
 
 // Export singleton instance
-module.exports = new AuditService();
+module.exports = AuditService;

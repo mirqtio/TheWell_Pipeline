@@ -75,3 +75,25 @@ build/
 # Test outputs
 test-results/
 coverage/
+
+
+# Test artifacts and caches
+.jest-cache*
+test-results/
+test-artifacts/
+html-report/
+*.trace
+*.network
+*.stacks
+trace.zip
+latest_trace*.zip
+ms-playwright/
+temp_playwright_artifacts/
+resources/
+temp/
+
+# Temporary context files
+*_context.md
+e2e-*-summary.md
+debug_*.js
+ci_logs.txt

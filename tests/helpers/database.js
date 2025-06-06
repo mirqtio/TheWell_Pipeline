@@ -4,24 +4,29 @@
 
 const path = require('path');
 const fs = require('fs').promises;
+const { createTestDatabase, setupTestSchema } = require('./setup-test-db');
+const { Pool } = require('pg');
 
 /**
  * Setup test database
- * This is a placeholder implementation - adapt based on your actual database setup
+ * Creates database, user, and applies all schemas
  */
 async function setupTestDatabase() {
   try {
-    // For file-based databases or test data setup
-    const testDataDir = path.join(__dirname, '../fixtures');
+    // First create the database and user
+    await createTestDatabase();
     
-    // Ensure test data directory exists
+    // Then apply the schema
+    await setupTestSchema();
+    
+    // Also create test fixtures directory
+    const testDataDir = path.join(__dirname, '../fixtures');
     try {
       await fs.access(testDataDir);
     } catch (error) {
       await fs.mkdir(testDataDir, { recursive: true });
     }
     
-    // Initialize any test data files or database connections
     console.log('Test database setup completed');
     
     return true;
@@ -36,7 +41,36 @@ async function setupTestDatabase() {
  */
 async function cleanupTestDatabase() {
   try {
-    // Clean up test data, close connections, etc.
+    const dbName = process.env.DB_NAME || 'thewell_test';
+    const testUser = process.env.DB_USER || 'thewell_test';
+    const testPassword = process.env.DB_PASSWORD || 'thewell_test_password';
+
+    const pool = new Pool({
+      host: process.env.DB_HOST || 'localhost',
+      port: parseInt(process.env.DB_PORT || '5432'),
+      database: dbName,
+      user: testUser,
+      password: testPassword
+    });
+
+    // Clean up test data from tables
+    const tablesToClean = [
+      'feedback',
+      'feedback_aggregates',
+      'documents',
+      'jobs',
+      'sources'
+    ];
+
+    for (const table of tablesToClean) {
+      try {
+        await pool.query(`TRUNCATE TABLE ${table} CASCADE`);
+      } catch (error) {
+        // Table might not exist, ignore
+      }
+    }
+
+    await pool.end();
     console.log('Test database cleanup completed');
     
     return true;
@@ -97,15 +131,20 @@ async function createTestFixtures() {
 }
 
 /**
- * Get test database connection (if using a real database)
+ * Get test database connection
  */
 function getTestDatabaseConnection() {
-  // Return mock connection or real test database connection
-  return {
-    query: jest.fn(),
-    close: jest.fn(),
-    transaction: jest.fn()
-  };
+  const dbName = process.env.DB_NAME || 'thewell_test';
+  const testUser = process.env.DB_USER || 'thewell_test';
+  const testPassword = process.env.DB_PASSWORD || 'thewell_test_password';
+
+  return new Pool({
+    host: process.env.DB_HOST || 'localhost',
+    port: parseInt(process.env.DB_PORT || '5432'),
+    database: dbName,
+    user: testUser,
+    password: testPassword
+  });
 }
 
 module.exports = {

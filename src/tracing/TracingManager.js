@@ -22,7 +22,21 @@ class TracingManager {
     this.namespace = createNamespace('tracing-context');
     
     // Disable tracing in test environments to prevent timeout issues, unless explicitly enabled
-    this.enabled = options.enabled === true || (options.enabled !== false && process.env.NODE_ENV !== 'test');
+    const tracingEnv = process.env.TRACING_ENABLED;
+    let isTracingEnvActuallyEnabled = true; // Default to true, can be overridden by TRACING_ENABLED
+
+    if (tracingEnv !== undefined) {
+      const lowerTracingEnv = tracingEnv.toLowerCase();
+      if (lowerTracingEnv === 'false' || lowerTracingEnv === '0') {
+        isTracingEnvActuallyEnabled = false;
+      }
+      // If tracingEnv is 'true', '1', or any other value, it doesn't change isTracingEnvActuallyEnabled from true
+    }
+
+    // Tracing is enabled if TRACING_ENABLED allows it AND the original logic allows it.
+    // This means TRACING_ENABLED=false acts as an override to disable tracing.
+    this.enabled = isTracingEnvActuallyEnabled && 
+                   (options.enabled === true || (options.enabled !== false && process.env.NODE_ENV !== 'test'));
     
     if (this.enabled) {
       this.initializeTracer();

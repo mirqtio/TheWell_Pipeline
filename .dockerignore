@@ -5,13 +5,23 @@ yarn-debug.log*
 yarn-error.log*
 
 # Testing
-tests/
+# tests/
 coverage/
 test-results/
+test-artifacts/
 *.test.js
 *.spec.js
 jest.config.js
-jest.setup.js
+# jest.setup.js
+.jest-cache*
+html-report/
+*.trace
+*.network
+*.stacks
+trace.zip
+latest_trace*.zip
+ms-playwright/
+temp_playwright_artifacts/
 
 # Development
 .git/
@@ -47,3 +57,19 @@ docker-compose*
 # Misc
 .DS_Store
 Thumbs.db
+
+# Temporary files
+temp/
+resources/
+ci_logs.txt
+debug_feedback.js
+*.log
+
+# Test databases
+tests/temp/
+
+# Summary and documentation files that aren't needed in Docker
+e2e-test-fixes-summary.md
+e2e-database-issues-summary.md
+current_dashboard_failure_context.md
+dashboard_heading_failure_context*.md

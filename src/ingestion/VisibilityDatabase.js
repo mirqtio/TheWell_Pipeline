@@ -54,10 +54,10 @@ class VisibilityDatabase extends EventEmitter {
     const path = require('path');
     
     try {
-      const schemaPath = path.join(__dirname, 'schemas', 'visibility.sql');
-      const schema = fs.readFileSync(schemaPath, 'utf8');
+      // const schemaPath = path.join(__dirname, 'schemas', 'visibility.sql');
+      // const schema = fs.readFileSync(schemaPath, 'utf8');
       
-      await this.pool.query(schema);
+      // await this.pool.query(schema); // Schema is now initialized by Docker entrypoint scripts
       this.emit('schemaInitialized');
       
     } catch (error) {

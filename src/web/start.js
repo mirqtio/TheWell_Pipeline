@@ -7,11 +7,12 @@
 const path = require('path'); // eslint-disable-line no-unused-vars
 const ManualReviewServer = require('./server');
 const logger = require('../utils/logger');
+const { ConfigManager } = require('../config');
 const SourceReliabilityService = require('../services/SourceReliabilityService');
 const QueueManager = require('../ingestion/queue/QueueManager');
 const IngestionEngine = require('../ingestion/IngestionEngine');
 const DatabaseManager = require('../database/DatabaseManager');
-const ConfigManager = require('../config/ConfigManager');
+const AuditService = require('../services/AuditService');
 
 // Mock dependencies for development
 class MockQueueManager {
@@ -365,11 +366,13 @@ async function startWebServer() {
       });
       await databaseManager.initialize();
       
+      logger.info('Initializing ConfigManager...');
       const configManager = new ConfigManager({
-        configDir: process.env.CONFIG_DIR || '/app/config',
-        watchForChanges: true
+        configDir: process.env.CONFIG_DIR || '/app/config'
+        // watchOptions can be specified here if defaults are not suitable
       });
-      await configManager.loadConfigs();
+      await configManager.startWatching();
+      logger.info('ConfigManager started watching.');
       
       queueManager = new QueueManager({
         redis: {
@@ -387,8 +390,12 @@ async function startWebServer() {
       });
       await ingestionEngine.initialize();
       
+      // Initialize AuditService
+      const auditService = new AuditService({ databaseManager });
+      
       sourceReliabilityService = new SourceReliabilityService({
-        databaseManager
+        databaseManager,
+        auditService // Pass the auditService instance
       });
     } else {
       logger.info('Using mock services for development...');

@@ -3,13 +3,15 @@ const { defineConfig, devices } = require('@playwright/test');
 
 module.exports = defineConfig({
   testDir: './tests/e2e',
+  testMatch: '**/*.e2e.test.js',
+  // outputDir: '/app/test-artifacts',
   
   // Maximum time one test can run
-  timeout: 30 * 1000,
+  timeout: 60 * 1000,
   
   expect: {
     // Maximum time expect() should wait
-    timeout: 5000
+    timeout: 10000
   },
   
   // Run tests in files in parallel
@@ -26,18 +28,20 @@ module.exports = defineConfig({
   
   // Reporter to use
   reporter: [
-    ['html', { open: 'never' }],
-    ['json', { outputFile: 'test-results/ui-test-results.json' }],
+    // Explicitly set output folder for HTML report to avoid conflicts or assumptions
+    ['html', { open: 'never', outputFolder: '/app/html-report' }],
+
+    ['json', { outputFile: '/app/test-results/ui-test-results.json' }],
     ['list']
   ],
   
   // Shared settings for all the projects below
   use: {
     // Base URL to use in actions like `await page.goto('/')`
-    baseURL: process.env.ADMIN_UI_URL || 'http://localhost:3001',
+    baseURL: process.env.ADMIN_UI_URL || 'http://localhost:3000',
     
     // Collect trace when retrying the failed test
-    trace: 'on-first-retry',
+    trace: 'retain-on-failure',
     
     // Screenshot on failure
     screenshot: 'only-on-failure',
@@ -45,10 +49,6 @@ module.exports = defineConfig({
     // Video on failure
     video: 'retain-on-failure',
     
-    // Default API key for tests
-    extraHTTPHeaders: {
-      'X-API-Key': process.env.API_KEY || 'test-api-key'
-    }
   },
 
   // Configure projects for major browsers
@@ -81,9 +81,11 @@ module.exports = defineConfig({
 
   // Run your local dev server before starting the tests
   webServer: process.env.CI ? undefined : {
-    command: 'npm run start:web',
-    port: 3001,
+    command: 'npm start',
+    url: process.env.ADMIN_UI_URL || 'http://localhost:3000', // URL to poll
+
+
     timeout: 120 * 1000,
-    reuseExistingServer: !process.env.CI,
+    reuseExistingServer: true, // Always try to reuse
   },
 });

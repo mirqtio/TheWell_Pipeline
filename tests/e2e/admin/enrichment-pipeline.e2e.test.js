@@ -16,8 +16,8 @@ describe('Enrichment Pipeline E2E Tests', () => {
   const baseUrl = 'http://localhost:3099';
 
   beforeAll(async () => {
-    // Start web server
-    const serverPath = path.join(__dirname, '../../../src/web/start.js');
+    // Start web server with full app (includes all routes)
+    const serverPath = path.join(__dirname, '../../../src/web/app-server.js');
     webServer = spawn('node', [serverPath], {
       env: {
         ...process.env,
@@ -29,6 +29,14 @@ describe('Enrichment Pipeline E2E Tests', () => {
       stdio: ['pipe', 'pipe', 'pipe']
     });
 
+    webServer.stdout.on('data', (data) => {
+      console.log(`[Web Server STDOUT]: ${data}`);
+    });
+
+    webServer.stderr.on('data', (data) => {
+      console.error(`[Web Server STDERR]: ${data}`);
+    });
+
     // Wait for server to be available
     await waitForServer(baseUrl, 30000);
     
@@ -37,7 +45,7 @@ describe('Enrichment Pipeline E2E Tests', () => {
     });
     context = await browser.newContext();
     page = await context.newPage();
-  }, 35000);
+  }, 60000);
 
   afterAll(async () => {
     if (browser) {
