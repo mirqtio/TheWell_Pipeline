@@ -200,17 +200,17 @@ async function setupTestDatabase() {
     if (defaultSourceId && testAdminUserId) {
       console.log('Seeding sample documents for admin...');
       await pool.query(`
-        INSERT INTO documents (title, source_id, content_type, author, published_at)
-        VALUES ('Test Document 1 by Admin', $1, 'article', $2, NOW());
-      `, [defaultSourceId, testUserUsername]);
+        INSERT INTO documents (title, source_id, content_type, published_at)
+        VALUES ('Test Document 1 by Admin', $1, 'article', NOW());
+      `, [defaultSourceId]);
     }
 
     if (defaultSourceId && testUserId) {
       console.log('Seeding sample documents for user...');
       await pool.query(`
-        INSERT INTO documents (title, source_id, content_type, author, published_at)
-        VALUES ('Test Document 2 by User', $1, 'report', $2, NOW());
-      `, [defaultSourceId, 'testuser']);
+        INSERT INTO documents (title, source_id, content_type, published_at)
+        VALUES ('Test Document 2 by User', $1, 'report', NOW());
+      `, [defaultSourceId]);
     }
     console.log('Sample documents seeded (if applicable).');
 
