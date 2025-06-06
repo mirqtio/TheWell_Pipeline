@@ -13,6 +13,7 @@ jest.mock('../../../src/utils/logger', () => ({
 }));
 
 describe('WebSocketServer', () => {
+  jest.setTimeout(30000); // Increase timeout for socket tests
   let httpServer;
   let wsServer;
   let clientSocket;

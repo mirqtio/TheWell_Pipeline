@@ -355,6 +355,22 @@ Return only valid JSON.`;
           potentialEntity = [];
         }
       }
+      
+      // Handle any remaining entity at end of sentence
+      if (potentialEntity.length > 0) {
+        const entity = potentialEntity.join(' ');
+        
+        // Simple classification based on patterns
+        if (this.isPersonName(entity)) {
+          entities.people.push(entity);
+        } else if (this.isOrganization(entity)) {
+          entities.organizations.push(entity);
+        } else if (this.isLocation(entity)) {
+          entities.locations.push(entity);
+        } else {
+          entities.topics.push(entity);
+        }
+      }
     }
 
     return entities;

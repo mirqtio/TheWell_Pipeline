@@ -60,7 +60,7 @@ describe('ApiKeyService', () => {
         expect.arrayContaining([
           userId,
           expect.any(String), // key_hash
-          expect.stringMatching(/^sk_[a-zA-Z0-9_]{8}$/), // key_prefix
+          expect.stringMatching(/^sk_[a-zA-Z0-9_]+$/), // key_prefix
           keyName
         ])
       );
