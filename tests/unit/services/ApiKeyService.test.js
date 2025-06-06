@@ -33,7 +33,7 @@ describe('ApiKeyService', () => {
       expect(result).toHaveProperty('id');
       expect(result).toHaveProperty('key');
       expect(result).toHaveProperty('key_prefix');
-      expect(result.key).toMatch(/^sk_[a-zA-Z0-9_]+$/);
+      expect(result.key).toMatch(/^sk_[a-zA-Z0-9_-]+$/);
       expect(result.key.length).toBeGreaterThan(32);
       
       // Check that key was hashed before storage

@@ -24,7 +24,7 @@ describe('AnalyticsEngine', () => {
   let mockPool;
   let mockClient;
 
-  beforeEach(() => {
+  beforeEach(async () => {
     jest.clearAllMocks();
     
     // Get mock instances
@@ -36,11 +36,17 @@ describe('AnalyticsEngine', () => {
     };
     mockPool.connect.mockResolvedValue(mockClient);
     
+    // Mock the pool's query method for loadBaselineStats
+    mockPool.query.mockResolvedValue({ rows: [] });
+    
     analyticsEngine = new AnalyticsEngine({
       windowSizes: [60, 300], // 1m, 5m for testing
       aggregationInterval: 100, // Fast for testing
       anomalyThreshold: 2 // Lower threshold for testing
     });
+    
+    // Store reference to the actual pool for expectations
+    mockPool = analyticsEngine.pool;
   });
 
   afterEach(async () => {
