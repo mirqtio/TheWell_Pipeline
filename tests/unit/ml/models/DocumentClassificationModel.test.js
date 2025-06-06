@@ -113,8 +113,7 @@ describe('DocumentClassificationModel', () => {
       expect(tf.layers.embedding).toHaveBeenCalledWith({
         inputDim: 1000,
         outputDim: 128,
-        inputLength: 100,
-        maskZero: true
+        inputLength: 100
       });
       expect(tf.layers.conv1d).toHaveBeenCalled();
       expect(tf.layers.dense).toHaveBeenCalled();

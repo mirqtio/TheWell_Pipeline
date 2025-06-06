@@ -15,10 +15,12 @@ describe('RBAC Middleware', () => {
       method: 'GET'
     };
     
-    res = {
+    const EventEmitter = require('events');
+    res = Object.assign(new EventEmitter(), {
       status: jest.fn().mockReturnThis(),
-      json: jest.fn()
-    };
+      json: jest.fn(),
+      statusCode: 200
+    });
     
     next = jest.fn();
     

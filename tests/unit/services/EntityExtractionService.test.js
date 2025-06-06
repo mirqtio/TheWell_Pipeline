@@ -296,7 +296,10 @@ describe('EntityExtractionService', () => {
           entities: { persons: [], organizations: [], locations: [], dates: [], times: [], emails: [], urls: [], money: [], phones: [], custom: [] }
         });
       
-      mockDb.query.mockResolvedValue({ rows: [{ id: 1 }] });
+      // Mock all database queries for processing both documents
+      mockDb.query.mockImplementation(() => 
+        Promise.resolve({ rows: [{ id: Date.now() }], rowCount: 1 })
+      );
       
       const results = await service.processBatch(documents);
       
