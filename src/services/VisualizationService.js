@@ -22,7 +22,7 @@ class VisualizationService extends EventEmitter {
 
     try {
       // Initialize database connection
-      this.db = new DatabaseManager();
+      this.db = DatabaseManager.getInstance();
       await this.db.initialize();
 
       // Register built-in transformers

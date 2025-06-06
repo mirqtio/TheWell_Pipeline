@@ -2,6 +2,34 @@ const VisualizationEngine = require('../../../src/visualization/VisualizationEng
 const BaseRenderer = require('../../../src/visualization/renderers/BaseRenderer');
 const EventEmitter = require('events');
 
+// Mock all renderer modules before they're required
+const createMockRenderer = () => {
+  return jest.fn().mockImplementation(() => ({
+    render: jest.fn().mockResolvedValue(true),
+    update: jest.fn().mockResolvedValue(true),
+    destroy: jest.fn(),
+    on: jest.fn(),
+    off: jest.fn(),
+    resize: jest.fn().mockResolvedValue(true),
+    applyTheme: jest.fn().mockResolvedValue(true),
+    applyFilter: jest.fn().mockResolvedValue(true),
+    animateTransition: jest.fn().mockResolvedValue(true),
+    toPNG: jest.fn().mockResolvedValue('data:image/png;base64,test'),
+    toSVG: jest.fn().mockResolvedValue('data:image/svg+xml;base64,test'),
+    toPDF: jest.fn().mockResolvedValue('data:application/pdf;base64,test'),
+    toJSON: jest.fn().mockResolvedValue({ type: 'chart', data: [] })
+  }));
+};
+
+jest.mock('../../../src/visualization/renderers/ChartRenderer', () => createMockRenderer());
+jest.mock('../../../src/visualization/renderers/NetworkRenderer', () => createMockRenderer());
+jest.mock('../../../src/visualization/renderers/HeatMapRenderer', () => createMockRenderer());
+jest.mock('../../../src/visualization/renderers/TreeMapRenderer', () => createMockRenderer());
+jest.mock('../../../src/visualization/renderers/SankeyRenderer', () => createMockRenderer());
+jest.mock('../../../src/visualization/renderers/WordCloudRenderer', () => createMockRenderer());
+jest.mock('../../../src/visualization/renderers/TimelineRenderer', () => createMockRenderer());
+jest.mock('../../../src/visualization/renderers/GeoMapRenderer', () => createMockRenderer());
+
 jest.mock('../../../src/database/DatabaseManager', () => ({
   getInstance: jest.fn(() => ({
     query: jest.fn().mockResolvedValue({ rows: [], rowCount: 0 }),
@@ -43,23 +71,6 @@ describe('VisualizationEngine', () => {
       }))
     };
 
-    // Mock renderer classes
-    jest.mock('../../../src/visualization/renderers/ChartRenderer', () => {
-      return jest.fn().mockImplementation(() => ({
-        render: jest.fn().mockResolvedValue(true),
-        update: jest.fn().mockResolvedValue(true),
-        destroy: jest.fn(),
-        on: jest.fn(),
-        off: jest.fn(),
-        resize: jest.fn().mockResolvedValue(true),
-        applyTheme: jest.fn().mockResolvedValue(true),
-        applyFilter: jest.fn().mockResolvedValue(true),
-        toPNG: jest.fn().mockResolvedValue('data:image/png;base64,test'),
-        toSVG: jest.fn().mockResolvedValue('data:image/svg+xml;base64,test'),
-        toPDF: jest.fn().mockResolvedValue('data:application/pdf;base64,test'),
-        toJSON: jest.fn().mockResolvedValue({ type: 'chart', data: [] })
-      }));
-    });
   });
 
   afterEach(() => {
@@ -109,8 +120,13 @@ describe('VisualizationEngine', () => {
       expect(engine.renderers.get('custom')).toBe(CustomRenderer);
     });
 
-    it('should overwrite existing renderer with warning', () => {
-      const logSpy = jest.spyOn(console, 'warn').mockImplementation();
+    it('should overwrite existing renderer with warning', async () => {
+      // First initialize to register built-in renderers
+      await engine.initialize();
+      
+      const logger = require('../../../src/utils/logger');
+      const logSpy = jest.spyOn(logger, 'warn').mockImplementation();
+      
       class CustomRenderer extends BaseRenderer {}
       
       engine.registerRenderer('chart', CustomRenderer);

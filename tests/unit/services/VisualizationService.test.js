@@ -3,23 +3,30 @@ const CacheManager = require('../../../src/cache/CacheManager');
 const DatabaseManager = require('../../../src/database/DatabaseManager');
 
 jest.mock('../../../src/cache/CacheManager');
-jest.mock('../../../src/database/DatabaseManager', () => ({
-  getInstance: jest.fn(() => ({
+// Create mock outside to allow proper mocking
+const mockDbInstance = {
+  query: jest.fn().mockResolvedValue({ rows: [], rowCount: 0 }),
+  connect: jest.fn().mockResolvedValue({
     query: jest.fn().mockResolvedValue({ rows: [], rowCount: 0 }),
-    connect: jest.fn().mockResolvedValue({
+    release: jest.fn()
+  }),
+  transaction: jest.fn((callback) => {
+    const mockTrx = {
       query: jest.fn().mockResolvedValue({ rows: [], rowCount: 0 }),
-      release: jest.fn()
-    }),
-    transaction: jest.fn((callback) => {
-      const mockTrx = {
-        query: jest.fn().mockResolvedValue({ rows: [], rowCount: 0 }),
-        commit: jest.fn(),
-        rollback: jest.fn()
-      };
-      return callback(mockTrx);
-    })
-  }))
-}));
+      commit: jest.fn(),
+      rollback: jest.fn()
+    };
+    return callback(mockTrx);
+  })
+};
+
+jest.mock('../../../src/database/DatabaseManager', () => {
+  return {
+    __esModule: true,
+    default: jest.fn(),
+    getInstance: jest.fn(() => mockDbInstance)
+  };
+});
 // Mock pg module
 jest.mock('pg', () => {
   const mockPool = {
@@ -45,7 +52,7 @@ describe('VisualizationService', () => {
   beforeEach(() => {
     // Reset mocks
     CacheManager.mockClear();
-    DatabaseManager.mockClear();
+    jest.clearAllMocks();
 
     // Create mock instances
     mockCache = {
@@ -57,9 +64,22 @@ describe('VisualizationService', () => {
 
     mockDb = {
       initialize: jest.fn().mockResolvedValue(true),
-      query: jest.fn()
+      query: jest.fn().mockResolvedValue({ rows: [], rowCount: 0 }),
+      connect: jest.fn().mockResolvedValue({
+        query: jest.fn().mockResolvedValue({ rows: [], rowCount: 0 }),
+        release: jest.fn()
+      }),
+      transaction: jest.fn((callback) => {
+        const mockTrx = {
+          query: jest.fn().mockResolvedValue({ rows: [], rowCount: 0 }),
+          commit: jest.fn(),
+          rollback: jest.fn()
+        };
+        return callback(mockTrx);
+      })
     };
-    DatabaseManager.mockImplementation(() => mockDb);
+    // Update the mock instance
+    DatabaseManager.getInstance.mockReturnValue(mockDb);
 
     service = new VisualizationService();
   });
@@ -154,10 +174,10 @@ describe('VisualizationService', () => {
 
     it('should handle unknown visualization type', async () => {
       mockCache.get.mockResolvedValue(null);
-      mockDb.query.mockResolvedValue([]);
+      mockDb.query.mockResolvedValue({ rows: [] });
 
       await expect(
-        service.getVisualizationData('unknown', {})
+        service.getVisualizationData('unknown', { source: 'documents' })
       ).rejects.toThrow('No transformer registered for type: unknown');
     });
   });
