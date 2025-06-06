@@ -26,10 +26,14 @@ const ragRoutes = require('./routes/rag');
 const reliabilityRoutes = require('./routes/reliability');
 const curationRoutes = require('./routes/curation');
 const adminRoutes = require('./routes/admin');
+const usersRoutes = require('./routes/users');
+const rolesRoutes = require('./routes/roles');
+const versioningRoutes = require('./routes/versioning');
 
 // Import middleware
 const authMiddleware = require('./middleware/auth');
 const errorHandler = require('./middleware/errorHandler');
+const { checkOptionalAuth, rateLimit } = require('./middleware/rbac');
 
 // Create Express app
 const app = express();
@@ -138,6 +142,9 @@ app.use('/api/v1/visibility', visibilityRoutes);
 app.use('/api/v1/feedback', feedbackRoutes);
 app.use('/api/v1/curation', curationRoutes);
 app.use('/api/v1/admin', adminRoutes);
+app.use('/api/v1/users', usersRoutes);
+app.use('/api/v1/roles', rolesRoutes);
+app.use('/api/v1', versioningRoutes);
 
 // Initialize SourceReliabilityService for production use
 let sourceReliabilityService = global.testSourceReliabilityService;
