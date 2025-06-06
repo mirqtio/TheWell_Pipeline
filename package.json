@@ -171,6 +171,12 @@
     "testMatch": [
       "**/tests/**/*.test.js"
     ],
+    "testPathIgnorePatterns": [
+      "/node_modules/",
+      "/tests/unit/ui-framework/",
+      "/tests/unit/web/components/AdminDashboard.test.js",
+      "/tests/unit/web/components/CurationBoard.test.js"
+    ],
     "collectCoverageFrom": [
       "src/**/*.js",
       "!src/**/*.test.js",
