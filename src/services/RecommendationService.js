@@ -193,7 +193,7 @@ class RecommendationService {
       
       // Load from database
       const result = await this._getDb().query(
-        `SELECT * FROM user_profiles WHERE user_id = $1`,
+        'SELECT * FROM user_profiles WHERE user_id = $1',
         [userId]
       );
       

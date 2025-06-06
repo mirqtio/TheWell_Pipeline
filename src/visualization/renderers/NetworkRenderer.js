@@ -133,9 +133,9 @@ class NetworkRenderer extends BaseRenderer {
         
         // Keep nodes within bounds
         node.x = Math.max(this.networkOptions.nodeRadius, 
-                Math.min(width - this.networkOptions.nodeRadius, node.x));
+          Math.min(width - this.networkOptions.nodeRadius, node.x));
         node.y = Math.max(this.networkOptions.nodeRadius, 
-                Math.min(height - this.networkOptions.nodeRadius, node.y));
+          Math.min(height - this.networkOptions.nodeRadius, node.y));
       });
       
       // Update visual elements

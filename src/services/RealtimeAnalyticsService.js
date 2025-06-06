@@ -422,15 +422,15 @@ class RealtimeAnalyticsService extends EventEmitter {
       // Process each type
       for (const [type, typeEvents] of Object.entries(eventsByType)) {
         switch (type) {
-          case 'document.processing':
-            await this.batchInsertDocumentEvents(db, typeEvents);
-            break;
-          case 'search.query':
-            await this.batchInsertSearchEvents(db, typeEvents);
-            break;
-          case 'user.activity':
-            await this.batchInsertActivityEvents(db, typeEvents);
-            break;
+        case 'document.processing':
+          await this.batchInsertDocumentEvents(db, typeEvents);
+          break;
+        case 'search.query':
+          await this.batchInsertSearchEvents(db, typeEvents);
+          break;
+        case 'user.activity':
+          await this.batchInsertActivityEvents(db, typeEvents);
+          break;
           // Add more batch processors as needed
         }
       }
@@ -492,27 +492,27 @@ class RealtimeAnalyticsService extends EventEmitter {
         const data = JSON.parse(message);
         
         switch (channel) {
-          case 'ingestion:complete':
-            await this.trackDocumentProcessing(
-              data.documentId,
-              'completed',
-              data.metadata
-            );
-            break;
-          case 'ingestion:error':
-            await this.trackDocumentProcessing(
-              data.documentId,
-              'failed',
-              data.metadata
-            );
-            break;
-          case 'search:executed':
-            await this.trackSearchQuery(
-              data.query,
-              data.results,
-              data.metadata
-            );
-            break;
+        case 'ingestion:complete':
+          await this.trackDocumentProcessing(
+            data.documentId,
+            'completed',
+            data.metadata
+          );
+          break;
+        case 'ingestion:error':
+          await this.trackDocumentProcessing(
+            data.documentId,
+            'failed',
+            data.metadata
+          );
+          break;
+        case 'search:executed':
+          await this.trackSearchQuery(
+            data.query,
+            data.results,
+            data.metadata
+          );
+          break;
         }
       } catch (error) {
         logger.error('Error processing system event', { channel, error });

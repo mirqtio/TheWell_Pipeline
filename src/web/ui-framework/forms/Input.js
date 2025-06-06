@@ -87,8 +87,8 @@ export const Input = forwardRef(({
           aria-invalid={!!error}
           aria-describedby={
             error ? `${inputId}-error` :
-            helper ? `${inputId}-helper` :
-            undefined
+              helper ? `${inputId}-helper` :
+                undefined
           }
           {...props}
         />
@@ -174,8 +174,8 @@ export const Textarea = forwardRef(({
         aria-invalid={!!error}
         aria-describedby={
           error ? `${textareaId}-error` :
-          helper ? `${textareaId}-helper` :
-          undefined
+            helper ? `${textareaId}-helper` :
+              undefined
         }
         {...props}
       />

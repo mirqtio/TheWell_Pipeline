@@ -106,8 +106,8 @@ class MigrationManager {
         } catch (e) { /* Ignore if no transaction active */ }
         try {
           await client.query('COMMIT');
-        console.error(`[Migration ${version} (${name})] COMMIT Non-Concurrent Transaction`);
-        console.log(`[Migration ${version} (${name})] COMMIT transaction`); // Attempt to clear any aborted transaction state
+          console.error(`[Migration ${version} (${name})] COMMIT Non-Concurrent Transaction`);
+          console.log(`[Migration ${version} (${name})] COMMIT transaction`); // Attempt to clear any aborted transaction state
         } catch (e) { /* Ignore if no transaction or already committed */ }
 
         // 2. Run the main script (index creation) outside an explicit transaction, statement by statement.
@@ -122,14 +122,14 @@ class MigrationManager {
             console.log(`[Migration ${version} (${name})] Executing statement ${statements.indexOf(stmt) + 1}/${statements.length}: ${stmt.substring(0, 100)}...`);
             try {
               console.error(`[Migration ${version} (${name})] Executing NC Stmt ${statements.indexOf(stmt) + 1}/${statements.length}: ${stmt.substring(0, 150).replace(/\n/g, ' ')}...`);
-            try {
-              await client.query(stmt);
-              console.error(`[Migration ${version} (${name})] NC Stmt ${statements.indexOf(stmt) + 1} executed successfully.`);
-            } catch (stmtError) {
-              console.error(`[Migration ${version} (${name})] ERROR executing NC Stmt ${statements.indexOf(stmt) + 1}: ${stmtError.message}`);
-              console.error(`[Migration ${version} (${name})] Failing NC Stmt: ${stmt}`);
-              throw stmtError;
-            }
+              try {
+                await client.query(stmt);
+                console.error(`[Migration ${version} (${name})] NC Stmt ${statements.indexOf(stmt) + 1} executed successfully.`);
+              } catch (stmtError) {
+                console.error(`[Migration ${version} (${name})] ERROR executing NC Stmt ${statements.indexOf(stmt) + 1}: ${stmtError.message}`);
+                console.error(`[Migration ${version} (${name})] Failing NC Stmt: ${stmt}`);
+                throw stmtError;
+              }
               console.log(`[Migration ${version} (${name})] Statement ${statements.indexOf(stmt) + 1} executed successfully.`);
             } catch (stmtError) {
               console.error(`[Migration ${version} (${name})] ERROR executing statement ${statements.indexOf(stmt) + 1}: ${stmtError.message}`);
@@ -178,11 +178,11 @@ class MigrationManager {
         // **** BEGIN NEW DIAGNOSTIC ****
         try {
           if (forwardScript && forwardScript.includes('CREATE TABLE e2e_test_documents')) {
-            const checkResult = await client.query("SELECT to_regclass('public.e2e_test_documents');");
+            const checkResult = await client.query('SELECT to_regclass(\'public.e2e_test_documents\');');
             console.error(`[Migration ${version} (${name})] POST-COMMIT CHECK for e2e_test_documents: ${JSON.stringify(checkResult.rows[0])}`);
           }
           if (forwardScript && forwardScript.includes('CREATE TABLE integrity_test')) {
-            const checkResult = await client.query("SELECT to_regclass('public.integrity_test');");
+            const checkResult = await client.query('SELECT to_regclass(\'public.integrity_test\');');
             console.error(`[Migration ${version} (${name})] POST-COMMIT CHECK for integrity_test: ${JSON.stringify(checkResult.rows[0])}`);
           }
         } catch (diagError) {
@@ -202,13 +202,13 @@ class MigrationManager {
     } catch (error) {
       // Attempt to rollback only if we explicitly started a transaction for non-concurrent or recording part.
       if (client && client.activeQuery === null) { // Check if client is not busy and can issue rollback
-         try {
-            // For concurrent, the recording part is in its own transaction.
-            // For non-concurrent, the whole thing is in one transaction.
-            await client.query('ROLLBACK');
-         } catch (rbError) {
-            console.error(`Rollback attempt failed for ${version} (${name}): ${rbError.message}`);
-         }
+        try {
+          // For concurrent, the recording part is in its own transaction.
+          // For non-concurrent, the whole thing is in one transaction.
+          await client.query('ROLLBACK');
+        } catch (rbError) {
+          console.error(`Rollback attempt failed for ${version} (${name}): ${rbError.message}`);
+        }
       }
       console.error(`[Migration ${version} (${name})] Overall failure: ${error.message}`);
       throw new Error(`Failed to apply migration ${version} (${name}): ${error.message}`);

@@ -144,7 +144,7 @@ export const useApi = (endpoint, options = {}) => {
         abortControllerRef.current.abort();
       }
     };
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  }, []);
 
   return {
     data,

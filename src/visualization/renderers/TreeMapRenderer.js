@@ -251,25 +251,25 @@ class TreeMapRenderer extends BaseRenderer {
 
   getNodeColor(node, colors, maxDepth) {
     switch (this.treemapOptions.colorBy) {
-      case 'depth':
-        const depthRatio = node.depth / maxDepth;
-        return colors.palette[Math.floor(depthRatio * (colors.palette.length - 1))];
+    case 'depth':
+      const depthRatio = node.depth / maxDepth;
+      return colors.palette[Math.floor(depthRatio * (colors.palette.length - 1))];
       
-      case 'value':
-        const parent = node.parent;
-        if (!parent) return colors.primary;
-        const siblings = parent.children || [];
-        const maxValue = Math.max(...siblings.map(d => d.value));
-        const valueRatio = node.value / maxValue;
-        const opacity = 0.3 + valueRatio * 0.7;
-        return this.adjustOpacity(colors.primary, opacity);
+    case 'value':
+      const parent = node.parent;
+      if (!parent) return colors.primary;
+      const siblings = parent.children || [];
+      const maxValue = Math.max(...siblings.map(d => d.value));
+      const valueRatio = node.value / maxValue;
+      const opacity = 0.3 + valueRatio * 0.7;
+      return this.adjustOpacity(colors.primary, opacity);
       
-      case 'category':
-        const category = node.data.category || node.data.type || 0;
-        return colors.palette[category % colors.palette.length];
+    case 'category':
+      const category = node.data.category || node.data.type || 0;
+      return colors.palette[category % colors.palette.length];
       
-      default:
-        return colors.primary;
+    default:
+      return colors.primary;
     }
   }
 

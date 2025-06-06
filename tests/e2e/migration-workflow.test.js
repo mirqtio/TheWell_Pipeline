@@ -196,7 +196,7 @@ DROP TABLE IF EXISTS audit_log;`;
       // **** BEGIN NEW DIAGNOSTIC ****
       try {
         const extCheckClient = await db.getClient();
-        const extResult = await extCheckClient.query("SELECT oid FROM pg_extension WHERE extname = 'vector';");
+        const extResult = await extCheckClient.query('SELECT oid FROM pg_extension WHERE extname = \'vector\';');
         console.error(`DIAGNOSTIC: Vector extension check before migrate (lifecycle test): ${JSON.stringify(extResult.rows)}`);
         extCheckClient.release();
       } catch (diagErr) {
@@ -470,7 +470,7 @@ ALTER TABLE integrity_test DROP COLUMN IF EXISTS active;`;
       // **** BEGIN NEW DIAGNOSTIC ****
       try {
         const extCheckClient = await db.getClient();
-        const extResult = await extCheckClient.query("SELECT oid FROM pg_extension WHERE extname = 'vector';");
+        const extResult = await extCheckClient.query('SELECT oid FROM pg_extension WHERE extname = \'vector\';');
         console.error(`DIAGNOSTIC: Vector extension check before migrate (integrity test): ${JSON.stringify(extResult.rows)}`);
         extCheckClient.release();
       } catch (diagErr) {

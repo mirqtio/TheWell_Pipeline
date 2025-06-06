@@ -35,7 +35,7 @@ test.describe('Admin UI - Navigation', () => {
       console.log('[Navigation beforeEach] Login form disappeared.');
 
       console.log(`[Navigation beforeEach] Waiting for URL to be ${BASE_URL}{,/}* after login...`);
-      await page.waitForURL(BASE_URL + "{,/}*", { timeout: 20000, waitUntil: 'domcontentloaded' });
+      await page.waitForURL(BASE_URL + '{,/}*', { timeout: 20000, waitUntil: 'domcontentloaded' });
       console.log(`[Navigation beforeEach] URL is now ${page.url()}. Waiting for network idle...`);
 
       await page.waitForLoadState('networkidle', { timeout: 15000 });
@@ -43,13 +43,13 @@ test.describe('Admin UI - Navigation', () => {
     } else {
       console.log('[Navigation beforeEach] Login form not visible. Assuming already logged in or no auth needed.');
       if (page.url().startsWith(BASE_URL)) {
-          console.log(`[Navigation beforeEach] Already on BASE_URL or sub-path. Current URL: ${page.url()}. Waiting for network idle...`);
-          await page.waitForLoadState('networkidle', { timeout: 15000 });
-          console.log('[Navigation beforeEach] Network is idle on initial page (assumed logged in).');
+        console.log(`[Navigation beforeEach] Already on BASE_URL or sub-path. Current URL: ${page.url()}. Waiting for network idle...`);
+        await page.waitForLoadState('networkidle', { timeout: 15000 });
+        console.log('[Navigation beforeEach] Network is idle on initial page (assumed logged in).');
       } else {
-          console.log(`[Navigation beforeEach] Not on BASE_URL. Current URL: ${page.url()}. Waiting for network idle...`);
-          await page.waitForLoadState('networkidle', { timeout: 10000 });
-          console.log('[Navigation beforeEach] Network is idle on unexpected initial page.');
+        console.log(`[Navigation beforeEach] Not on BASE_URL. Current URL: ${page.url()}. Waiting for network idle...`);
+        await page.waitForLoadState('networkidle', { timeout: 10000 });
+        console.log('[Navigation beforeEach] Network is idle on unexpected initial page.');
       }
     }
     console.log(`[Navigation beforeEach] Completed. Current URL: ${page.url()}`);

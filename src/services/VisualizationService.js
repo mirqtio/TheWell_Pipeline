@@ -112,16 +112,16 @@ class VisualizationService extends EventEmitter {
     const { source, filters = {}, limit = 1000, offset = 0 } = query;
 
     switch (source) {
-      case 'documents':
-        return this.fetchDocuments(filters, limit, offset);
-      case 'feedback':
-        return this.fetchFeedback(filters, limit, offset);
-      case 'jobs':
-        return this.fetchJobs(filters, limit, offset);
-      case 'entities':
-        return this.fetchEntities(filters, limit, offset);
-      default:
-        throw new Error(`Unknown data source: ${source}`);
+    case 'documents':
+      return this.fetchDocuments(filters, limit, offset);
+    case 'feedback':
+      return this.fetchFeedback(filters, limit, offset);
+    case 'jobs':
+      return this.fetchJobs(filters, limit, offset);
+    case 'entities':
+      return this.fetchEntities(filters, limit, offset);
+    default:
+      throw new Error(`Unknown data source: ${source}`);
     }
   }
 
@@ -672,17 +672,17 @@ class VisualizationService extends EventEmitter {
    */
   async exportData(type, data, format = 'json') {
     switch (format) {
-      case 'json':
-        return JSON.stringify(data, null, 2);
+    case 'json':
+      return JSON.stringify(data, null, 2);
       
-      case 'csv':
-        return this.convertToCSV(data);
+    case 'csv':
+      return this.convertToCSV(data);
       
-      case 'excel':
-        return this.convertToExcel(data);
+    case 'excel':
+      return this.convertToExcel(data);
       
-      default:
-        throw new Error(`Unsupported export format: ${format}`);
+    default:
+      throw new Error(`Unsupported export format: ${format}`);
     }
   }
 

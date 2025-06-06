@@ -314,21 +314,21 @@ class QualityScoringModel extends BaseModel {
     Object.entries(scores).forEach(([dimension, score]) => {
       if (score < 0.7 && dimension !== 'overall') {
         switch (dimension) {
-          case 'relevance':
-            recommendations.push('Improve content relevance by focusing on main topics');
-            break;
-          case 'completeness':
-            recommendations.push('Add more comprehensive information and details');
-            break;
-          case 'accuracy':
-            recommendations.push('Verify facts and fix any inaccuracies');
-            break;
-          case 'clarity':
-            recommendations.push('Simplify language and improve sentence structure');
-            break;
-          case 'coherence':
-            recommendations.push('Improve logical flow and transitions between ideas');
-            break;
+        case 'relevance':
+          recommendations.push('Improve content relevance by focusing on main topics');
+          break;
+        case 'completeness':
+          recommendations.push('Add more comprehensive information and details');
+          break;
+        case 'accuracy':
+          recommendations.push('Verify facts and fix any inaccuracies');
+          break;
+        case 'clarity':
+          recommendations.push('Simplify language and improve sentence structure');
+          break;
+        case 'coherence':
+          recommendations.push('Improve logical flow and transitions between ideas');
+          break;
         }
       }
     });
@@ -344,7 +344,7 @@ class QualityScoringModel extends BaseModel {
     
     // Prepare labels for multi-output
     const labels = [];
-    this.qualityDimensions.forEach((dim, idx) => {
+    this.qualityDimensions.forEach((dim, _idx) => {
       labels.push(tf.tensor2d(qualityLabels.map(label => [label[dim] || 0])));
     });
     

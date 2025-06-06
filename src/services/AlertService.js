@@ -106,7 +106,7 @@ class AlertService {
       }
       
       if (updateFields.length > 0) {
-        updateFields.push(`updated_at = NOW()`);
+        updateFields.push('updated_at = NOW()');
         values.push(ruleId);
         
         await this._getDb().query(`
@@ -523,18 +523,18 @@ class AlertService {
     const config = action.configuration;
     
     switch (action.type) {
-      case 'email':
-        return this._createEmailHandler(config);
-      case 'slack':
-        return this._createSlackHandler(config);
-      case 'webhook':
-        return this._createWebhookHandler(config);
-      case 'log':
-        return this._createLogHandler(config);
-      default:
-        return async () => {
-          logger.warn(`Unknown action type: ${action.type}`);
-        };
+    case 'email':
+      return this._createEmailHandler(config);
+    case 'slack':
+      return this._createSlackHandler(config);
+    case 'webhook':
+      return this._createWebhookHandler(config);
+    case 'log':
+      return this._createLogHandler(config);
+    default:
+      return async () => {
+        logger.warn(`Unknown action type: ${action.type}`);
+      };
     }
   }
   
@@ -542,7 +542,7 @@ class AlertService {
    * Create email action handler
    */
   _createEmailHandler(config) {
-    return async ({ rule, data, result }) => {
+    return async ({ rule, data: _data, result }) => {
       logger.info('Email alert triggered', {
         rule: rule.name,
         recipients: config.default_recipients,
@@ -556,7 +556,7 @@ class AlertService {
    * Create Slack action handler
    */
   _createSlackHandler(config) {
-    return async ({ rule, data, result }) => {
+    return async ({ rule, data: _data, result }) => {
       logger.info('Slack alert triggered', {
         rule: rule.name,
         channel: config.channel,
@@ -570,7 +570,7 @@ class AlertService {
    * Create webhook action handler
    */
   _createWebhookHandler(config) {
-    return async ({ rule, data, result }) => {
+    return async ({ rule, data: _data, result }) => {
       logger.info('Webhook alert triggered', {
         rule: rule.name,
         url: config.url,

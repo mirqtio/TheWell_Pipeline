@@ -347,8 +347,8 @@ class SearchService {
         let facetQuery;
         
         switch (facetType) {
-          case 'content_type':
-            facetQuery = `
+        case 'content_type':
+          facetQuery = `
               SELECT 
                 content_type as value,
                 COUNT(*) as count
@@ -357,10 +357,10 @@ class SearchService {
               GROUP BY content_type
               ORDER BY count DESC
             `;
-            break;
+          break;
             
-          case 'author':
-            facetQuery = `
+        case 'author':
+          facetQuery = `
               SELECT 
                 author as value,
                 COUNT(*) as count
@@ -370,10 +370,10 @@ class SearchService {
               ORDER BY count DESC
               LIMIT 50
             `;
-            break;
+          break;
             
-          case 'tags':
-            facetQuery = `
+        case 'tags':
+          facetQuery = `
               SELECT 
                 UNNEST(tags) as value,
                 COUNT(*) as count
@@ -384,10 +384,10 @@ class SearchService {
               ORDER BY count DESC
               LIMIT 100
             `;
-            break;
+          break;
             
-          case 'quality':
-            facetQuery = `
+        case 'quality':
+          facetQuery = `
               SELECT 
                 CASE 
                   WHEN quality_score >= 0.8 THEN 'high'
@@ -405,7 +405,7 @@ class SearchService {
                   WHEN 'low' THEN 3
                 END
             `;
-            break;
+          break;
         }
         
         const result = await this.pool.query(facetQuery);

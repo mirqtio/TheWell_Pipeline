@@ -95,9 +95,9 @@ class RecommendationWidget {
         </div>
         <div class="recommendations-list">
           ${this.recommendations.length > 0 ? 
-            this.recommendations.map((item, index) => this.renderRecommendation(item, index)).join('') :
-            '<p class="no-recommendations">No recommendations available</p>'
-          }
+    this.recommendations.map((item, index) => this.renderRecommendation(item, index)).join('') :
+    '<p class="no-recommendations">No recommendations available</p>'
+}
         </div>
       </div>
     `;
@@ -114,8 +114,8 @@ class RecommendationWidget {
           <p class="recommendation-snippet">${this.escapeHtml(this.truncate(item.content || '', 100))}</p>
           ${item.category ? `<span class="recommendation-category">${this.escapeHtml(item.category)}</span>` : ''}
           ${this.options.showExplanation && item.explanation ? 
-            `<p class="recommendation-explanation">${this.escapeHtml(item.explanation)}</p>` : ''
-          }
+    `<p class="recommendation-explanation">${this.escapeHtml(item.explanation)}</p>` : ''
+}
         </div>
         <div class="recommendation-actions">
           <button class="action-btn like-btn" data-action="like" title="Like">

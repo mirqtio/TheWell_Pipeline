@@ -331,21 +331,21 @@ class RealtimeDashboard {
     const chartData = { x: new Date(timestamp), y: value };
     
     switch (metric) {
-      case 'document.processing.time':
-        this.addChartData('processing', 0, chartData);
-        break;
-      case 'document.processing.count':
-        this.addChartData('processing', 1, chartData);
-        break;
-      case 'search.query.latency':
-        this.addChartData('latency', 0, chartData);
-        break;
-      case 'system.cpu.usage':
-        this.addChartData('resources', 0, chartData);
-        break;
-      case 'system.memory.usage':
-        this.addChartData('resources', 1, chartData);
-        break;
+    case 'document.processing.time':
+      this.addChartData('processing', 0, chartData);
+      break;
+    case 'document.processing.count':
+      this.addChartData('processing', 1, chartData);
+      break;
+    case 'search.query.latency':
+      this.addChartData('latency', 0, chartData);
+      break;
+    case 'system.cpu.usage':
+      this.addChartData('resources', 0, chartData);
+      break;
+    case 'system.memory.usage':
+      this.addChartData('resources', 1, chartData);
+      break;
     }
   }
 
@@ -469,18 +469,18 @@ class RealtimeDashboard {
     statusEl.className = `connection-status status-${status}`;
     
     switch (status) {
-      case 'connected':
-        textEl.textContent = 'Connected';
-        break;
-      case 'disconnected':
-        textEl.textContent = 'Disconnected';
-        break;
-      case 'connecting':
-        textEl.textContent = 'Connecting...';
-        break;
-      case 'error':
-        textEl.textContent = 'Connection Error';
-        break;
+    case 'connected':
+      textEl.textContent = 'Connected';
+      break;
+    case 'disconnected':
+      textEl.textContent = 'Disconnected';
+      break;
+    case 'connecting':
+      textEl.textContent = 'Connecting...';
+      break;
+    case 'error':
+      textEl.textContent = 'Connection Error';
+      break;
     }
   }
 
@@ -532,7 +532,7 @@ class RealtimeDashboard {
     } else if (change < 0) {
       element.innerHTML = `<span class="trend-down">↓ ${Math.abs(change).toFixed(1)}%</span>`;
     } else {
-      element.innerHTML = `<span class="trend-stable">→ 0%</span>`;
+      element.innerHTML = '<span class="trend-stable">→ 0%</span>';
     }
   }
 

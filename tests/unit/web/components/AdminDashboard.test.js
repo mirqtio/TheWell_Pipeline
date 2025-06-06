@@ -4,7 +4,7 @@
 
 const React = require('react');
 const { render, screen, fireEvent, waitFor } = require('@testing-library/react');
-const '@testing-library/jest-dom';
+require('@testing-library/jest-dom');
 const AdminDashboard = require('../../../../src/web/components/admin/AdminDashboard');
 
 // Mock the fetch API

@@ -151,17 +151,17 @@ class AlertRulesEngine {
     // Evaluate based on rule type
     let result;
     switch (rule.type) {
-      case 'threshold':
-        result = this._evaluateThresholdRule(rule, data);
-        break;
-      case 'composite':
-        result = this._evaluateCompositeRule(rule, data);
-        break;
-      case 'pattern':
-        result = this._evaluatePatternRule(rule, data);
-        break;
-      default:
-        throw new Error(`Unknown rule type: ${rule.type}`);
+    case 'threshold':
+      result = this._evaluateThresholdRule(rule, data);
+      break;
+    case 'composite':
+      result = this._evaluateCompositeRule(rule, data);
+      break;
+    case 'pattern':
+      result = this._evaluatePatternRule(rule, data);
+      break;
+    default:
+      throw new Error(`Unknown rule type: ${rule.type}`);
     }
     
     // Mark as triggered if applicable
@@ -393,7 +393,7 @@ class AlertRulesEngine {
   /**
    * Evaluate pattern rule
    */
-  _evaluatePatternRule(rule, data) {
+  _evaluatePatternRule(rule, _data) {
     const { pattern, count, window } = rule.conditions;
     const events = this.eventHistory.get(rule.id) || [];
     
@@ -441,20 +441,20 @@ class AlertRulesEngine {
    */
   _compareValues(actual, operator, expected) {
     switch (operator) {
-      case '>':
-        return actual > expected;
-      case '>=':
-        return actual >= expected;
-      case '<':
-        return actual < expected;
-      case '<=':
-        return actual <= expected;
-      case '==':
-        return actual == expected;
-      case '!=':
-        return actual != expected;
-      default:
-        throw new Error(`Unknown operator: ${operator}`);
+    case '>':
+      return actual > expected;
+    case '>=':
+      return actual >= expected;
+    case '<':
+      return actual < expected;
+    case '<=':
+      return actual <= expected;
+    case '==':
+      return actual == expected;
+    case '!=':
+      return actual != expected;
+    default:
+      throw new Error(`Unknown operator: ${operator}`);
     }
   }
   
@@ -473,7 +473,7 @@ class AlertRulesEngine {
     });
     
     // Console action (for testing)
-    this.registerAction('console', async ({ rule, data, result }) => {
+    this.registerAction('console', async ({ rule, data: _data, result }) => {
       console.log(`ALERT: ${rule.name} - ${result.reason}`);
     });
   }

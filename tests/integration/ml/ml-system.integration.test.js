@@ -93,7 +93,7 @@ describe('ML System Integration Tests', () => {
       // Step 3: Mock training (since we can't train real models in tests)
       // In a real scenario, this would train the model
       await dbManager.query(
-        `UPDATE ml_models SET status = 'trained' WHERE id = $1`,
+        'UPDATE ml_models SET status = \'trained\' WHERE id = $1',
         [model.id]
       );
 
@@ -133,7 +133,7 @@ describe('ML System Integration Tests', () => {
 
       for (const doc of testDocuments) {
         await dbManager.query(
-          `INSERT INTO documents (content, metadata) VALUES ($1, $2)`,
+          'INSERT INTO documents (content, metadata) VALUES ($1, $2)',
           [doc.content, JSON.stringify({ category: doc.category })]
         );
       }
@@ -152,7 +152,7 @@ describe('ML System Integration Tests', () => {
 
       // Mock deployment
       await dbManager.query(
-        `UPDATE ml_models SET status = 'deployed' WHERE id IN ($1, $2)`,
+        'UPDATE ml_models SET status = \'deployed\' WHERE id IN ($1, $2)',
         [classificationModel.id, qualityModel.id]
       );
 
@@ -180,7 +180,7 @@ describe('ML System Integration Tests', () => {
       });
 
       await dbManager.query(
-        `UPDATE ml_models SET status = 'deployed' WHERE id = $1`,
+        'UPDATE ml_models SET status = \'deployed\' WHERE id = $1',
         [model.id]
       );
 
@@ -202,7 +202,7 @@ describe('ML System Integration Tests', () => {
       });
 
       await dbManager.query(
-        `UPDATE ml_models SET status = 'deployed' WHERE id = $1`,
+        'UPDATE ml_models SET status = \'deployed\' WHERE id = $1',
         [model.id]
       );
 

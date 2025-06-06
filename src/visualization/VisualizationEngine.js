@@ -243,20 +243,20 @@ class VisualizationEngine extends EventEmitter {
       let result;
       
       switch (format.toLowerCase()) {
-        case 'png':
-          result = await viz.renderer.toPNG(options);
-          break;
-        case 'svg':
-          result = await viz.renderer.toSVG(options);
-          break;
-        case 'pdf':
-          result = await viz.renderer.toPDF(options);
-          break;
-        case 'json':
-          result = await viz.renderer.toJSON(options);
-          break;
-        default:
-          throw new Error(`Unsupported export format: ${format}`);
+      case 'png':
+        result = await viz.renderer.toPNG(options);
+        break;
+      case 'svg':
+        result = await viz.renderer.toSVG(options);
+        break;
+      case 'pdf':
+        result = await viz.renderer.toPDF(options);
+        break;
+      case 'json':
+        result = await viz.renderer.toJSON(options);
+        break;
+      default:
+        throw new Error(`Unsupported export format: ${format}`);
       }
       
       this.emit('visualization:exported', { id, format });

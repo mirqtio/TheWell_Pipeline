@@ -140,20 +140,20 @@ router.get('/aggregations/:pipeline', auth, async (req, res) => {
 
     let result;
     switch (pipeline) {
-      case 'documentStats':
-        result = await visualizationService.aggregateDocumentStats(filters);
-        break;
-      case 'entityRelations':
-        result = await visualizationService.aggregateEntityRelations(filters);
-        break;
-      case 'temporalDistribution':
-        result = await visualizationService.aggregateTemporalDistribution(filters);
-        break;
-      case 'categoryBreakdown':
-        result = await visualizationService.aggregateCategoryBreakdown(filters);
-        break;
-      default:
-        throw new Error(`Unknown aggregation pipeline: ${pipeline}`);
+    case 'documentStats':
+      result = await visualizationService.aggregateDocumentStats(filters);
+      break;
+    case 'entityRelations':
+      result = await visualizationService.aggregateEntityRelations(filters);
+      break;
+    case 'temporalDistribution':
+      result = await visualizationService.aggregateTemporalDistribution(filters);
+      break;
+    case 'categoryBreakdown':
+      result = await visualizationService.aggregateCategoryBreakdown(filters);
+      break;
+    default:
+      throw new Error(`Unknown aggregation pipeline: ${pipeline}`);
     }
 
     res.json({

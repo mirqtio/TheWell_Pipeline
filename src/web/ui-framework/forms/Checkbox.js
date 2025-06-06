@@ -54,8 +54,8 @@ export const Checkbox = forwardRef(({
           aria-invalid={!!error}
           aria-describedby={
             error ? `${checkboxId}-error` :
-            helper ? `${checkboxId}-helper` :
-            undefined
+              helper ? `${checkboxId}-helper` :
+                undefined
           }
           onChange={onChange}
           {...props}
@@ -126,8 +126,8 @@ export const Radio = forwardRef(({
           aria-invalid={!!error}
           aria-describedby={
             error ? `${radioId}-error` :
-            helper ? `${radioId}-helper` :
-            undefined
+              helper ? `${radioId}-helper` :
+                undefined
           }
           {...props}
         />

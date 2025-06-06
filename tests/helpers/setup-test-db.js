@@ -26,7 +26,7 @@ async function createTestDatabase() {
     // Create test database if it doesn't exist
     const dbName = process.env.DB_NAME || 'thewell_test';
     const dbCheckResult = await adminClient.query(
-      "SELECT 1 FROM pg_database WHERE datname = $1",
+      'SELECT 1 FROM pg_database WHERE datname = $1',
       [dbName]
     );
 
@@ -42,7 +42,7 @@ async function createTestDatabase() {
     const testPassword = process.env.DB_PASSWORD || 'thewell_test_password';
     
     const userCheckResult = await adminClient.query(
-      "SELECT 1 FROM pg_roles WHERE rolname = $1",
+      'SELECT 1 FROM pg_roles WHERE rolname = $1',
       [testUser]
     );
 
@@ -61,11 +61,11 @@ async function createTestDatabase() {
 
     // Also create thewell_user role if tests expect it
     const thewellUserCheck = await adminClient.query(
-      "SELECT 1 FROM pg_roles WHERE rolname = 'thewell_user'"
+      'SELECT 1 FROM pg_roles WHERE rolname = \'thewell_user\''
     );
 
     if (thewellUserCheck.rows.length === 0) {
-      await adminClient.query(`CREATE ROLE thewell_user WITH LOGIN PASSWORD 'SuperSecurePwd123!'`);
+      await adminClient.query('CREATE ROLE thewell_user WITH LOGIN PASSWORD \'SuperSecurePwd123!\'');
       console.log('Created role: thewell_user');
     }
 
@@ -111,8 +111,8 @@ async function setupTestSchema() {
 
     // Grant schema permissions
     await client.query(`GRANT CREATE ON SCHEMA public TO ${testUser}`);
-    await client.query(`GRANT CREATE ON SCHEMA public TO thewell_user`);
-    await client.query(`GRANT USAGE ON SCHEMA public TO thewell_user`);
+    await client.query('GRANT CREATE ON SCHEMA public TO thewell_user');
+    await client.query('GRANT USAGE ON SCHEMA public TO thewell_user');
 
     // Read and apply main schema
     const schemaPath = path.join(__dirname, '../../src/database/schema.sql');

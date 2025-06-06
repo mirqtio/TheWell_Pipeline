@@ -425,27 +425,27 @@ class EntityExtractionService {
     const value = {};
     
     switch (entityType) {
-      case 'dates':
-        if (entity.parsed) value.parsed = entity.parsed;
-        if (entity.relative) value.relative = entity.relative;
-        break;
+    case 'dates':
+      if (entity.parsed) value.parsed = entity.parsed;
+      if (entity.relative) value.relative = entity.relative;
+      break;
         
-      case 'money':
-        if (entity.amount) value.amount = entity.amount;
-        if (entity.currency) value.currency = entity.currency;
-        break;
+    case 'money':
+      if (entity.amount) value.amount = entity.amount;
+      if (entity.currency) value.currency = entity.currency;
+      break;
         
-      case 'emails':
-        if (entity.address) value.address = entity.address;
-        break;
+    case 'emails':
+      if (entity.address) value.address = entity.address;
+      break;
         
-      case 'urls':
-        if (entity.url) value.url = entity.url;
-        break;
+    case 'urls':
+      if (entity.url) value.url = entity.url;
+      break;
         
-      case 'phones':
-        if (entity.number) value.number = entity.number;
-        break;
+    case 'phones':
+      if (entity.number) value.number = entity.number;
+      break;
     }
     
     return Object.keys(value).length > 0 ? JSON.stringify(value) : null;

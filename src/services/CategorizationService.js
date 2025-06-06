@@ -255,7 +255,7 @@ class CategorizationService extends EventEmitter {
   /**
    * Get categorization history for a document
    */
-  async getCategorization History(documentId) {
+  async getCategorizationHistory(documentId) {
     const query = `
       SELECT 
         dc.*,

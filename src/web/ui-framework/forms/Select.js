@@ -56,8 +56,8 @@ export const Select = forwardRef(({
           aria-invalid={!!error}
           aria-describedby={
             error ? `${selectId}-error` :
-            helper ? `${selectId}-helper` :
-            undefined
+              helper ? `${selectId}-helper` :
+                undefined
           }
           {...props}
         >

@@ -203,14 +203,14 @@ class RateLimiter {
    */
   async checkLimit(key, options = {}) {
     switch (this.strategy) {
-      case 'token-bucket':
-        return this.tokenBucket(key, options);
-      case 'sliding-window':
-        return this.slidingWindow(key, options);
-      case 'fixed-window':
-        return this.fixedWindow(key, options);
-      default:
-        throw new Error(`Unknown rate limiting strategy: ${this.strategy}`);
+    case 'token-bucket':
+      return this.tokenBucket(key, options);
+    case 'sliding-window':
+      return this.slidingWindow(key, options);
+    case 'fixed-window':
+      return this.fixedWindow(key, options);
+    default:
+      throw new Error(`Unknown rate limiting strategy: ${this.strategy}`);
     }
   }
 

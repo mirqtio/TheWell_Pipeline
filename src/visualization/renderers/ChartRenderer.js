@@ -182,19 +182,19 @@ class ChartRenderer extends BaseRenderer {
     
     // Add specific options based on chart type
     switch (this.chartOptions.type) {
-      case 'pie':
-      case 'doughnut':
-        delete options.scales;
-        break;
-      case 'radar':
-        options.scales = {
-          r: {
-            grid: { color: colors.grid },
-            pointLabels: { color: colors.text },
-            ticks: { color: colors.text }
-          }
-        };
-        break;
+    case 'pie':
+    case 'doughnut':
+      delete options.scales;
+      break;
+    case 'radar':
+      options.scales = {
+        r: {
+          grid: { color: colors.grid },
+          pointLabels: { color: colors.text },
+          ticks: { color: colors.text }
+        }
+      };
+      break;
     }
     
     return options;

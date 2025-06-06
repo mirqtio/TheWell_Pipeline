@@ -50,10 +50,10 @@ export const useBreakpoint = () => {
   const is2xl = useMediaQuery(`(min-width: ${breakpoints['2xl']})`);
 
   const current = is2xl ? '2xl' :
-                 isXl ? 'xl' :
-                 isLg ? 'lg' :
-                 isMd ? 'md' :
-                 isSm ? 'sm' : 'xs';
+    isXl ? 'xl' :
+      isLg ? 'lg' :
+        isMd ? 'md' :
+          isSm ? 'sm' : 'xs';
 
   return {
     current,

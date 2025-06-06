@@ -42,14 +42,14 @@ class ReportGenerator {
       const minutes = String(d.getMinutes()).padStart(2, '0');
       
       switch (format) {
-        case 'YYYY-MM-DD':
-          return `${year}-${month}-${day}`;
-        case 'YYYY-MM-DD HH:mm':
-          return `${year}-${month}-${day} ${hours}:${minutes}`;
-        case 'MM/DD/YYYY':
-          return `${month}/${day}/${year}`;
-        default:
-          return date.toString();
+      case 'YYYY-MM-DD':
+        return `${year}-${month}-${day}`;
+      case 'YYYY-MM-DD HH:mm':
+        return `${year}-${month}-${day} ${hours}:${minutes}`;
+      case 'MM/DD/YYYY':
+        return `${month}/${day}/${year}`;
+      default:
+        return date.toString();
       }
     });
 
@@ -73,7 +73,7 @@ class ReportGenerator {
 
     // Array iteration with index
     Handlebars.registerHelper('eachWithIndex', function(context, options) {
-      let ret = "";
+      let ret = '';
       for (let i = 0; i < context.length; i++) {
         ret = ret + options.fn({ ...context[i], index: i + 1 });
       }
@@ -213,10 +213,10 @@ class ReportGenerator {
    */
   addPDFHeader(doc, reportType, metadata) {
     doc.fontSize(20)
-       .text(this.formatReportTitle(reportType), { align: 'center' });
+      .text(this.formatReportTitle(reportType), { align: 'center' });
     
     doc.fontSize(10)
-       .text(`Generated: ${new Date(metadata.generatedAt).toLocaleString()}`, { align: 'center' });
+      .text(`Generated: ${new Date(metadata.generatedAt).toLocaleString()}`, { align: 'center' });
     
     doc.moveDown();
   }
@@ -323,7 +323,7 @@ class ReportGenerator {
   /**
    * Add PDF footer
    */
-  addPDFFooter(doc, metadata) {
+  addPDFFooter(doc, _metadata) {
     const pageCount = doc.bufferedPageRange().count;
     
     for (let i = 0; i < pageCount; i++) {
@@ -331,12 +331,12 @@ class ReportGenerator {
       
       // Add page number
       doc.fontSize(8)
-         .text(
-           `Page ${i + 1} of ${pageCount}`,
-           50,
-           doc.page.height - 50,
-           { align: 'center' }
-         );
+        .text(
+          `Page ${i + 1} of ${pageCount}`,
+          50,
+          doc.page.height - 50,
+          { align: 'center' }
+        );
     }
   }
 
@@ -780,8 +780,8 @@ class ReportGenerator {
 
   formatLabel(key) {
     return key.replace(/([A-Z])/g, ' $1')
-              .replace(/^./, str => str.toUpperCase())
-              .trim();
+      .replace(/^./, str => str.toUpperCase())
+      .trim();
   }
 
   calculateAverage(data, field) {
@@ -856,14 +856,14 @@ class ReportGenerator {
       let key;
       
       switch (granularity) {
-        case 'hour':
-          key = `${date.getHours()}:00`;
-          break;
-        case 'day':
-          key = date.toLocaleDateString();
-          break;
-        default:
-          key = date.toISOString();
+      case 'hour':
+        key = `${date.getHours()}:00`;
+        break;
+      case 'day':
+        key = date.toLocaleDateString();
+        break;
+      default:
+        key = date.toISOString();
       }
       
       acc[key] = (acc[key] || 0) + 1;

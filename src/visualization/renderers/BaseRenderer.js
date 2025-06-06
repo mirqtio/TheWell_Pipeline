@@ -317,20 +317,20 @@ class BaseRenderer extends EventEmitter {
     if (value == null) return 'N/A';
     
     switch (type) {
-      case 'number':
-        return typeof value === 'number' 
-          ? value.toLocaleString() 
-          : value;
-      case 'percent':
-        return typeof value === 'number' 
-          ? `${(value * 100).toFixed(1)}%` 
-          : value;
-      case 'currency':
-        return typeof value === 'number' 
-          ? `$${value.toLocaleString()}` 
-          : value;
-      default:
-        return value.toString();
+    case 'number':
+      return typeof value === 'number' 
+        ? value.toLocaleString() 
+        : value;
+    case 'percent':
+      return typeof value === 'number' 
+        ? `${(value * 100).toFixed(1)}%` 
+        : value;
+    case 'currency':
+      return typeof value === 'number' 
+        ? `$${value.toLocaleString()}` 
+        : value;
+    default:
+      return value.toString();
     }
   }
 }

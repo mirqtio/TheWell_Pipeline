@@ -117,18 +117,18 @@ class IntelligentSearchEngine {
       // Execute search based on mode
       let results;
       switch (searchParams.mode) {
-        case 'semantic':
-          results = await this.semanticSearch(searchParams);
-          break;
-        case 'exact':
-          results = await this.exactSearch(searchParams);
-          break;
-        case 'fuzzy':
-          results = await this.fuzzySearch(searchParams);
-          break;
-        case 'hybrid':
-        default:
-          results = await this.hybridSearch(searchParams);
+      case 'semantic':
+        results = await this.semanticSearch(searchParams);
+        break;
+      case 'exact':
+        results = await this.exactSearch(searchParams);
+        break;
+      case 'fuzzy':
+        results = await this.fuzzySearch(searchParams);
+        break;
+      case 'hybrid':
+      default:
+        results = await this.hybridSearch(searchParams);
       }
       
       // Apply post-processing

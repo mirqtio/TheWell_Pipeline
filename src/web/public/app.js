@@ -1401,8 +1401,8 @@ class ManualReviewApp {
       const successRate = queueData.recent?.successRate || 'N/A';
       const successRateClass = 
         successRate === 'N/A' ? 'bg-secondary' :
-        parseFloat(successRate) >= 95 ? 'bg-success' :
-        parseFloat(successRate) >= 80 ? 'bg-warning' : 'bg-danger';
+          parseFloat(successRate) >= 95 ? 'bg-success' :
+            parseFloat(successRate) >= 80 ? 'bg-warning' : 'bg-danger';
       
       rows += `
         <tr>

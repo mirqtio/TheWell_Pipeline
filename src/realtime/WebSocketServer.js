@@ -194,24 +194,24 @@ class WebSocketServer {
         const data = JSON.parse(message);
         
         switch (channel) {
-          case 'document:status':
-            this.broadcastDocumentStatus(data);
-            break;
-          case 'analytics:update':
-            this.broadcastAnalyticsUpdate(data);
-            break;
-          case 'alert:trigger':
-            this.broadcastAlert(data);
-            break;
-          case 'performance:metric':
-            this.broadcastPerformanceMetric(data);
-            break;
-          case 'activity:log':
-            this.broadcastActivity(data);
-            break;
-          case 'error:report':
-            this.broadcastError(data);
-            break;
+        case 'document:status':
+          this.broadcastDocumentStatus(data);
+          break;
+        case 'analytics:update':
+          this.broadcastAnalyticsUpdate(data);
+          break;
+        case 'alert:trigger':
+          this.broadcastAlert(data);
+          break;
+        case 'performance:metric':
+          this.broadcastPerformanceMetric(data);
+          break;
+        case 'activity:log':
+          this.broadcastActivity(data);
+          break;
+        case 'error:report':
+          this.broadcastError(data);
+          break;
         }
       } catch (error) {
         logger.error('Error processing Redis message', { channel, error });

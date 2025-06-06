@@ -128,26 +128,30 @@ class AutoCategorizationEngine extends EventEmitter {
     const content = `${document.title || ''} ${document.content || ''} ${document.description || ''}`.toLowerCase();
 
     switch (rule.rule_type) {
-      case 'regex':
-        const regex = new RegExp(rule.pattern, 'i');
-        return regex.test(content) ? rule.confidence : 0;
+    case 'regex': {
+      const regex = new RegExp(rule.pattern, 'i');
+      return regex.test(content) ? rule.confidence : 0;
+    }
 
-      case 'contains':
-        const keywords = rule.pattern.toLowerCase().split(',').map(k => k.trim());
-        const matches = keywords.filter(keyword => content.includes(keyword));
-        return (matches.length / keywords.length) * rule.confidence;
+    case 'contains': {
+      const keywords = rule.pattern.toLowerCase().split(',').map(k => k.trim());
+      const matches = keywords.filter(keyword => content.includes(keyword));
+      return (matches.length / keywords.length) * rule.confidence;
+    }
 
-      case 'entity':
-        const entities = await this.extractEntities(document);
-        const entityPattern = JSON.parse(rule.pattern);
-        return this.matchEntityPattern(entities, entityPattern) * rule.confidence;
+    case 'entity': {
+      const entities = await this.extractEntities(document);
+      const entityPattern = JSON.parse(rule.pattern);
+      return this.matchEntityPattern(entities, entityPattern) * rule.confidence;
+    }
 
-      case 'metadata':
-        const metadataPattern = JSON.parse(rule.pattern);
-        return this.matchMetadataPattern(document.metadata || {}, metadataPattern) * rule.confidence;
+    case 'metadata': {
+      const metadataPattern = JSON.parse(rule.pattern);
+      return this.matchMetadataPattern(document.metadata || {}, metadataPattern) * rule.confidence;
+    }
 
-      default:
-        return 0;
+    default:
+      return 0;
     }
   }
 
@@ -606,14 +610,14 @@ Return only valid JSON.`;
    */
   evaluateOperator(value, operator, targetValue) {
     switch (operator) {
-      case '>': return value > targetValue;
-      case '>=': return value >= targetValue;
-      case '<': return value < targetValue;
-      case '<=': return value <= targetValue;
-      case '!=': return value !== targetValue;
-      case 'in': return targetValue.includes(value);
-      case 'contains': return value.toString().includes(targetValue);
-      default: return value === targetValue;
+    case '>': return value > targetValue;
+    case '>=': return value >= targetValue;
+    case '<': return value < targetValue;
+    case '<=': return value <= targetValue;
+    case '!=': return value !== targetValue;
+    case 'in': return targetValue.includes(value);
+    case 'contains': return value.toString().includes(targetValue);
+    default: return value === targetValue;
     }
   }
 

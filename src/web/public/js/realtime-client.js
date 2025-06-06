@@ -118,24 +118,24 @@ class RealtimeClient {
 
   setupNamespaceHandlers(name, namespace) {
     switch (name) {
-      case 'documents':
-        this.setupDocumentHandlers(namespace);
-        break;
-      case 'analytics':
-        this.setupAnalyticsHandlers(namespace);
-        break;
-      case 'alerts':
-        this.setupAlertHandlers(namespace);
-        break;
-      case 'performance':
-        this.setupPerformanceHandlers(namespace);
-        break;
-      case 'activity':
-        this.setupActivityHandlers(namespace);
-        break;
-      case 'errors':
-        this.setupErrorHandlers(namespace);
-        break;
+    case 'documents':
+      this.setupDocumentHandlers(namespace);
+      break;
+    case 'analytics':
+      this.setupAnalyticsHandlers(namespace);
+      break;
+    case 'alerts':
+      this.setupAlertHandlers(namespace);
+      break;
+    case 'performance':
+      this.setupPerformanceHandlers(namespace);
+      break;
+    case 'activity':
+      this.setupActivityHandlers(namespace);
+      break;
+    case 'errors':
+      this.setupErrorHandlers(namespace);
+      break;
     }
   }
 

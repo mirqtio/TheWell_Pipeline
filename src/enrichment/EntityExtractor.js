@@ -1,4 +1,4 @@
-const logger = require('../utils/logger');
+// const logger = require('../utils/logger');
 
 /**
  * Entity Extractor - Extracts named entities from text using patterns and heuristics
@@ -141,8 +141,7 @@ class EntityExtractor {
     // Known organizations
     for (const org of this.knownOrgs) {
       const regex = new RegExp(`\\b${org}\\b`, 'gi');
-      let match;
-      while ((match = regex.exec(text)) !== null) {
+      while (regex.exec(text) !== null) {
         organizations.push({
           name: org,
           type: 'ORGANIZATION',
@@ -222,7 +221,7 @@ class EntityExtractor {
     }
     
     // Pattern 2: Numeric dates (12/31/2024, 2024-12-31)
-    const numericDatePattern = /\b(\d{1,2}[\/\-]\d{1,2}[\/\-]\d{2,4}|\d{4}[\/\-]\d{1,2}[\/\-]\d{1,2})\b/g;
+    const numericDatePattern = /\b(\d{1,2}[/-]\d{1,2}[/-]\d{2,4}|\d{4}[/-]\d{1,2}[/-]\d{1,2})\b/g;
     while ((match = numericDatePattern.exec(text)) !== null) {
       dates.push({
         text: match[0],
@@ -290,7 +289,7 @@ class EntityExtractor {
   async _extractURLs(text) {
     const urls = [];
     
-    const urlPattern = /https?:\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_\+.~#?&//=]*)/gi;
+    const urlPattern = /https?:\/\/(www\.)?[-a-zA-Z0-9@:%._+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_+.~#?&//=]*)/gi;
     let match;
     while ((match = urlPattern.exec(text)) !== null) {
       urls.push({

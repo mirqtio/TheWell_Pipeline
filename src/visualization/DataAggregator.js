@@ -611,17 +611,17 @@ class DataAggregator extends EventEmitter {
    */
   getTimeKey(date, interval) {
     switch (interval) {
-      case 'hour':
-        return date.toISOString().slice(0, 13) + ':00:00.000Z';
-      case 'day':
-        return date.toISOString().slice(0, 10);
-      case 'week':
-        const week = this.getWeekNumber(date);
-        return `${date.getFullYear()}-W${week}`;
-      case 'month':
-        return date.toISOString().slice(0, 7);
-      default:
-        return date.toISOString();
+    case 'hour':
+      return date.toISOString().slice(0, 13) + ':00:00.000Z';
+    case 'day':
+      return date.toISOString().slice(0, 10);
+    case 'week':
+      const week = this.getWeekNumber(date);
+      return `${date.getFullYear()}-W${week}`;
+    case 'month':
+      return date.toISOString().slice(0, 7);
+    default:
+      return date.toISOString();
     }
   }
 
@@ -651,18 +651,18 @@ class DataAggregator extends EventEmitter {
       filled.push(this.getTimeKey(current, interval));
       
       switch (interval) {
-        case 'hour':
-          current.setHours(current.getHours() + 1);
-          break;
-        case 'day':
-          current.setDate(current.getDate() + 1);
-          break;
-        case 'week':
-          current.setDate(current.getDate() + 7);
-          break;
-        case 'month':
-          current.setMonth(current.getMonth() + 1);
-          break;
+      case 'hour':
+        current.setHours(current.getHours() + 1);
+        break;
+      case 'day':
+        current.setDate(current.getDate() + 1);
+        break;
+      case 'week':
+        current.setDate(current.getDate() + 7);
+        break;
+      case 'month':
+        current.setMonth(current.getMonth() + 1);
+        break;
       }
     }
     
@@ -708,23 +708,23 @@ class DataAggregator extends EventEmitter {
     if (values.length === 0) return null;
     
     switch (operation) {
-      case 'sum':
-        return values.reduce((a, b) => a + b, 0);
-      case 'mean':
-      case 'avg':
-        return values.reduce((a, b) => a + b, 0) / values.length;
-      case 'min':
-        return Math.min(...values);
-      case 'max':
-        return Math.max(...values);
-      case 'std':
-        const mean = values.reduce((a, b) => a + b, 0) / values.length;
-        const variance = values.reduce((sum, val) => sum + Math.pow(val - mean, 2), 0) / values.length;
-        return Math.sqrt(variance);
-      case 'count':
-        return values.length;
-      default:
-        return null;
+    case 'sum':
+      return values.reduce((a, b) => a + b, 0);
+    case 'mean':
+    case 'avg':
+      return values.reduce((a, b) => a + b, 0) / values.length;
+    case 'min':
+      return Math.min(...values);
+    case 'max':
+      return Math.max(...values);
+    case 'std':
+      const mean = values.reduce((a, b) => a + b, 0) / values.length;
+      const variance = values.reduce((sum, val) => sum + Math.pow(val - mean, 2), 0) / values.length;
+      return Math.sqrt(variance);
+    case 'count':
+      return values.length;
+    default:
+      return null;
     }
   }
 

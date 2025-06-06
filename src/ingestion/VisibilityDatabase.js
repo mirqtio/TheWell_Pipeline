@@ -50,8 +50,8 @@ class VisibilityDatabase extends EventEmitter {
    * Initialize database schema
    */
   async initializeSchema() {
-    const fs = require('fs');
-    const path = require('path');
+    // const fs = require('fs');
+    // const path = require('path');
     
     try {
       // const schemaPath = path.join(__dirname, 'schemas', 'visibility.sql');

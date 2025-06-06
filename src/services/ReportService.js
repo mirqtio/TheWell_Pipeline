@@ -356,7 +356,7 @@ class ReportService {
       values.push(minConfidence);
     }
 
-    query += ` ORDER BY e.extracted_at DESC`;
+    query += ' ORDER BY e.extracted_at DESC';
 
     const result = await this.db.query(query, values);
     return result.rows;
@@ -405,7 +405,7 @@ class ReportService {
       values.push(status);
     }
 
-    query += ` ORDER BY a.created_at DESC`;
+    query += ' ORDER BY a.created_at DESC';
 
     const result = await this.db.query(query, values);
     return result.rows;
@@ -449,7 +449,7 @@ class ReportService {
       values.push(minResultCount);
     }
 
-    query += ` ORDER BY s.timestamp DESC`;
+    query += ' ORDER BY s.timestamp DESC';
 
     const result = await this.db.query(query, values);
     return result.rows;
@@ -501,7 +501,7 @@ class ReportService {
       values.push(activityType);
     }
 
-    query += ` ORDER BY al.timestamp DESC`;
+    query += ' ORDER BY al.timestamp DESC';
 
     const result = await this.db.query(query, values);
     return result.rows;
@@ -547,7 +547,7 @@ class ReportService {
       values.push(metricType);
     }
 
-    query += ` ORDER BY m.timestamp DESC`;
+    query += ' ORDER BY m.timestamp DESC';
 
     const result = await this.db.query(query, values);
     return result.rows;
@@ -652,7 +652,7 @@ class ReportService {
       values.push(filters.endDate);
     }
 
-    query += ` ORDER BY rh.requested_at DESC`;
+    query += ' ORDER BY rh.requested_at DESC';
 
     if (filters.limit) {
       query += ` LIMIT $${paramIndex++}`;
@@ -733,38 +733,38 @@ class ReportService {
     const now = new Date();
 
     switch (scheduleType) {
-      case 'once':
-        return scheduleConfig.runAt || now;
+    case 'once':
+      return scheduleConfig.runAt || now;
       
-      case 'daily':
-        const daily = new Date(now);
-        daily.setDate(daily.getDate() + 1);
-        daily.setHours(scheduleConfig.hour || 0, scheduleConfig.minute || 0, 0, 0);
-        return daily;
+    case 'daily':
+      const daily = new Date(now);
+      daily.setDate(daily.getDate() + 1);
+      daily.setHours(scheduleConfig.hour || 0, scheduleConfig.minute || 0, 0, 0);
+      return daily;
       
-      case 'weekly':
-        const weekly = new Date(now);
-        const daysUntilTarget = (scheduleConfig.dayOfWeek - weekly.getDay() + 7) % 7 || 7;
-        weekly.setDate(weekly.getDate() + daysUntilTarget);
-        weekly.setHours(scheduleConfig.hour || 0, scheduleConfig.minute || 0, 0, 0);
-        return weekly;
+    case 'weekly':
+      const weekly = new Date(now);
+      const daysUntilTarget = (scheduleConfig.dayOfWeek - weekly.getDay() + 7) % 7 || 7;
+      weekly.setDate(weekly.getDate() + daysUntilTarget);
+      weekly.setHours(scheduleConfig.hour || 0, scheduleConfig.minute || 0, 0, 0);
+      return weekly;
       
-      case 'monthly':
-        const monthly = new Date(now);
-        monthly.setMonth(monthly.getMonth() + 1);
-        monthly.setDate(scheduleConfig.dayOfMonth || 1);
-        monthly.setHours(scheduleConfig.hour || 0, scheduleConfig.minute || 0, 0, 0);
-        return monthly;
+    case 'monthly':
+      const monthly = new Date(now);
+      monthly.setMonth(monthly.getMonth() + 1);
+      monthly.setDate(scheduleConfig.dayOfMonth || 1);
+      monthly.setHours(scheduleConfig.hour || 0, scheduleConfig.minute || 0, 0, 0);
+      return monthly;
       
-      case 'custom':
-        // Use cron expression
-        const job = schedule.scheduleJob(scheduleConfig.cron, () => {});
-        const nextRun = job.nextInvocation();
-        job.cancel();
-        return nextRun;
+    case 'custom':
+      // Use cron expression
+      const job = schedule.scheduleJob(scheduleConfig.cron, () => {});
+      const nextRun = job.nextInvocation();
+      job.cancel();
+      return nextRun;
       
-      default:
-        throw new Error(`Unknown schedule type: ${scheduleType}`);
+    default:
+      throw new Error(`Unknown schedule type: ${scheduleType}`);
     }
   }
 
@@ -816,19 +816,19 @@ class ReportService {
 
     let job;
     switch (scheduledReport.schedule_type) {
-      case 'daily':
-      case 'weekly':
-      case 'monthly':
-        const cronExpression = this.buildCronExpression(
-          scheduledReport.schedule_type,
-          scheduledReport.schedule_config
-        );
-        job = schedule.scheduleJob(cronExpression, jobFunction);
-        break;
+    case 'daily':
+    case 'weekly':
+    case 'monthly':
+      const cronExpression = this.buildCronExpression(
+        scheduledReport.schedule_type,
+        scheduledReport.schedule_config
+      );
+      job = schedule.scheduleJob(cronExpression, jobFunction);
+      break;
       
-      case 'custom':
-        job = schedule.scheduleJob(scheduledReport.schedule_config.cron, jobFunction);
-        break;
+    case 'custom':
+      job = schedule.scheduleJob(scheduledReport.schedule_config.cron, jobFunction);
+      break;
     }
 
     if (job) {
@@ -841,40 +841,40 @@ class ReportService {
     const hour = config.hour || 0;
 
     switch (scheduleType) {
-      case 'daily':
-        return `${minute} ${hour} * * *`;
+    case 'daily':
+      return `${minute} ${hour} * * *`;
       
-      case 'weekly':
-        return `${minute} ${hour} * * ${config.dayOfWeek || 0}`;
+    case 'weekly':
+      return `${minute} ${hour} * * ${config.dayOfWeek || 0}`;
       
-      case 'monthly':
-        return `${minute} ${hour} ${config.dayOfMonth || 1} * *`;
+    case 'monthly':
+      return `${minute} ${hour} ${config.dayOfMonth || 1} * *`;
       
-      default:
-        throw new Error(`Cannot build cron for schedule type: ${scheduleType}`);
+    default:
+      throw new Error(`Cannot build cron for schedule type: ${scheduleType}`);
     }
   }
 
   async deliverReport(report, scheduledReport) {
     switch (scheduledReport.delivery_method) {
-      case 'email':
-        // TODO: Implement email delivery
-        logger.info('Email delivery not implemented', { reportId: report.reportId });
-        break;
+    case 'email':
+      // TODO: Implement email delivery
+      logger.info('Email delivery not implemented', { reportId: report.reportId });
+      break;
       
-      case 'webhook':
-        // TODO: Implement webhook delivery
-        logger.info('Webhook delivery not implemented', { reportId: report.reportId });
-        break;
+    case 'webhook':
+      // TODO: Implement webhook delivery
+      logger.info('Webhook delivery not implemented', { reportId: report.reportId });
+      break;
       
-      case 'storage':
-        // Already saved to storage
-        break;
+    case 'storage':
+      // Already saved to storage
+      break;
       
-      case 'download':
-      default:
-        // No additional delivery needed
-        break;
+    case 'download':
+    default:
+      // No additional delivery needed
+      break;
     }
   }
 

@@ -166,7 +166,7 @@ class CategoryManager extends EventEmitter {
         // Update path if name changed
         if (updates.name !== category.name) {
           const newPath = category.parent_id 
-            ? `${category.path.replace(/\/[^\/]+$/, '')}/${updates.name}`
+            ? `${category.path.replace(/\/[^/]+$/, '')}/${updates.name}`
             : updates.name;
           updateFields.push(`path = $${paramCount++}`);
           values.push(newPath);
