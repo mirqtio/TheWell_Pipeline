@@ -202,7 +202,7 @@ describe('CategoryManager', () => {
     it('should update category name and path', async () => {
       mockClient.query
         .mockResolvedValueOnce() // BEGIN
-        .mockResolvedValueOnce() // Update child paths (none)
+        .mockResolvedValueOnce({ rows: [] }) // Update child paths (none)
         .mockResolvedValueOnce({ // UPDATE
           rows: [{
             id: 1,
@@ -245,7 +245,12 @@ describe('CategoryManager', () => {
     });
 
     it('should handle non-existent category', async () => {
-      mockClient.query.mockResolvedValueOnce(); // BEGIN
+      // Remove category from cache
+      categoryManager.categoryCache.delete(999);
+      
+      mockClient.query
+        .mockResolvedValueOnce() // BEGIN
+        .mockRejectedValueOnce(new Error('Category not found')); // This will be caught
 
       await expect(categoryManager.updateCategory(999, {
         name: 'NewName'

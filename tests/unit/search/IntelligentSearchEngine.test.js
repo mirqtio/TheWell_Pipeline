@@ -105,16 +105,25 @@ describe('IntelligentSearchEngine', () => {
     });
 
     it('should load synonyms if synonym expansion is enabled', async () => {
+      // Create a search engine with synonym expansion enabled
+      const searchEngineWithSynonyms = new IntelligentSearchEngine({
+        database: {},
+        embeddingApiKey: 'test-key',
+        cache: {},
+        synonymExpansion: true
+      });
+      searchEngineWithSynonyms.pool = mockPool;
+      
       const synonymRows = [
         { term: 'ai', synonyms: ['artificial intelligence', 'machine learning'] },
         { term: 'db', synonyms: ['database', 'data store'] }
       ];
       mockPool.query.mockResolvedValue({ rows: synonymRows });
 
-      await searchEngine.initialize();
+      await searchEngineWithSynonyms.initialize();
 
-      expect(searchEngine.synonymCache.size).toBe(2);
-      expect(searchEngine.synonymCache.get('ai')).toEqual(['artificial intelligence', 'machine learning']);
+      expect(searchEngineWithSynonyms.synonymCache.size).toBe(2);
+      expect(searchEngineWithSynonyms.synonymCache.get('ai')).toEqual(['artificial intelligence', 'machine learning']);
     });
   });
 
