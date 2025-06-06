@@ -3,7 +3,23 @@ const CacheManager = require('../../../src/cache/CacheManager');
 const DatabaseManager = require('../../../src/database/DatabaseManager');
 
 jest.mock('../../../src/cache/CacheManager');
-jest.mock('../../../src/database/DatabaseManager');
+jest.mock('../../../src/database/DatabaseManager', () => ({
+  getInstance: jest.fn(() => ({
+    query: jest.fn().mockResolvedValue({ rows: [], rowCount: 0 }),
+    connect: jest.fn().mockResolvedValue({
+      query: jest.fn().mockResolvedValue({ rows: [], rowCount: 0 }),
+      release: jest.fn()
+    }),
+    transaction: jest.fn((callback) => {
+      const mockTrx = {
+        query: jest.fn().mockResolvedValue({ rows: [], rowCount: 0 }),
+        commit: jest.fn(),
+        rollback: jest.fn()
+      };
+      return callback(mockTrx);
+    })
+  }))
+}));
 // Mock pg module
 jest.mock('pg', () => {
   const mockPool = {

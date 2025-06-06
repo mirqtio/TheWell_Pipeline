@@ -1,6 +1,24 @@
 const ApiKeyService = require('../../../src/services/ApiKeyService');
 const crypto = require('crypto');
 
+jest.mock('../../../src/database/DatabaseManager', () => ({
+  getInstance: jest.fn(() => ({
+    query: jest.fn().mockResolvedValue({ rows: [], rowCount: 0 }),
+    connect: jest.fn().mockResolvedValue({
+      query: jest.fn().mockResolvedValue({ rows: [], rowCount: 0 }),
+      release: jest.fn()
+    }),
+    transaction: jest.fn((callback) => {
+      const mockTrx = {
+        query: jest.fn().mockResolvedValue({ rows: [], rowCount: 0 }),
+        commit: jest.fn(),
+        rollback: jest.fn()
+      };
+      return callback(mockTrx);
+    })
+  }))
+}));
+
 describe('ApiKeyService', () => {
   let service;
   let mockDb;

@@ -4,7 +4,23 @@ const Redis = require('ioredis-mock');
 const crypto = require('crypto');
 
 // Mock the database
-jest.mock('../../../src/database/DatabaseManager');
+jest.mock('../../../src/database/DatabaseManager', () => ({
+  getInstance: jest.fn(() => ({
+    query: jest.fn().mockResolvedValue({ rows: [], rowCount: 0 }),
+    connect: jest.fn().mockResolvedValue({
+      query: jest.fn().mockResolvedValue({ rows: [], rowCount: 0 }),
+      release: jest.fn()
+    }),
+    transaction: jest.fn((callback) => {
+      const mockTrx = {
+        query: jest.fn().mockResolvedValue({ rows: [], rowCount: 0 }),
+        commit: jest.fn(),
+        rollback: jest.fn()
+      };
+      return callback(mockTrx);
+    })
+  }))
+}));
 // Mock pg module
 jest.mock('pg', () => {
   const mockPool = {
