@@ -5,6 +5,39 @@ const DatabaseManager = require('../../../src/database/DatabaseManager');
 // Mock dependencies
 jest.mock('../../../src/reporting/ReportGenerator');
 jest.mock('../../../src/database/DatabaseManager');
+jest.mock('exceljs', () => ({
+  Workbook: jest.fn(() => ({
+    addWorksheet: jest.fn(() => ({
+      columns: [],
+      addRow: jest.fn(),
+      getCell: jest.fn(() => ({ font: {} }))
+    })),
+    xlsx: {
+      writeBuffer: jest.fn().mockResolvedValue(Buffer.from('excel data'))
+    }
+  }))
+}));
+jest.mock('handlebars', () => ({
+  compile: jest.fn(() => jest.fn(() => '<html>Report</html>'))
+}));
+jest.mock('json2csv', () => ({
+  Parser: jest.fn(() => ({
+    parse: jest.fn(() => 'csv,data')
+  }))
+}));
+jest.mock('chart.js', () => ({
+  Chart: jest.fn()
+}));
+jest.mock('puppeteer', () => ({
+  launch: jest.fn(() => ({
+    newPage: jest.fn(() => ({
+      setContent: jest.fn(),
+      pdf: jest.fn(() => Buffer.from('pdf content')),
+      close: jest.fn()
+    })),
+    close: jest.fn()
+  }))
+}));
 // Mock pg module
 jest.mock('pg', () => {
   const mockPool = {
@@ -29,12 +62,12 @@ jest.mock('node-schedule', () => ({
 }));
 jest.mock('fs', () => ({
   promises: {
-    mkdir: jest.fn(),
-    readdir: jest.fn(() => []),
-    writeFile: jest.fn(),
-    readFile: jest.fn(() => Buffer.from('test content')),
-    unlink: jest.fn(),
-    access: jest.fn()
+    mkdir: jest.fn().mockResolvedValue(),
+    readdir: jest.fn().mockResolvedValue([]),
+    writeFile: jest.fn().mockResolvedValue(),
+    readFile: jest.fn().mockResolvedValue(Buffer.from('test content')),
+    unlink: jest.fn().mockResolvedValue(),
+    access: jest.fn().mockResolvedValue()
   }
 }));
 
@@ -408,7 +441,7 @@ describe('ReportService', () => {
       expect(result).toEqual(mockReports);
       expect(mockDb.query).toHaveBeenCalledWith(
         expect.stringContaining('FROM report_history'),
-        expect.arrayContaining(['completed', 'document-analytics', 10, 0])
+        ['completed', 'document-analytics', 10, 0]
       );
     });
   });

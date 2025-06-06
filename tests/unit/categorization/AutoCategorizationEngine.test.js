@@ -48,6 +48,9 @@ describe('AutoCategorizationEngine', () => {
       embeddingService: mockEmbeddingService,
       llmProvider: mockLLMProvider
     });
+    
+    // Mock the classifier's classify method to prevent "Not Trained" error
+    engine.classifier.classify = jest.fn().mockReturnValue('1');
   });
 
   afterEach(() => {
@@ -89,13 +92,15 @@ describe('AutoCategorizationEngine', () => {
         ]
       });
 
-      // Mock entity extraction
-      mockLLMProvider.complete.mockResolvedValue(JSON.stringify({
-        people: [],
-        organizations: [],
-        topics: ['machine learning', 'AI'],
-        concepts: ['supervised learning', 'unsupervised learning']
-      }));
+      // Mock entity extraction - first call returns valid JSON
+      mockLLMProvider.complete
+        .mockResolvedValueOnce(JSON.stringify({
+          people: [],
+          organizations: [],
+          locations: [],
+          topics: ['machine learning', 'AI'],
+          concepts: ['supervised learning', 'unsupervised learning']
+        }));
 
       // Mock entity patterns
       mockCategoryManager.db.query
@@ -106,9 +111,6 @@ describe('AutoCategorizationEngine', () => {
       mockCategoryManager.getCategory
         .mockResolvedValueOnce({ id: 1, path: 'Technology' })
         .mockResolvedValueOnce({ id: 2, path: 'Technology/AI' });
-
-      // Mock explanation generation
-      mockLLMProvider.complete.mockResolvedValueOnce('Categorized based on ML keywords');
 
       const results = await engine.categorizeDocument(mockDocument);
 

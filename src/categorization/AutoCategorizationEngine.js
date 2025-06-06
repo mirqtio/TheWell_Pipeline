@@ -166,8 +166,9 @@ class AutoCategorizationEngine extends EventEmitter {
     const stopwords = natural.stopwords;
     const keywords = tokens.filter(token => !stopwords.includes(token));
     
-    // Calculate TF-IDF scores
-    this.tfidf.addDocument(keywords);
+    // Create a new TF-IDF instance for this document
+    const tfidf = new natural.TfIdf();
+    tfidf.addDocument(keywords.join(' '));
     
     const categories = await this.categoryManager.getCategories({ isActive: true });
     const results = [];
@@ -177,7 +178,7 @@ class AutoCategorizationEngine extends EventEmitter {
       let score = 0;
 
       for (const keyword of categoryKeywords) {
-        const tfidfScore = this.tfidf.tfidf(keyword.term, 0);
+        const tfidfScore = tfidf.tfidf(keyword.term, 0);
         score += tfidfScore * keyword.weight;
       }
 

@@ -39,7 +39,8 @@ describe('MigrationManager', () => {
     // Mock database client
     mockClient = {
       query: jest.fn(),
-      release: jest.fn()
+      release: jest.fn(),
+      activeQuery: null
     };
 
     // Mock database manager
@@ -254,12 +255,25 @@ DROP TABLE test;`;
 
       jest.spyOn(migrationManager, 'getPendingMigrations').mockResolvedValue(pendingMigrations);
       jest.spyOn(migrationManager, 'applyMigration').mockResolvedValue();
+      
+      // Mock file reading
+      fs.readFile.mockResolvedValue('CREATE TABLE test (id INTEGER);\n-- ROLLBACK\nDROP TABLE test;');
 
       await migrationManager.migrate();
 
       expect(migrationManager.applyMigration).toHaveBeenCalledTimes(2);
-      expect(migrationManager.applyMigration).toHaveBeenCalledWith(pendingMigrations[0]);
-      expect(migrationManager.applyMigration).toHaveBeenCalledWith(pendingMigrations[1]);
+      expect(migrationManager.applyMigration).toHaveBeenCalledWith(
+        pendingMigrations[0].version,
+        pendingMigrations[0].name,
+        'CREATE TABLE test (id INTEGER);',
+        'DROP TABLE test;'
+      );
+      expect(migrationManager.applyMigration).toHaveBeenCalledWith(
+        pendingMigrations[1].version,
+        pendingMigrations[1].name,
+        'CREATE TABLE test (id INTEGER);',
+        'DROP TABLE test;'
+      );
     });
 
     it('should do nothing if no pending migrations', async () => {
