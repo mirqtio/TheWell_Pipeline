@@ -3,9 +3,61 @@ const fs = require('fs').promises;
 const path = require('path');
 
 // Mock dependencies
-jest.mock('pdfkit');
-jest.mock('exceljs');
+jest.mock('pdfkit', () => {
+  const mockDoc = {
+    pipe: jest.fn(),
+    fontSize: jest.fn().mockReturnThis(),
+    font: jest.fn().mockReturnThis(),
+    text: jest.fn().mockReturnThis(),
+    moveDown: jest.fn().mockReturnThis(),
+    addPage: jest.fn().mockReturnThis(),
+    end: jest.fn(),
+    on: jest.fn((event, callback) => {
+      if (event === 'end') {
+        setTimeout(callback, 0);
+      }
+    })
+  };
+  return jest.fn(() => mockDoc);
+});
+jest.mock('exceljs', () => ({
+  Workbook: jest.fn(() => ({
+    addWorksheet: jest.fn(() => ({
+      columns: [],
+      addRow: jest.fn(),
+      getCell: jest.fn(() => ({ font: {} }))
+    })),
+    xlsx: {
+      writeBuffer: jest.fn().mockResolvedValue(Buffer.from('excel data'))
+    }
+  }))
+}));
 jest.mock('chart.js');
+
+// Mock fs stream
+jest.mock('stream', () => {
+  const { EventEmitter } = require('events');
+  class MockWriteStream extends EventEmitter {
+    constructor() {
+      super();
+      this.chunks = [];
+    }
+    write(chunk) {
+      this.chunks.push(chunk);
+      return true;
+    }
+    end() {
+      setTimeout(() => {
+        this.emit('finish');
+      }, 0);
+    }
+  }
+  return {
+    ...jest.requireActual('stream'),
+    Writable: MockWriteStream
+  };
+});
+
 // Mock pg module
 jest.mock('pg', () => {
   const mockPool = {

@@ -2,13 +2,21 @@
  * Unit tests for authentication middleware
  */
 
-// Unmock PermissionManager for auth middleware tests
-jest.unmock('../../../../src/permissions/PermissionManager');
+// Mock PermissionManager before importing auth middleware
+jest.mock('../../../../src/permissions/PermissionManager', () => {
+  return jest.fn().mockImplementation(() => ({
+    checkPermission: jest.fn().mockResolvedValue(true),
+    checkResourcePermission: jest.fn().mockResolvedValue(true),
+    checkOwnershipOrRole: jest.fn().mockResolvedValue(true),
+    getUserPermissions: jest.fn().mockResolvedValue(['documents:read', 'documents:write'])
+  }));
+});
 
 const request = require('supertest');
 const express = require('express');
 const authMiddleware = require('../../../../src/web/middleware/auth');
 
+// Mock database instance for any database operations
 const mockDbInstance = {
   query: jest.fn().mockResolvedValue({ rows: [], rowCount: 0 }),
   connect: jest.fn().mockResolvedValue({
