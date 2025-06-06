@@ -207,7 +207,14 @@ describe('CategoryManager', () => {
           rows: [{
             id: 1,
             name: 'NewName',
-            path: 'NewName'
+            path: 'NewName',
+            description: 'Old description',
+            parent_id: null,
+            depth: 0,
+            metadata: {},
+            is_active: true,
+            created_at: new Date(),
+            updated_at: new Date()
           }]
         })
         .mockResolvedValueOnce(); // COMMIT
@@ -230,7 +237,15 @@ describe('CategoryManager', () => {
         .mockResolvedValueOnce({ // UPDATE
           rows: [{
             id: 1,
-            metadata: newMetadata
+            name: 'OldName',
+            path: 'OldName',
+            description: 'Old description',
+            parent_id: null,
+            depth: 0,
+            metadata: newMetadata,
+            is_active: true,
+            created_at: new Date(),
+            updated_at: new Date()
           }]
         })
         .mockResolvedValueOnce(); // COMMIT
@@ -245,16 +260,19 @@ describe('CategoryManager', () => {
     });
 
     it('should handle non-existent category', async () => {
-      // Remove category from cache
+      // Remove category from cache to force getCategory to return null
       categoryManager.categoryCache.delete(999);
+      // Mock getCategory to return null
+      jest.spyOn(categoryManager, 'getCategory').mockResolvedValueOnce(null);
       
       mockClient.query
-        .mockResolvedValueOnce() // BEGIN
-        .mockRejectedValueOnce(new Error('Category not found')); // This will be caught
+        .mockResolvedValueOnce(); // BEGIN
 
       await expect(categoryManager.updateCategory(999, {
         name: 'NewName'
       })).rejects.toThrow('Category not found');
+      
+      expect(mockClient.query).toHaveBeenCalledWith('ROLLBACK');
     });
   });
 

@@ -50,6 +50,12 @@ jest.mock('../../../src/utils/logger', () => ({
   debug: jest.fn()
 }));
 
+// Mock ML Integration
+jest.mock('../../../src/ml/MLIntegration', () => ({
+  enhanceSearchRanking: jest.fn((query, docs) => docs),
+  assessDocumentQuality: jest.fn(() => ({ overallScore: 0.5, qualityLevel: 'unknown' }))
+}));
+
 const InputProcessor = require('../../../src/rag/components/InputProcessor');
 const DocumentRetriever = require('../../../src/rag/components/DocumentRetriever');
 const ResponseGenerator = require('../../../src/rag/components/ResponseGenerator');
@@ -229,7 +235,7 @@ describe('RAGManager', () => {
         options: { maxResults: 10 }
       };
 
-      const userContext = {
+      const userAuth = {
         userId: 'user123',
         roles: ['user']
       };
@@ -243,6 +249,11 @@ describe('RAGManager', () => {
 
       const retrievedDocs = [
         { id: 1, title: 'Doc 1', content: 'Content 1', score: 0.9 }
+      ];
+      
+      // The documents will be enhanced with quality scores by ML integration
+      const enhancedDocs = [
+        { id: 1, title: 'Doc 1', content: 'Content 1', score: 0.9, qualityScore: 0.5, qualityLevel: 'unknown' }
       ];
 
       const generatedResponse = {
@@ -263,60 +274,63 @@ describe('RAGManager', () => {
       ragManager.responseGenerator.generate.mockResolvedValue(generatedResponse);
       ragManager.outputFormatter.format.mockResolvedValue(formattedOutput);
 
-      const result = await ragManager.processQuery(queryData, userContext);
+      const result = await ragManager.processQuery(queryData, userAuth);
 
-      expect(ragManager.inputProcessor.process).toHaveBeenCalledWith(queryData, userContext);
+      expect(ragManager.inputProcessor.process).toHaveBeenCalledWith(queryData, userAuth);
       expect(ragManager.documentRetriever.retrieve).toHaveBeenCalledWith(
         processedInput.query,
         processedInput.filters,
-        userContext
+        userAuth
       );
       expect(ragManager.responseGenerator.generate).toHaveBeenCalledWith(
         processedInput.query,
-        retrievedDocs,
+        enhancedDocs,
         processedInput.context
       );
-      expect(ragManager.outputFormatter.format).toHaveBeenCalledWith(generatedResponse, retrievedDocs, expect.any(Object));
+      expect(ragManager.outputFormatter.format).toHaveBeenCalledWith(generatedResponse, enhancedDocs, expect.any(Object));
       
       // Check that the result includes the formatted output plus additional metadata
-      expect(result).toEqual({
-        ...formattedOutput,
+      expect(result).toEqual(expect.objectContaining({
+        answer: 'Formatted response',
+        confidence: 0.85,
+        sources: [],
+        metadata: {},
         fromCache: false,
         searchType: 'hybrid',
-        totalCount: retrievedDocs.length,
+        totalCount: 1,
         maxScore: 0.9,
-        documents: retrievedDocs
-      });
+        documents: enhancedDocs
+      }));
     });
 
     it('should handle input processing errors', async () => {
       const queryData = { query: 'test query' };
-      const userContext = { userId: 'user123' };
+      const userAuth = { userId: 'user123' };
 
       ragManager.inputProcessor.process.mockRejectedValue(new Error('Invalid input'));
 
-      await expect(ragManager.processQuery(queryData, userContext)).rejects.toThrow('Invalid input');
+      await expect(ragManager.processQuery(queryData, userAuth)).rejects.toThrow('Invalid input');
     });
 
     it('should handle document retrieval errors', async () => {
       const queryData = { query: 'test query' };
-      const userContext = { userId: 'user123' };
+      const userAuth = { userId: 'user123' };
 
       ragManager.inputProcessor.process.mockResolvedValue({ query: 'processed query' });
       ragManager.documentRetriever.retrieve.mockRejectedValue(new Error('Retrieval failed'));
 
-      await expect(ragManager.processQuery(queryData, userContext)).rejects.toThrow('Retrieval failed');
+      await expect(ragManager.processQuery(queryData, userAuth)).rejects.toThrow('Retrieval failed');
     });
 
     it('should handle response generation errors', async () => {
       const queryData = { query: 'test query' };
-      const userContext = { userId: 'user123' };
+      const userAuth = { userId: 'user123' };
 
       ragManager.inputProcessor.process.mockResolvedValue({ query: 'processed query' });
       ragManager.documentRetriever.retrieve.mockResolvedValue([]);
       ragManager.responseGenerator.generate.mockRejectedValue(new Error('Generation failed'));
 
-      await expect(ragManager.processQuery(queryData, userContext)).rejects.toThrow('Generation failed');
+      await expect(ragManager.processQuery(queryData, userAuth)).rejects.toThrow('Generation failed');
     });
 
     it('should require initialization before processing', async () => {

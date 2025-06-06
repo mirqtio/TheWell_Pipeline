@@ -9,20 +9,11 @@ const CacheManager = require('../../../src/cache/CacheManager');
 // Mock dependencies
 jest.mock('../../../src/enrichment/EmbeddingService');
 jest.mock('../../../src/cache/CacheManager');
-// Mock pg module
+// Mock pg module - define outside describe block to be accessible
+let mockPoolInstance;
 jest.mock('pg', () => {
-  const mockPool = {
-    query: jest.fn().mockResolvedValue({ rows: [], rowCount: 0 }),
-    connect: jest.fn().mockResolvedValue({
-      query: jest.fn().mockResolvedValue({ rows: [], rowCount: 0 }),
-      release: jest.fn()
-    }),
-    end: jest.fn().mockResolvedValue(undefined),
-    on: jest.fn()
-  };
-  
   return {
-    Pool: jest.fn(() => mockPool)
+    Pool: jest.fn(() => mockPoolInstance)
   };
 });
 jest.mock('../../../src/utils/logger', () => ({
@@ -44,9 +35,13 @@ describe('IntelligentSearchEngine', () => {
 
     // Mock database pool
     mockPool = {
-      query: jest.fn(),
-      end: jest.fn()
+      query: jest.fn().mockResolvedValue({ rows: [] }),
+      end: jest.fn().mockResolvedValue(undefined),
+      on: jest.fn()
     };
+    
+    // Set the mock pool instance for pg module to use
+    mockPoolInstance = mockPool;
 
     // Mock embedding service
     mockEmbeddingService = {
@@ -70,9 +65,6 @@ describe('IntelligentSearchEngine', () => {
       embeddingApiKey: 'test-key',
       cache: {}
     });
-
-    // Override pool creation
-    searchEngine.pool = mockPool;
   });
 
   afterEach(() => {
@@ -95,8 +87,6 @@ describe('IntelligentSearchEngine', () => {
         database: {},
         cache: {}
       });
-      searchEngine.pool = mockPool;
-      mockPool.query.mockResolvedValue({ rows: [] });
 
       await searchEngine.initialize();
 
@@ -110,9 +100,11 @@ describe('IntelligentSearchEngine', () => {
         database: {},
         embeddingApiKey: 'test-key',
         cache: {},
-        synonymExpansion: true
+        features: {
+          enableSynonymExpansion: true
+        }
       });
-      searchEngineWithSynonyms.pool = mockPool;
+      // Pool will be created during initialize
       
       const synonymRows = [
         { term: 'ai', synonyms: ['artificial intelligence', 'machine learning'] },
@@ -129,7 +121,6 @@ describe('IntelligentSearchEngine', () => {
 
   describe('search', () => {
     beforeEach(async () => {
-      mockPool.query.mockResolvedValue({ rows: [] });
       await searchEngine.initialize();
     });
 
@@ -139,6 +130,12 @@ describe('IntelligentSearchEngine', () => {
           id: '1',
           title: 'Test Document',
           content: 'Test content',
+          url: 'https://test.com/doc1',
+          author: 'Test Author',
+          published_at: new Date(),
+          metadata: {},
+          quality_score: 0.8,
+          believability_score: 0.9,
           relevance_score: 0.9
         }
       ];
@@ -160,6 +157,9 @@ describe('IntelligentSearchEngine', () => {
         mode: 'hybrid'
       };
       mockCacheManager.get.mockResolvedValue(cachedResults);
+      
+      // Reset query mock after initialization
+      mockPool.query.mockClear();
 
       const results = await searchEngine.search('cached query');
 
@@ -173,6 +173,12 @@ describe('IntelligentSearchEngine', () => {
           id: '2',
           title: 'Exact Match',
           content: 'Exact content match',
+          url: 'https://test.com/doc2',
+          author: 'Test Author',
+          published_at: new Date(),
+          metadata: {},
+          quality_score: 1.0,
+          believability_score: 1.0,
           relevance_score: 1.0
         }
       ];
@@ -187,6 +193,9 @@ describe('IntelligentSearchEngine', () => {
 
     it('should apply filters correctly', async () => {
       mockPool.query.mockResolvedValue({ rows: [] });
+      
+      // Clear mock after initialization
+      mockPool.query.mockClear();
 
       await searchEngine.search('test', {
         filters: {
@@ -198,33 +207,43 @@ describe('IntelligentSearchEngine', () => {
         }
       });
 
-      const queryCall = mockPool.query.mock.calls[0];
-      expect(queryCall[0]).toContain('d.author ILIKE');
-      expect(queryCall[0]).toContain('d.published_at >=');
-      expect(queryCall[0]).toContain('d.published_at <=');
-      expect(queryCall[0]).toContain('d.visibility =');
-      expect(queryCall[0]).toContain('d.quality_score >=');
+      // Find the search query call (not the synonyms query)
+      const searchQueryCall = mockPool.query.mock.calls.find(call => 
+        call[0].includes('SELECT') && call[0].includes('FROM documents')
+      );
+      expect(searchQueryCall).toBeDefined();
+      expect(searchQueryCall[0]).toContain('d.author ILIKE');
+      expect(searchQueryCall[0]).toContain('d.published_at >=');
+      expect(searchQueryCall[0]).toContain('d.published_at <=');
+      expect(searchQueryCall[0]).toContain('d.visibility =');
+      expect(searchQueryCall[0]).toContain('d.quality_score >=');
     });
 
     it('should handle pagination correctly', async () => {
       mockPool.query.mockResolvedValue({ rows: [] });
+      
+      // Clear mock after initialization
+      mockPool.query.mockClear();
 
       await searchEngine.search('test', {
         limit: 50,
         offset: 100
       });
 
-      const queryCall = mockPool.query.mock.calls[0];
-      expect(queryCall[0]).toContain('LIMIT');
-      expect(queryCall[0]).toContain('OFFSET');
-      expect(queryCall[1]).toContain(50);
-      expect(queryCall[1]).toContain(100);
+      // Find the search query call
+      const searchQueryCall = mockPool.query.mock.calls.find(call => 
+        call[0].includes('SELECT') && call[0].includes('FROM documents')
+      );
+      expect(searchQueryCall).toBeDefined();
+      expect(searchQueryCall[0]).toContain('LIMIT');
+      expect(searchQueryCall[0]).toContain('OFFSET');
+      expect(searchQueryCall[1]).toContain(50);
+      expect(searchQueryCall[1]).toContain(100);
     });
   });
 
   describe('semanticSearch', () => {
     beforeEach(async () => {
-      mockPool.query.mockResolvedValue({ rows: [] });
       await searchEngine.initialize();
     });
 
@@ -236,6 +255,13 @@ describe('IntelligentSearchEngine', () => {
         {
           id: '3',
           title: 'Semantic Result',
+          content: 'Semantic content',
+          url: 'https://test.com/doc3',
+          author: 'Test Author',
+          published_at: new Date(),
+          metadata: {},
+          quality_score: 0.8,
+          believability_score: 0.8,
           similarity_score: 0.85
         }
       ];
@@ -245,7 +271,8 @@ describe('IntelligentSearchEngine', () => {
         query: 'semantic test',
         filters: {},
         limit: 10,
-        offset: 0
+        offset: 0,
+        sort: { field: 'relevance', order: 'desc' }
       });
 
       expect(mockEmbeddingService.generateEmbedding).toHaveBeenCalledWith('semantic test');
@@ -264,7 +291,6 @@ describe('IntelligentSearchEngine', () => {
 
   describe('fuzzySearch', () => {
     beforeEach(async () => {
-      mockPool.query.mockResolvedValue({ rows: [] });
       await searchEngine.initialize();
     });
 
@@ -273,6 +299,13 @@ describe('IntelligentSearchEngine', () => {
         {
           id: '4',
           title: 'Fuzzy Match',
+          content: 'Fuzzy content',
+          url: 'https://test.com/doc4',
+          author: 'Test Author',
+          published_at: new Date(),
+          metadata: {},
+          quality_score: 0.7,
+          believability_score: 0.7,
           similarity: 0.8
         }
       ];
@@ -282,12 +315,17 @@ describe('IntelligentSearchEngine', () => {
         normalizedQuery: 'fuzy match',
         filters: {},
         limit: 10,
-        offset: 0
+        offset: 0,
+        sort: { field: 'relevance', order: 'desc' }
       });
 
-      const queryCall = mockPool.query.mock.calls[0];
-      expect(queryCall[0]).toContain('similarity(');
-      expect(queryCall[0]).toContain('%');
+      // Find the fuzzy search query call (not the synonyms query)
+      const fuzzyQueryCall = mockPool.query.mock.calls.find(call => 
+        call[0].includes('similarity(') || call[0].includes('fuzzy_search')
+      );
+      expect(fuzzyQueryCall).toBeDefined();
+      expect(fuzzyQueryCall[0]).toContain('similarity(');
+      expect(fuzzyQueryCall[0]).toContain('%');
       expect(results.items).toHaveLength(1);
       expect(results.mode).toBe('fuzzy');
     });
@@ -320,13 +358,13 @@ describe('IntelligentSearchEngine', () => {
   describe('result merging', () => {
     it('should merge semantic and keyword results correctly', () => {
       const semanticResults = [
-        { id: '1', title: 'Doc 1', relevance_score: 0.9 },
-        { id: '2', title: 'Doc 2', relevance_score: 0.8 }
+        { id: '1', title: 'Doc 1', content: 'Content 1', relevance_score: 0.9 },
+        { id: '2', title: 'Doc 2', content: 'Content 2', relevance_score: 0.8 }
       ];
 
       const keywordResults = [
-        { id: '2', title: 'Doc 2', relevance_score: 0.7, highlighted_title: '<mark>Doc 2</mark>' },
-        { id: '3', title: 'Doc 3', relevance_score: 0.6 }
+        { id: '2', title: 'Doc 2', content: 'Content 2', relevance_score: 0.7, highlighted_title: '<mark>Doc 2</mark>' },
+        { id: '3', title: 'Doc 3', content: 'Content 3', relevance_score: 0.6 }
       ];
 
       const merged = searchEngine.mergeSearchResults(semanticResults, keywordResults, {
@@ -343,7 +381,6 @@ describe('IntelligentSearchEngine', () => {
 
   describe('getSuggestions', () => {
     beforeEach(async () => {
-      mockPool.query.mockResolvedValue({ rows: [] });
       await searchEngine.initialize();
     });
 
@@ -352,6 +389,9 @@ describe('IntelligentSearchEngine', () => {
         { suggestion_text: 'artificial intelligence', suggestion_type: 'query', relevance_score: 0.9 },
         { suggestion_text: 'artificial neural networks', suggestion_type: 'completion', relevance_score: 0.8 }
       ];
+      
+      // Clear mock after initialization
+      mockPool.query.mockClear();
       mockPool.query.mockResolvedValue({ rows: mockSuggestions });
 
       const suggestions = await searchEngine.getSuggestions('artif', 5);
@@ -365,7 +405,6 @@ describe('IntelligentSearchEngine', () => {
 
   describe('facet computation', () => {
     beforeEach(async () => {
-      mockPool.query.mockResolvedValue({ rows: [] });
       await searchEngine.initialize();
     });
 
@@ -390,7 +429,6 @@ describe('IntelligentSearchEngine', () => {
 
   describe('analytics tracking', () => {
     beforeEach(async () => {
-      mockPool.query.mockResolvedValue({ rows: [] });
       await searchEngine.initialize();
     });
 
@@ -469,7 +507,6 @@ describe('IntelligentSearchEngine', () => {
 
   describe('shutdown', () => {
     it('should clean up resources on shutdown', async () => {
-      mockPool.query.mockResolvedValue({ rows: [] });
       await searchEngine.initialize();
 
       await searchEngine.shutdown();
