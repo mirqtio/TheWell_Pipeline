@@ -40,7 +40,7 @@ jobs:
       
       - name: Check for console.log statements
         run: |
-          if grep -r "console\.log" src/ --exclude-dir=node_modules --exclude="*.test.js"; then
+          if grep -r "console\.log" src/ --exclude-dir=node_modules --exclude="*.test.js" --exclude="logger.js" | grep -v "src/utils/logger.js"; then
             echo "::error::Found console.log statements. Please use logger instead."
             exit 1
           fi
