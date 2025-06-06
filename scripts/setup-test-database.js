@@ -57,7 +57,9 @@ async function setupTestDatabase() {
       CREATE TABLE IF NOT EXISTS jobs (
         id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
         source_id UUID REFERENCES sources(id) ON DELETE CASCADE,
-        type VARCHAR(50) NOT NULL,
+        document_id UUID REFERENCES documents(id) ON DELETE CASCADE,
+        job_type VARCHAR(100) NOT NULL,
+        type VARCHAR(50), -- kept for backward compatibility
         status VARCHAR(20) DEFAULT 'pending',
         priority INTEGER DEFAULT 5,
         payload JSONB DEFAULT '{}',
