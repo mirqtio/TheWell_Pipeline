@@ -7,7 +7,7 @@ jest.mock('redis');
 const Bull = require('bull');
 const Redis = require('redis');
 
-jest.mock('../../../src/database/DatabaseManager', () => ({
+jest.mock('../../../../src/database/DatabaseManager', () => ({
   getInstance: jest.fn(() => ({
     query: jest.fn().mockResolvedValue({ rows: [], rowCount: 0 }),
     connect: jest.fn().mockResolvedValue({

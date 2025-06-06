@@ -9,23 +9,25 @@ const request = require('supertest');
 const express = require('express');
 const authMiddleware = require('../../../../src/web/middleware/auth');
 
-jest.mock('../../../../src/database/DatabaseManager', () => ({
-  getInstance: jest.fn(() => ({
+const mockDbInstance = {
+  query: jest.fn().mockResolvedValue({ rows: [], rowCount: 0 }),
+  connect: jest.fn().mockResolvedValue({
     query: jest.fn().mockResolvedValue({ rows: [], rowCount: 0 }),
-    connect: jest.fn().mockResolvedValue({
+    release: jest.fn()
+  }),
+  transaction: jest.fn((callback) => {
+    const mockTrx = {
       query: jest.fn().mockResolvedValue({ rows: [], rowCount: 0 }),
-      release: jest.fn()
-    }),
-    transaction: jest.fn((callback) => {
-      const mockTrx = {
-        query: jest.fn().mockResolvedValue({ rows: [], rowCount: 0 }),
-        commit: jest.fn(),
-        rollback: jest.fn()
-      };
-      return callback(mockTrx);
-    })
-  }))
-}));
+      commit: jest.fn(),
+      rollback: jest.fn()
+    };
+    return callback(mockTrx);
+  })
+};
+
+jest.mock('../../../../src/database/DatabaseManager', () => {
+  return jest.fn().mockImplementation(() => mockDbInstance);
+});
 
 describe('Authentication Middleware', () => {
   let app;

@@ -45,7 +45,7 @@ class RateLimiter {
       local cost = tonumber(ARGV[5]) or 1
       
       local bucket = redis.call('HMGET', key, 'tokens', 'last_refill')
-      local tokens = tonumber(bucket[1]) or limit
+      local tokens = tonumber(bucket[1]) or (limit + burst)
       local last_refill = tonumber(bucket[2]) or now
       
       -- Calculate tokens to add based on time passed

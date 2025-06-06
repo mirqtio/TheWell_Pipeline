@@ -168,7 +168,9 @@ class AutoCategorizationEngine extends EventEmitter {
     
     // Create a new TF-IDF instance for this document
     const tfidf = new natural.TfIdf();
-    tfidf.addDocument(keywords.join(' '));
+    // If no keywords, add a dummy document to avoid errors
+    const documentText = keywords.length > 0 ? keywords.join(' ') : 'empty';
+    tfidf.addDocument(documentText);
     
     const categories = await this.categoryManager.getCategories({ isActive: true });
     const results = [];

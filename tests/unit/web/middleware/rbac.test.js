@@ -1,11 +1,16 @@
-const rbacMiddleware = require('../../../../src/web/middleware/rbac');
+// Mock services before importing middleware
+jest.mock('../../../../src/services/ApiKeyService');
+jest.mock('../../../../src/services/PermissionService');
+
 const ApiKeyService = require('../../../../src/services/ApiKeyService');
 const PermissionService = require('../../../../src/services/PermissionService');
+const RBACMiddleware = require('../../../../src/web/middleware/rbac');
 
 describe('RBAC Middleware', () => {
   let req, res, next;
   let mockApiKeyService;
   let mockPermissionService;
+  let rbacMiddleware;
   
   beforeEach(() => {
     req = {
@@ -58,6 +63,9 @@ describe('RBAC Middleware', () => {
     // Replace service instances
     ApiKeyService.getInstance = jest.fn().mockReturnValue(mockApiKeyService);
     PermissionService.getInstance = jest.fn().mockReturnValue(mockPermissionService);
+    
+    // Create middleware instance after mocks are set up
+    rbacMiddleware = new RBACMiddleware();
   });
   
   describe('requireAuth', () => {

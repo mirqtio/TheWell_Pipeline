@@ -22,12 +22,7 @@ jest.mock('pg', () => {
     Pool: jest.fn(() => mockPool)
   };
 });
-jest.mock('canvas', () => ({
-  createCanvas: jest.fn(() => ({
-    getContext: jest.fn(() => ({})),
-    toBuffer: jest.fn(() => Buffer.from('mock-image'))
-  }))
-}));
+// Canvas is optional in ReportGenerator, so we don't need to mock it
 
 describe('ReportGenerator', () => {
   let generator;
