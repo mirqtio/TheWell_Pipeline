@@ -218,6 +218,9 @@ describe('RAGManager', () => {
   describe('processQuery', () => {
     beforeEach(async () => {
       await ragManager.initialize();
+      // Ensure responseGenerator has required methods after initialization
+      ragManager.responseGenerator.getModel = jest.fn().mockReturnValue('gpt-3.5-turbo');
+      ragManager.responseGenerator.getTemperature = jest.fn().mockReturnValue(0.7);
     });
 
     it('should process query successfully', async () => {
