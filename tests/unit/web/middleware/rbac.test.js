@@ -17,7 +17,7 @@ describe('RBAC Middleware', () => {
     
     const EventEmitter = require('events');
 
-    jest.mock('../../../src/database/DatabaseManager', () => ({
+    jest.mock('../../../../src/database/DatabaseManager', () => ({
       getInstance: jest.fn(() => ({
         query: jest.fn().mockResolvedValue({ rows: [], rowCount: 0 }),
         connect: jest.fn().mockResolvedValue({

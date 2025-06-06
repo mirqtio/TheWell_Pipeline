@@ -179,19 +179,20 @@ describe('PermissionService', () => {
   
   describe('assignRoleToUser', () => {
     it('should assign role to user', async () => {
-      mockDb.query.mockResolvedValue({
-        rows: [{
-          id: 1,
-          role_id: 2
-        }]
-      });
+      mockDb.query
+        .mockResolvedValueOnce({ rows: [{ id: 2 }] }) // Role lookup
+        .mockResolvedValueOnce({ rows: [{ id: 1, role_id: 2 }] }); // User update
       
       const result = await service.assignRoleToUser(1, 'analyst');
       
       expect(result).toBe(true);
       expect(mockDb.query).toHaveBeenCalledWith(
-        expect.stringContaining('UPDATE users SET role_id'),
-        expect.any(Array)
+        'SELECT id FROM roles WHERE name = $1',
+        ['analyst']
+      );
+      expect(mockDb.query).toHaveBeenCalledWith(
+        expect.stringContaining('UPDATE users'),
+        [1, 2]
       );
     });
     
