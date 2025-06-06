@@ -52,7 +52,7 @@ describe('ReportService', () => {
     const mockDate = jest.fn().mockImplementation((arg) => {
       if (arg) return new originalDate(arg);
       return new originalDate('2024-01-15T10:00:00');
-    }) as any;
+    });
     mockDate.now = jest.fn(() => new originalDate('2024-01-15T10:00:00').getTime());
     mockDate.parse = originalDate.parse;
     mockDate.UTC = originalDate.UTC;
