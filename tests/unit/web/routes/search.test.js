@@ -11,12 +11,10 @@ const SearchService = require('../../../../src/services/SearchService');
 jest.mock('../../../../src/services/SearchService');
 
 // Mock auth middleware
-jest.mock('../../../../src/web/middleware/auth', () => ({
-  authenticateUser: (req, res, next) => {
-    req.user = { id: 'test-user', role: req.headers['x-test-role'] || 'user' };
-    next();
-  }
-}));
+jest.mock('../../../../src/web/middleware/auth', () => (req, res, next) => {
+  req.user = { id: 'test-user', role: req.headers['x-test-role'] || 'user' };
+  next();
+});
 
 describe('Search API Routes', () => {
   let app;

@@ -14,7 +14,7 @@ class EntityExtractionService {
     // Lazy load database
     this._getDb = () => {
       if (!this.db) {
-        this.db = DatabaseManager.getInstance().getDatabase();
+        this.db = new DatabaseManager();
       }
       return this.db;
     };

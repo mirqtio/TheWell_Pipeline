@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
-const { authenticateUser, authorizeRole } = require('../middleware/auth');
+const auth = require('../middleware/auth');
+const { requireRole } = require('../middleware/auth');
 const logger = require('../../utils/logger');
 
 /**
@@ -36,7 +37,7 @@ const logger = require('../../utils/logger');
  *       200:
  *         description: List of categories
  */
-router.get('/categories', authenticateUser, async (req, res, next) => {
+router.get('/categories', auth, async (req, res, next) => {
   try {
     const { parentId, depth, isActive } = req.query;
     
@@ -68,7 +69,7 @@ router.get('/categories', authenticateUser, async (req, res, next) => {
  *       200:
  *         description: Hierarchical category structure
  */
-router.get('/categories/hierarchy', authenticateUser, async (req, res, next) => {
+router.get('/categories/hierarchy', auth, async (req, res, next) => {
   try {
     const { rootId } = req.query;
     
@@ -104,7 +105,7 @@ router.get('/categories/hierarchy', authenticateUser, async (req, res, next) => 
  *       200:
  *         description: Search results
  */
-router.get('/categories/search', authenticateUser, async (req, res, next) => {
+router.get('/categories/search', auth, async (req, res, next) => {
   try {
     const { q, limit = 20 } = req.query;
     
@@ -139,7 +140,7 @@ router.get('/categories/search', authenticateUser, async (req, res, next) => {
  *       200:
  *         description: Category details
  */
-router.get('/categories/:id', authenticateUser, async (req, res, next) => {
+router.get('/categories/:id', auth, async (req, res, next) => {
   try {
     const { id } = req.params;
     
@@ -196,7 +197,7 @@ router.get('/categories/:id', authenticateUser, async (req, res, next) => {
  *       201:
  *         description: Created category
  */
-router.post('/categories', authenticateUser, authorizeRole(['admin', 'curator']), async (req, res, next) => {
+router.post('/categories', auth, requireRole(['admin', 'curator']), async (req, res, next) => {
   try {
     const { name, description, parentId, metadata, rules } = req.body;
 
@@ -242,7 +243,7 @@ router.post('/categories', authenticateUser, authorizeRole(['admin', 'curator'])
  *       200:
  *         description: Updated category
  */
-router.put('/categories/:id', authenticateUser, authorizeRole(['admin', 'curator']), async (req, res, next) => {
+router.put('/categories/:id', auth, requireRole(['admin', 'curator']), async (req, res, next) => {
   try {
     const { id } = req.params;
     const updates = req.body;
@@ -281,7 +282,7 @@ router.put('/categories/:id', authenticateUser, authorizeRole(['admin', 'curator
  *       200:
  *         description: Category deleted
  */
-router.delete('/categories/:id', authenticateUser, authorizeRole(['admin']), async (req, res, next) => {
+router.delete('/categories/:id', auth, requireRole(['admin']), async (req, res, next) => {
   try {
     const { id } = req.params;
     const { reassignTo } = req.query;
@@ -334,7 +335,7 @@ router.delete('/categories/:id', authenticateUser, authorizeRole(['admin']), asy
  *       201:
  *         description: Created rule
  */
-router.post('/categories/:id/rules', authenticateUser, authorizeRole(['admin', 'curator']), async (req, res, next) => {
+router.post('/categories/:id/rules', auth, requireRole(['admin', 'curator']), async (req, res, next) => {
   try {
     const { id } = req.params;
     const rule = req.body;
@@ -380,7 +381,7 @@ router.post('/categories/:id/rules', authenticateUser, authorizeRole(['admin', '
  *       200:
  *         description: Categorization results
  */
-router.post('/categorize/document/:id', authenticateUser, async (req, res, next) => {
+router.post('/categorize/document/:id', auth, async (req, res, next) => {
   try {
     const { id } = req.params;
     const { threshold, maxCategories, strategies } = req.query;
@@ -428,7 +429,7 @@ router.post('/categorize/document/:id', authenticateUser, async (req, res, next)
  *       200:
  *         description: Batch categorization results
  */
-router.post('/categorize/batch', authenticateUser, async (req, res, next) => {
+router.post('/categorize/batch', auth, async (req, res, next) => {
   try {
     const { documentIds, options = {} } = req.body;
 
@@ -491,7 +492,7 @@ router.post('/categorize/batch', authenticateUser, async (req, res, next) => {
  *       200:
  *         description: Categorization results
  */
-router.post('/categorize/realtime', authenticateUser, async (req, res, next) => {
+router.post('/categorize/realtime', auth, async (req, res, next) => {
   try {
     const { content, options = {} } = req.body;
 
@@ -531,7 +532,7 @@ router.post('/categorize/realtime', authenticateUser, async (req, res, next) => 
  *       200:
  *         description: Category suggestions
  */
-router.get('/categorize/suggest/:documentId', authenticateUser, async (req, res, next) => {
+router.get('/categorize/suggest/:documentId', auth, async (req, res, next) => {
   try {
     const { documentId } = req.params;
     const { limit } = req.query;
@@ -585,7 +586,7 @@ router.get('/categorize/suggest/:documentId', authenticateUser, async (req, res,
  *       200:
  *         description: Feedback recorded
  */
-router.post('/categorize/feedback', authenticateUser, async (req, res, next) => {
+router.post('/categorize/feedback', auth, async (req, res, next) => {
   try {
     const { documentId, categoryId, feedback } = req.body;
 
@@ -626,7 +627,7 @@ router.post('/categorize/feedback', authenticateUser, async (req, res, next) => 
  *       200:
  *         description: Categorization history
  */
-router.get('/categorize/history/:documentId', authenticateUser, async (req, res, next) => {
+router.get('/categorize/history/:documentId', auth, async (req, res, next) => {
   try {
     const { documentId } = req.params;
 
@@ -668,7 +669,7 @@ router.get('/categorize/history/:documentId', authenticateUser, async (req, res,
  *       200:
  *         description: Analytics data
  */
-router.get('/categorize/analytics', authenticateUser, authorizeRole(['admin', 'analyst']), async (req, res, next) => {
+router.get('/categorize/analytics', auth, requireRole(['admin', 'analyst']), async (req, res, next) => {
   try {
     const { startDate, endDate, categoryId } = req.query;
 
@@ -700,7 +701,7 @@ router.get('/categorize/analytics', authenticateUser, authorizeRole(['admin', 'a
  *             schema:
  *               type: object
  */
-router.get('/categories/export', authenticateUser, authorizeRole(['admin']), async (req, res, next) => {
+router.get('/categories/export', auth, requireRole(['admin']), async (req, res, next) => {
   try {
     const exportData = await req.app.locals.categorizationService.categoryManager.exportCategories();
 
@@ -735,7 +736,7 @@ router.get('/categories/export', authenticateUser, authorizeRole(['admin']), asy
  *       200:
  *         description: Import results
  */
-router.post('/categories/import', authenticateUser, authorizeRole(['admin']), async (req, res, next) => {
+router.post('/categories/import', auth, requireRole(['admin']), async (req, res, next) => {
   try {
     const data = req.body;
     const { mergeStrategy = 'skip' } = req.query;
@@ -765,7 +766,7 @@ router.post('/categories/import', authenticateUser, authorizeRole(['admin']), as
  *       200:
  *         description: Category statistics
  */
-router.get('/categories/stats', authenticateUser, async (req, res, next) => {
+router.get('/categories/stats', auth, async (req, res, next) => {
   try {
     const stats = await req.app.locals.categorizationService.categoryManager.getCategoryStats();
 

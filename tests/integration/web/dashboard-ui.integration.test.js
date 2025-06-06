@@ -8,6 +8,9 @@ const express = require('express');
 const path = require('path');
 const { waitForServer } = require('../../helpers/server');
 
+// Increase timeout for UI tests
+jest.setTimeout(60000);
+
 describe('Dashboard UI Integration Tests', () => {
   let browser;
   let context;

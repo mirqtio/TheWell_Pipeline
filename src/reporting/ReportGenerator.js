@@ -10,7 +10,13 @@ const Handlebars = require('handlebars');
 const { Parser } = require('json2csv');
 const ExcelJS = require('exceljs');
 const Chart = require('chart.js');
-const { createCanvas } = require('canvas');
+let createCanvas;
+try {
+  ({ createCanvas } = require('canvas'));
+} catch (error) {
+  // Canvas is optional - charts will not be generated in reports
+  createCanvas = null;
+}
 const logger = require('../utils/logger');
 
 class ReportGenerator {

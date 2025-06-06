@@ -16,10 +16,13 @@ async function setupTestDatabase() {
   try {
     console.log('Setting up test database...');
 
-    // Create minimal tables needed for permissions testing
+    // Create extensions first
     await pool.query(`
       -- Enable UUID extension
       CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+      
+      -- Enable pgcrypto as fallback for UUID generation
+      CREATE EXTENSION IF NOT EXISTS "pgcrypto";
 
       -- Create minimal sources table
       CREATE TABLE IF NOT EXISTS sources (

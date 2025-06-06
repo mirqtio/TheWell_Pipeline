@@ -9,7 +9,7 @@ const express = require('express');
 const router = express.Router();
 const SearchService = require('../../services/SearchService');
 const logger = require('../../utils/logger');
-const { authenticateUser } = require('../middleware/auth');
+const auth = require('../middleware/auth');
 
 // Initialize search service (this would typically be done in app initialization)
 let searchService;
@@ -49,7 +49,7 @@ function initializeSearchRoutes(serviceInstance) {
  *   "offset": 0
  * }
  */
-router.post('/search', authenticateUser, async (req, res) => {
+router.post('/search', auth, async (req, res) => {
   try {
     const {
       query,
@@ -182,7 +182,7 @@ router.get('/search/suggestions', async (req, res) => {
  * 
  * Supports boolean operators (AND, OR, NOT) and field-specific searches
  */
-router.post('/search/advanced', authenticateUser, async (req, res) => {
+router.post('/search/advanced', auth, async (req, res) => {
   try {
     const {
       queries,
@@ -246,7 +246,7 @@ router.post('/search/advanced', authenticateUser, async (req, res) => {
  * Track search result click
  * POST /api/search/click
  */
-router.post('/search/click', authenticateUser, async (req, res) => {
+router.post('/search/click', auth, async (req, res) => {
   try {
     const { queryId, documentId } = req.body;
     
@@ -273,7 +273,7 @@ router.post('/search/click', authenticateUser, async (req, res) => {
  * Get search analytics
  * GET /api/search/analytics
  */
-router.get('/search/analytics', authenticateUser, async (req, res) => {
+router.get('/search/analytics', auth, async (req, res) => {
   try {
     // Check if user has admin role
     if (req.user.role !== 'admin') {
@@ -397,7 +397,7 @@ router.get('/search/facets', async (req, res) => {
  * Index a document for search
  * POST /api/search/index
  */
-router.post('/search/index', authenticateUser, async (req, res) => {
+router.post('/search/index', auth, async (req, res) => {
   try {
     // Check if user has admin role
     if (req.user.role !== 'admin') {
@@ -436,7 +436,7 @@ router.post('/search/index', authenticateUser, async (req, res) => {
  * Batch index documents
  * POST /api/search/index/batch
  */
-router.post('/search/index/batch', authenticateUser, async (req, res) => {
+router.post('/search/index/batch', auth, async (req, res) => {
   try {
     // Check if user has admin role
     if (req.user.role !== 'admin') {
@@ -474,7 +474,7 @@ router.post('/search/index/batch', authenticateUser, async (req, res) => {
  * Get search service status
  * GET /api/search/status
  */
-router.get('/search/status', authenticateUser, async (req, res) => {
+router.get('/search/status', auth, async (req, res) => {
   try {
     // Check if user has admin role
     if (req.user.role !== 'admin') {
