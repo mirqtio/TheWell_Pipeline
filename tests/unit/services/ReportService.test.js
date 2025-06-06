@@ -27,21 +27,37 @@ jest.mock('node-schedule', () => ({
     cancel: jest.fn()
   }))
 }));
-jest.mock('fs').promises = {
-  mkdir: jest.fn(),
-  readdir: jest.fn(() => []),
-  writeFile: jest.fn(),
-  readFile: jest.fn(() => Buffer.from('test content')),
-  unlink: jest.fn(),
-  access: jest.fn()
-};
+jest.mock('fs', () => ({
+  promises: {
+    mkdir: jest.fn(),
+    readdir: jest.fn(() => []),
+    writeFile: jest.fn(),
+    readFile: jest.fn(() => Buffer.from('test content')),
+    unlink: jest.fn(),
+    access: jest.fn()
+  }
+}));
 
 describe('ReportService', () => {
   let service;
   let mockDb;
   let mockGenerator;
+  let originalDate;
 
   beforeEach(() => {
+    // Save original Date
+    originalDate = global.Date;
+    
+    // Mock Date.now
+    const mockDate = jest.fn().mockImplementation((arg) => {
+      if (arg) return new originalDate(arg);
+      return new originalDate('2024-01-15T10:00:00');
+    }) as any;
+    mockDate.now = jest.fn(() => new originalDate('2024-01-15T10:00:00').getTime());
+    mockDate.parse = originalDate.parse;
+    mockDate.UTC = originalDate.UTC;
+    global.Date = mockDate;
+    
     mockDb = {
       query: jest.fn()
     };
@@ -56,6 +72,11 @@ describe('ReportService', () => {
     
     service = new ReportService();
     jest.clearAllMocks();
+  });
+
+  afterEach(() => {
+    // Restore original Date
+    global.Date = originalDate;
   });
 
   describe('initialize', () => {
@@ -165,9 +186,6 @@ describe('ReportService', () => {
     });
 
     it('should calculate correct next run times', () => {
-      const now = new Date('2024-01-15T10:00:00');
-      jest.spyOn(global, 'Date').mockImplementation(() => now);
-
       // Daily
       const daily = service.calculateNextRunTime('daily', { hour: 9, minute: 0 });
       expect(daily.getHours()).toBe(9);

@@ -595,6 +595,11 @@ Return only valid JSON.`;
    * Match value with pattern
    */
   matchValue(value, pattern) {
+    // Handle undefined/null values
+    if (value === undefined || value === null) {
+      return false;
+    }
+    
     if (typeof pattern === 'string') {
       return value.toString().toLowerCase().includes(pattern.toLowerCase());
     } else if (pattern instanceof RegExp) {

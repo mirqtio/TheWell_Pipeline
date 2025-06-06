@@ -178,47 +178,37 @@ DROP TABLE test;`;
 
   describe('applyMigration', () => {
     it('should apply migration successfully', async () => {
-      const migration = {
-        version: '0001',
-        name: 'test_migration',
-        filename: '0001_test_migration.sql'
-      };
+      const version = '0001';
+      const name = 'test_migration';
+      const forwardScript = 'CREATE TABLE test (id INTEGER);';
+      const rollbackScript = 'DROP TABLE test;';
 
-      const migrationContent = `CREATE TABLE test (id INTEGER);
-
--- ROLLBACK
-DROP TABLE test;`;
-
-      fs.readFile.mockResolvedValue(migrationContent);
       mockClient.query.mockResolvedValue();
 
-      await migrationManager.applyMigration(migration);
+      await migrationManager.applyMigration(version, name, forwardScript, rollbackScript);
 
       expect(mockClient.query).toHaveBeenCalledWith('BEGIN');
-      expect(mockClient.query).toHaveBeenCalledWith('CREATE TABLE test (id INTEGER);');
+      expect(mockClient.query).toHaveBeenCalledWith(forwardScript);
       expect(mockClient.query).toHaveBeenCalledWith(
         expect.stringContaining('INSERT INTO schema_migrations'),
-        expect.arrayContaining(['0001', 'test_migration'])
+        expect.arrayContaining([version, name, rollbackScript])
       );
       expect(mockClient.query).toHaveBeenCalledWith('COMMIT');
       expect(mockClient.release).toHaveBeenCalled();
     });
 
     it('should rollback transaction on error', async () => {
-      const migration = {
-        version: '0001',
-        name: 'test_migration',
-        filename: '0001_test_migration.sql'
-      };
+      const version = '0001';
+      const name = 'test_migration';
+      const forwardScript = 'CREATE TABLE test (id INTEGER);';
 
-      fs.readFile.mockResolvedValue('CREATE TABLE test (id INTEGER);');
       mockClient.query.mockImplementation((query) => {
         if (query.includes('CREATE TABLE')) {
           throw new Error('SQL error');
         }
       });
 
-      await expect(migrationManager.applyMigration(migration)).rejects.toThrow('Failed to apply migration');
+      await expect(migrationManager.applyMigration(version, name, forwardScript)).rejects.toThrow('Failed to apply migration');
 
       expect(mockClient.query).toHaveBeenCalledWith('ROLLBACK');
       expect(mockClient.release).toHaveBeenCalled();
@@ -227,47 +217,30 @@ DROP TABLE test;`;
 
   describe('rollbackMigration', () => {
     it('should rollback migration successfully', async () => {
-      const appliedMigrations = [
-        { version: '0001', name: 'test_migration', applied_at: '2025-01-01T00:00:00Z' }
-      ];
+      const version = '0001';
+      const name = 'test_migration';
+      const rollbackScript = 'DROP TABLE test;';
 
-      jest.spyOn(migrationManager, 'getAppliedMigrations').mockResolvedValue(appliedMigrations);
-      mockDb.query.mockResolvedValue({
-        rows: [{ rollback_script: 'DROP TABLE test;' }]
-      });
       mockClient.query.mockResolvedValue();
 
-      await migrationManager.rollbackMigration('0001');
+      await migrationManager.rollbackMigration(version, name, rollbackScript);
 
       expect(mockClient.query).toHaveBeenCalledWith('BEGIN');
-      expect(mockClient.query).toHaveBeenCalledWith('DROP TABLE test;');
+      expect(mockClient.query).toHaveBeenCalledWith(rollbackScript);
       expect(mockClient.query).toHaveBeenCalledWith(
         expect.stringContaining('DELETE FROM schema_migrations'),
-        ['0001']
+        [version]
       );
       expect(mockClient.query).toHaveBeenCalledWith('COMMIT');
     });
 
-    it('should throw error if migration not found', async () => {
-      jest.spyOn(migrationManager, 'getAppliedMigrations').mockResolvedValue([]);
-
-      await expect(migrationManager.rollbackMigration('0001')).rejects.toThrow(
-        'Migration 0001 not found in applied migrations'
-      );
-    });
-
     it('should throw error if rollback script is empty', async () => {
-      const appliedMigrations = [
-        { version: '0001', name: 'test_migration', applied_at: '2025-01-01T00:00:00Z' }
-      ];
+      const version = '0001';
+      const name = 'test_migration';
+      const rollbackScript = '';
 
-      jest.spyOn(migrationManager, 'getAppliedMigrations').mockResolvedValue(appliedMigrations);
-      mockDb.query.mockResolvedValue({
-        rows: [{ rollback_script: '' }]
-      });
-
-      await expect(migrationManager.rollbackMigration('0001')).rejects.toThrow(
-        'Empty rollback script for migration 0001'
+      await expect(migrationManager.rollbackMigration(version, name, rollbackScript)).rejects.toThrow(
+        'Empty rollback script provided for migration 0001 (test_migration)'
       );
     });
   });

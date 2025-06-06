@@ -407,5 +407,12 @@ describe('AutoCategorizationEngine', () => {
       expect(engine.matchValue(3, { operator: '>', value: 5 })).toBe(false);
       expect(engine.matchValue('test', { operator: 'contains', value: 'es' })).toBe(true);
     });
+
+    it('should handle undefined and null values', () => {
+      expect(engine.matchValue(undefined, 'test')).toBe(false);
+      expect(engine.matchValue(null, 'test')).toBe(false);
+      expect(engine.matchValue(undefined, /test/)).toBe(false);
+      expect(engine.matchValue(null, { operator: '>', value: 5 })).toBe(false);
+    });
   });
 });

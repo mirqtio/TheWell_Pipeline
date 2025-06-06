@@ -90,6 +90,19 @@ class MigrationManager {
   }
 
   /**
+   * Parse migration file into forward and rollback scripts
+   */
+  parseMigrationFile(content) {
+    const rollbackDelimiter = /^--\s*ROLLBACK\s*$/mi;
+    const parts = content.split(rollbackDelimiter);
+    
+    return {
+      forward: parts[0] ? parts[0].trim() : '',
+      rollback: parts[1] ? parts[1].trim() : ''
+    };
+  }
+
+  /**
      * Apply a single migration
      */
   async applyMigration(version, name, forwardScript, rollbackScript = '') {
@@ -269,7 +282,8 @@ class MigrationManager {
         
     for (const migration of pending) {
       const scriptContent = await fs.readFile(path.join(this.migrationsPath, migration.filename), 'utf-8');
-      await this.applyMigration(migration.version, migration.name, scriptContent);
+      const { forward, rollback } = this.parseMigrationFile(scriptContent);
+      await this.applyMigration(migration.version, migration.name, forward, rollback);
       // DIAGNOSTIC DELAY
       logger.debug(`[MigrationManager.migrate] DIAGNOSTIC: Pausing for 200ms after applying ${migration.version}`);
       await new Promise(resolve => setTimeout(resolve, 200));
