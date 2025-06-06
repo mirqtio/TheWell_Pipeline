@@ -13,6 +13,9 @@ const QueueManager = require('../ingestion/queue/QueueManager');
 const IngestionEngine = require('../ingestion/IngestionEngine');
 const DatabaseManager = require('../database/DatabaseManager');
 const AuditService = require('../services/AuditService');
+const CategorizationService = require('../services/CategorizationService');
+const EmbeddingService = require('../enrichment/EmbeddingService');
+const { LLMProviderManager } = require('../enrichment/LLMProviderManager');
 
 // Mock dependencies for development
 class MockQueueManager {
@@ -350,7 +353,7 @@ class MockSourceReliabilityService {
 async function startWebServer() {
   try {
     const isProduction = process.env.NODE_ENV === 'production';
-    let queueManager, ingestionEngine, sourceReliabilityService;
+    let queueManager, ingestionEngine, sourceReliabilityService, categorizationService;
     let databaseManager; // Declare at function scope for cleanup
 
     if (isProduction) {
@@ -397,6 +400,37 @@ async function startWebServer() {
         databaseManager,
         auditService // Pass the auditService instance
       });
+      
+      // Initialize LLM Provider Manager
+      const llmProviderManager = new LLMProviderManager({
+        providers: {
+          openai: {
+            apiKey: process.env.OPENAI_API_KEY,
+            model: process.env.OPENAI_MODEL || 'gpt-3.5-turbo'
+          },
+          anthropic: {
+            apiKey: process.env.ANTHROPIC_API_KEY,
+            model: process.env.ANTHROPIC_MODEL || 'claude-2'
+          }
+        },
+        defaultProvider: process.env.DEFAULT_LLM_PROVIDER || 'openai'
+      });
+      await llmProviderManager.initialize();
+      
+      // Initialize Embedding Service
+      const embeddingService = new EmbeddingService({
+        provider: process.env.EMBEDDING_PROVIDER || 'openai',
+        apiKey: process.env.OPENAI_API_KEY,
+        model: process.env.EMBEDDING_MODEL || 'text-embedding-3-small'
+      });
+      
+      // Initialize Categorization Service
+      categorizationService = new CategorizationService({
+        database: databaseManager,
+        embeddingService,
+        llmProvider: llmProviderManager.getProvider()
+      });
+      await categorizationService.initialize();
     } else {
       logger.info('Using mock services for development...');
       
@@ -418,6 +452,8 @@ async function startWebServer() {
       queueManager,
       ingestionEngine,
       sourceReliabilityService,
+      categorizationService,
+      databaseManager,
       logger
     });
 

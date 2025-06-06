@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document Categorization - TheWell Pipeline</title>
+    <link rel="stylesheet" href="/styles.css">
+    <link rel="stylesheet" href="/categorization/categorization.css">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="nav-container">
+            <h1 class="nav-title">Document Categorization</h1>
+            <div class="nav-links">
+                <a href="/" class="nav-link">Dashboard</a>
+                <a href="/review" class="nav-link">Review</a>
+                <a href="/jobs" class="nav-link">Jobs</a>
+                <a href="/categorization" class="nav-link active">Categorization</a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container">
+        <div class="categorization-layout">
+            <!-- Left Panel: Category Tree -->
+            <div class="category-panel">
+                <div class="panel-header">
+                    <h2>Categories</h2>
+                    <button id="addCategoryBtn" class="btn btn-primary btn-sm">
+                        <span class="icon">+</span> Add Category
+                    </button>
+                </div>
+                <div class="category-search">
+                    <input type="text" id="categorySearch" placeholder="Search categories..." class="form-control">
+                </div>
+                <div id="categoryTree" class="category-tree">
+                    <!-- Category tree will be rendered here -->
+                </div>
+            </div>
+
+            <!-- Middle Panel: Documents -->
+            <div class="document-panel">
+                <div class="panel-header">
+                    <h2>Documents</h2>
+                    <div class="document-filters">
+                        <select id="categoryFilter" class="form-control">
+                            <option value="">All Categories</option>
+                        </select>
+                        <input type="text" id="documentSearch" placeholder="Search documents..." class="form-control">
+                    </div>
+                </div>
+                <div id="documentList" class="document-list">
+                    <!-- Document list will be rendered here -->
+                </div>
+            </div>
+
+            <!-- Right Panel: Details/Actions -->
+            <div class="details-panel">
+                <div id="categoryDetails" class="category-details" style="display: none;">
+                    <h3>Category Details</h3>
+                    <div class="details-content">
+                        <!-- Category details will be rendered here -->
+                    </div>
+                </div>
+                <div id="documentDetails" class="document-details" style="display: none;">
+                    <h3>Document Categorization</h3>
+                    <div class="details-content">
+                        <!-- Document categorization details will be rendered here -->
+                    </div>
+                </div>
+                <div id="bulkActions" class="bulk-actions" style="display: none;">
+                    <h3>Bulk Actions</h3>
+                    <button id="bulkCategorizeBtn" class="btn btn-primary">Categorize Selected</button>
+                    <button id="bulkSuggestBtn" class="btn btn-secondary">Get Suggestions</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modals -->
+    <div id="addCategoryModal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Add New Category</h3>
+                <button class="modal-close">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="addCategoryForm">
+                    <div class="form-group">
+                        <label for="categoryName">Name</label>
+                        <input type="text" id="categoryName" name="name" required class="form-control">
+                    </div>
+                    <div class="form-group">
+                        <label for="categoryDescription">Description</label>
+                        <textarea id="categoryDescription" name="description" rows="3" class="form-control"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="parentCategory">Parent Category</label>
+                        <select id="parentCategory" name="parentId" class="form-control">
+                            <option value="">None (Root Category)</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Rules</label>
+                        <div id="categoryRules">
+                            <button type="button" id="addRuleBtn" class="btn btn-secondary btn-sm">Add Rule</button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" onclick="closeModal('addCategoryModal')">Cancel</button>
+                <button type="submit" form="addCategoryForm" class="btn btn-primary">Create Category</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="/categorization/categorization.js"></script>
+</body>
+</html>

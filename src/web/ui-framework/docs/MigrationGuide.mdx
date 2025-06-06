@@ -1,0 +1,337 @@
+import { Meta } from '@storybook/addon-docs';
+
+<Meta title="Migration Guide" />
+
+# Migration Guide
+
+This guide helps you migrate existing components to use TheWell UI Framework.
+
+## Overview
+
+TheWell UI Framework consolidates all UI components into a unified system with consistent styling, behavior, and accessibility features. Follow this guide to migrate your existing components.
+
+## Step 1: Install Dependencies
+
+```bash
+npm install classnames react-hook-form react-hot-toast focus-trap-react @floating-ui/react framer-motion
+```
+
+## Step 2: Update Imports
+
+Replace individual component imports with framework imports:
+
+```jsx
+// Before
+import Button from '../components/Button';
+import Card from '../components/Card';
+import '../styles/components.css';
+
+// After
+import { Button, Card } from '@thewell/ui-framework';
+```
+
+## Step 3: Wrap App with Providers
+
+Add the necessary providers to your app root:
+
+```jsx
+// src/web/app.js or main entry point
+import { ThemeProvider, ToastProvider, LoadingProvider, ErrorBoundary } from '@thewell/ui-framework';
+
+function App() {
+  return (
+    <ErrorBoundary>
+      <ThemeProvider>
+        <LoadingProvider>
+          <ToastProvider>
+            {/* Your existing app content */}
+          </ToastProvider>
+        </LoadingProvider>
+      </ThemeProvider>
+    </ErrorBoundary>
+  );
+}
+```
+
+## Step 4: Component Migration
+
+### Buttons
+
+```jsx
+// Before
+<button className="btn btn-primary" onClick={handleClick}>
+  Click me
+</button>
+
+// After
+<Button variant="primary" onClick={handleClick}>
+  Click me
+</Button>
+```
+
+### Forms
+
+```jsx
+// Before
+<form onSubmit={handleSubmit}>
+  <input
+    type="email"
+    name="email"
+    value={email}
+    onChange={(e) => setEmail(e.target.value)}
+    required
+  />
+  <button type="submit">Submit</button>
+</form>
+
+// After
+<Form onSubmit={handleSubmit}>
+  <Form.Field
+    name="email"
+    rules={{ required: true, ...validationRules.email }}
+    render={({ register, error }) => (
+      <Input
+        {...register}
+        type="email"
+        label="Email"
+        error={error}
+      />
+    )}
+  />
+  <Form.SubmitButton>Submit</Form.SubmitButton>
+</Form>
+```
+
+### Layout
+
+```jsx
+// Before
+<div className="container">
+  <div className="row">
+    <div className="col-md-6">Content</div>
+    <div className="col-md-6">Content</div>
+  </div>
+</div>
+
+// After
+<Container>
+  <Grid columns={{ xs: 1, md: 2 }}>
+    <Grid.Item>Content</Grid.Item>
+    <Grid.Item>Content</Grid.Item>
+  </Grid>
+</Container>
+```
+
+### Modals
+
+```jsx
+// Before
+<div className={`modal ${isOpen ? 'show' : ''}`}>
+  <div className="modal-content">
+    <h2>Title</h2>
+    <p>Content</p>
+    <button onClick={onClose}>Close</button>
+  </div>
+</div>
+
+// After
+<Modal
+  isOpen={isOpen}
+  onClose={onClose}
+  title="Title"
+>
+  <p>Content</p>
+</Modal>
+```
+
+## Step 5: Update Styling
+
+### Replace Custom CSS with Design Tokens
+
+```css
+/* Before */
+.custom-component {
+  color: #333;
+  padding: 16px;
+  border-radius: 4px;
+}
+
+/* After */
+.custom-component {
+  color: var(--color-text-primary);
+  padding: var(--spacing-4);
+  border-radius: var(--radius-md);
+}
+```
+
+### Use Utility Classes
+
+```jsx
+// Before
+<div style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
+
+// After
+<Stack direction="horizontal" spacing={4} align="center">
+```
+
+## Step 6: API Integration
+
+Replace custom API calls with the framework's API client:
+
+```jsx
+// Before
+const fetchData = async () => {
+  setLoading(true);
+  try {
+    const response = await fetch('/api/data');
+    const data = await response.json();
+    setData(data);
+  } catch (error) {
+    setError(error);
+  } finally {
+    setLoading(false);
+  }
+};
+
+// After
+import { useApi } from '@thewell/ui-framework';
+
+const { data, error, loading, refetch } = useApi('/data');
+```
+
+## Step 7: Notifications
+
+Replace custom notification systems:
+
+```jsx
+// Before
+showNotification('Success!', 'success');
+
+// After
+import { useToast } from '@thewell/ui-framework';
+
+const toast = useToast();
+toast.success('Success!');
+```
+
+## Migration Checklist
+
+- [ ] Install framework dependencies
+- [ ] Add providers to app root
+- [ ] Update component imports
+- [ ] Replace custom buttons with Button component
+- [ ] Migrate forms to use Form component
+- [ ] Update layout components (Grid, Container, Stack)
+- [ ] Replace modals with Modal component
+- [ ] Update notification system to use Toast
+- [ ] Replace custom API calls with useApi hook
+- [ ] Update CSS to use design tokens
+- [ ] Add error boundaries
+- [ ] Test keyboard navigation
+- [ ] Verify screen reader compatibility
+
+## Common Issues
+
+### CSS Conflicts
+
+If you experience style conflicts:
+
+1. Ensure framework styles are loaded after any global styles
+2. Use CSS modules or styled-components for component-specific styles
+3. Prefix custom classes to avoid conflicts
+
+### TypeScript Support
+
+Add type definitions:
+
+```bash
+npm install --save-dev @types/react @types/react-dom
+```
+
+Import types:
+
+```tsx
+import type { ButtonProps, ModalProps } from '@thewell/ui-framework';
+```
+
+### Performance
+
+- Use React.lazy for code splitting
+- Implement virtual scrolling for large lists
+- Use the framework's loading states instead of custom implementations
+
+## Example: Complete Component Migration
+
+### Before
+
+```jsx
+// components/UserCard.js
+import React, { useState, useEffect } from 'react';
+import './UserCard.css';
+
+function UserCard({ userId }) {
+  const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    fetch(`/api/users/${userId}`)
+      .then(res => res.json())
+      .then(data => {
+        setUser(data);
+        setLoading(false);
+      })
+      .catch(err => {
+        setError(err);
+        setLoading(false);
+      });
+  }, [userId]);
+
+  if (loading) return <div className="spinner">Loading...</div>;
+  if (error) return <div className="error">Error: {error.message}</div>;
+
+  return (
+    <div className="user-card">
+      <h3>{user.name}</h3>
+      <p>{user.email}</p>
+      <button className="btn">Contact</button>
+    </div>
+  );
+}
+```
+
+### After
+
+```jsx
+// components/UserCard.js
+import React from 'react';
+import { Card, Button, Spinner, Alert, useApi } from '@thewell/ui-framework';
+
+function UserCard({ userId }) {
+  const { data: user, error, loading } = useApi(`/users/${userId}`);
+
+  if (loading) return <Spinner center />;
+  if (error) return <Alert type="error">Error: {error.message}</Alert>;
+
+  return (
+    <Card>
+      <Card.Header>
+        <Card.Title>{user.name}</Card.Title>
+      </Card.Header>
+      <Card.Body>
+        <p>{user.email}</p>
+      </Card.Body>
+      <Card.Footer>
+        <Button variant="primary">Contact</Button>
+      </Card.Footer>
+    </Card>
+  );
+}
+```
+
+## Need Help?
+
+- Review the component documentation in Storybook
+- Check the example implementations
+- Refer to the API documentation
+- Open an issue on GitHub for specific migration questions

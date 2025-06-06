@@ -1,0 +1,533 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TheWell Pipeline - Visualization Dashboard</title>
+    
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+    
+    <!-- Material UI -->
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Roboto', sans-serif;
+            background-color: #f5f5f5;
+            color: #333;
+        }
+
+        .app-bar {
+            background-color: #1976d2;
+            color: white;
+            padding: 16px 24px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .app-bar h1 {
+            font-size: 24px;
+            font-weight: 500;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 24px;
+        }
+
+        .dashboard-controls {
+            background: white;
+            padding: 16px;
+            border-radius: 8px;
+            margin-bottom: 24px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            display: flex;
+            gap: 16px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .control-group {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .control-group label {
+            font-size: 12px;
+            color: #666;
+            font-weight: 500;
+        }
+
+        select, input {
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+            background: white;
+        }
+
+        button {
+            background-color: #1976d2;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: background-color 0.2s;
+        }
+
+        button:hover {
+            background-color: #1565c0;
+        }
+
+        button.secondary {
+            background-color: #757575;
+        }
+
+        button.secondary:hover {
+            background-color: #616161;
+        }
+
+        .widget-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 24px;
+        }
+
+        .widget {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            overflow: hidden;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .widget:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+        }
+
+        .widget-header {
+            padding: 16px;
+            border-bottom: 1px solid #e0e0e0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .widget-title {
+            font-size: 16px;
+            font-weight: 500;
+        }
+
+        .widget-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .widget-content {
+            padding: 16px;
+            height: 300px;
+            position: relative;
+        }
+
+        .icon-button {
+            background: none;
+            border: none;
+            color: #666;
+            cursor: pointer;
+            padding: 4px;
+            border-radius: 50%;
+            transition: background-color 0.2s;
+        }
+
+        .icon-button:hover {
+            background-color: rgba(0,0,0,0.08);
+        }
+
+        .loading {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100%;
+            color: #666;
+        }
+
+        .error {
+            color: #d32f2f;
+            text-align: center;
+            padding: 16px;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 48px;
+            color: #666;
+        }
+
+        .empty-state .material-icons {
+            font-size: 48px;
+            opacity: 0.3;
+            margin-bottom: 16px;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+
+        .stat-card {
+            background: white;
+            padding: 16px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .stat-value {
+            font-size: 32px;
+            font-weight: 500;
+            color: #1976d2;
+        }
+
+        .stat-label {
+            font-size: 14px;
+            color: #666;
+            margin-top: 4px;
+        }
+
+        @media (max-width: 768px) {
+            .widget-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .dashboard-controls {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .control-group {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="app-bar">
+        <span class="material-icons">dashboard</span>
+        <h1>Visualization Dashboard</h1>
+    </div>
+
+    <div class="container">
+        <!-- Statistics Overview -->
+        <div class="stats-grid" id="statsGrid">
+            <div class="stat-card">
+                <div class="stat-value" id="totalDocuments">-</div>
+                <div class="stat-label">Total Documents</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="processedToday">-</div>
+                <div class="stat-label">Processed Today</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="activeSources">-</div>
+                <div class="stat-label">Active Sources</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="avgRating">-</div>
+                <div class="stat-label">Average Rating</div>
+            </div>
+        </div>
+
+        <!-- Dashboard Controls -->
+        <div class="dashboard-controls">
+            <div class="control-group">
+                <label>Data Source</label>
+                <select id="dataSource">
+                    <option value="documents">Documents</option>
+                    <option value="feedback">Feedback</option>
+                    <option value="jobs">Jobs</option>
+                    <option value="entities">Entities</option>
+                </select>
+            </div>
+            
+            <div class="control-group">
+                <label>Date Range</label>
+                <input type="date" id="startDate">
+            </div>
+            
+            <div class="control-group">
+                <label>&nbsp;</label>
+                <input type="date" id="endDate">
+            </div>
+            
+            <div class="control-group">
+                <label>&nbsp;</label>
+                <button onclick="refreshDashboard()">
+                    <span class="material-icons">refresh</span>
+                    Refresh
+                </button>
+            </div>
+            
+            <div class="control-group" style="margin-left: auto;">
+                <label>&nbsp;</label>
+                <button onclick="addWidget()" class="secondary">
+                    <span class="material-icons">add</span>
+                    Add Widget
+                </button>
+            </div>
+        </div>
+
+        <!-- Widget Grid -->
+        <div class="widget-grid" id="widgetGrid">
+            <!-- Widgets will be dynamically added here -->
+        </div>
+
+        <!-- Empty State -->
+        <div class="empty-state" id="emptyState" style="display: none;">
+            <div class="material-icons">dashboard</div>
+            <h3>No widgets added yet</h3>
+            <p>Click "Add Widget" to start building your dashboard</p>
+        </div>
+    </div>
+
+    <script>
+        // Global state
+        let widgets = [];
+        let widgetIdCounter = 0;
+        const API_BASE = '/api/visualizations';
+
+        // Initialize dashboard
+        document.addEventListener('DOMContentLoaded', function() {
+            // Set default date range (last 30 days)
+            const endDate = new Date();
+            const startDate = new Date();
+            startDate.setDate(startDate.getDate() - 30);
+            
+            document.getElementById('startDate').value = startDate.toISOString().split('T')[0];
+            document.getElementById('endDate').value = endDate.toISOString().split('T')[0];
+            
+            // Load statistics
+            loadStatistics();
+            
+            // Add default widgets
+            addWidget('chart', 'Document Timeline');
+            addWidget('chart', 'Source Distribution', { chartType: 'pie' });
+        });
+
+        // Load dashboard statistics
+        async function loadStatistics() {
+            try {
+                const response = await fetch(`${API_BASE}/aggregations/documentStats`, {
+                    headers: {
+                        'Authorization': `Bearer ${getAuthToken()}`
+                    }
+                });
+                
+                if (!response.ok) throw new Error('Failed to load statistics');
+                
+                const data = await response.json();
+                
+                document.getElementById('totalDocuments').textContent = 
+                    data.data.total.toLocaleString();
+                
+                // Calculate today's documents
+                const today = new Date().toISOString().split('T')[0];
+                const todayCount = data.data.timeline
+                    .filter(item => item.date === today)
+                    .reduce((sum, item) => sum + item.count, 0);
+                document.getElementById('processedToday').textContent = todayCount;
+                
+                // Count sources
+                const sourceCount = Object.keys(data.data.bySource || {}).length;
+                document.getElementById('activeSources').textContent = sourceCount;
+                
+                // Mock average rating (would come from feedback aggregation)
+                document.getElementById('avgRating').textContent = '4.2';
+            } catch (error) {
+                console.error('Failed to load statistics:', error);
+            }
+        }
+
+        // Add a new widget
+        function addWidget(type = 'chart', title = '', options = {}) {
+            const widgetId = `widget-${widgetIdCounter++}`;
+            const widget = {
+                id: widgetId,
+                type,
+                title: title || `${type.charAt(0).toUpperCase() + type.slice(1)} Widget`,
+                options
+            };
+            
+            widgets.push(widget);
+            renderWidget(widget);
+            updateEmptyState();
+        }
+
+        // Render a widget
+        function renderWidget(widget) {
+            const widgetEl = document.createElement('div');
+            widgetEl.className = 'widget';
+            widgetEl.id = widget.id;
+            widgetEl.innerHTML = `
+                <div class="widget-header">
+                    <div class="widget-title">${widget.title}</div>
+                    <div class="widget-actions">
+                        <button class="icon-button" onclick="refreshWidget('${widget.id}')">
+                            <span class="material-icons">refresh</span>
+                        </button>
+                        <button class="icon-button" onclick="exportWidget('${widget.id}')">
+                            <span class="material-icons">download</span>
+                        </button>
+                        <button class="icon-button" onclick="removeWidget('${widget.id}')">
+                            <span class="material-icons">close</span>
+                        </button>
+                    </div>
+                </div>
+                <div class="widget-content" id="${widget.id}-content">
+                    <div class="loading">Loading...</div>
+                </div>
+            `;
+            
+            document.getElementById('widgetGrid').appendChild(widgetEl);
+            loadWidgetData(widget);
+        }
+
+        // Load data for a widget
+        async function loadWidgetData(widget) {
+            const contentEl = document.getElementById(`${widget.id}-content`);
+            
+            try {
+                const dataSource = document.getElementById('dataSource').value;
+                const startDate = document.getElementById('startDate').value;
+                const endDate = document.getElementById('endDate').value;
+                
+                const params = new URLSearchParams({
+                    source: dataSource,
+                    filters: JSON.stringify({
+                        dateRange: { start: startDate, end: endDate }
+                    }),
+                    options: JSON.stringify(widget.options)
+                });
+                
+                const response = await fetch(`${API_BASE}/data/${widget.type}?${params}`, {
+                    headers: {
+                        'Authorization': `Bearer ${getAuthToken()}`
+                    }
+                });
+                
+                if (!response.ok) throw new Error('Failed to load data');
+                
+                const result = await response.json();
+                renderVisualization(widget, result.data, contentEl);
+            } catch (error) {
+                contentEl.innerHTML = `<div class="error">Failed to load data: ${error.message}</div>`;
+            }
+        }
+
+        // Render visualization
+        function renderVisualization(widget, data, container) {
+            container.innerHTML = '';
+            
+            if (widget.type === 'chart') {
+                renderChart(widget, data, container);
+            } else {
+                container.innerHTML = `<div class="error">Visualization type "${widget.type}" not implemented in demo</div>`;
+            }
+        }
+
+        // Render Chart.js chart
+        function renderChart(widget, data, container) {
+            const canvas = document.createElement('canvas');
+            container.appendChild(canvas);
+            
+            const chartType = widget.options.chartType || 'line';
+            
+            new Chart(canvas, {
+                type: chartType,
+                data: data,
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: chartType !== 'line'
+                        }
+                    }
+                }
+            });
+        }
+
+        // Refresh all widgets
+        function refreshDashboard() {
+            loadStatistics();
+            widgets.forEach(widget => {
+                loadWidgetData(widget);
+            });
+        }
+
+        // Refresh a single widget
+        function refreshWidget(widgetId) {
+            const widget = widgets.find(w => w.id === widgetId);
+            if (widget) {
+                loadWidgetData(widget);
+            }
+        }
+
+        // Export widget
+        async function exportWidget(widgetId) {
+            const widget = widgets.find(w => w.id === widgetId);
+            if (!widget) return;
+            
+            alert('Export functionality would download the visualization as PNG/SVG/PDF');
+        }
+
+        // Remove widget
+        function removeWidget(widgetId) {
+            widgets = widgets.filter(w => w.id !== widgetId);
+            const widgetEl = document.getElementById(widgetId);
+            if (widgetEl) {
+                widgetEl.remove();
+            }
+            updateEmptyState();
+        }
+
+        // Update empty state visibility
+        function updateEmptyState() {
+            const emptyState = document.getElementById('emptyState');
+            const widgetGrid = document.getElementById('widgetGrid');
+            
+            if (widgets.length === 0) {
+                emptyState.style.display = 'block';
+                widgetGrid.style.display = 'none';
+            } else {
+                emptyState.style.display = 'none';
+                widgetGrid.style.display = 'grid';
+            }
+        }
+
+        // Mock auth token (in real app, this would come from auth system)
+        function getAuthToken() {
+            return 'mock-auth-token';
+        }
+    </script>
+</body>
+</html>

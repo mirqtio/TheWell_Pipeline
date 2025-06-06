@@ -1,0 +1,21 @@
+{
+  "name": "@thewell/ui-framework",
+  "version": "1.0.0",
+  "description": "TheWell Pipeline UI Framework - Unified component library and design system",
+  "main": "index.js",
+  "author": "TheWell Team",
+  "license": "MIT",
+  "peerDependencies": {
+    "react": "^18.0.0",
+    "react-dom": "^18.0.0"
+  },
+  "dependencies": {
+    "classnames": "^2.3.2",
+    "framer-motion": "^10.16.4",
+    "react-hook-form": "^7.47.0",
+    "react-hot-toast": "^2.4.1",
+    "react-modal": "^3.16.1",
+    "focus-trap-react": "^10.2.3",
+    "@floating-ui/react": "^0.25.4"
+  }
+}

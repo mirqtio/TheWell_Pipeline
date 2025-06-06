@@ -1,0 +1,123 @@
+/**
+ * Select Component Styles
+ */
+
+.tw-select-container {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-2);
+  width: 100%;
+}
+
+/* Label */
+.tw-select__label {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-1);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-text-primary);
+}
+
+.tw-select__required {
+  color: var(--color-error-500);
+}
+
+/* Select wrapper */
+.tw-select__wrapper {
+  position: relative;
+  width: 100%;
+}
+
+/* Select base styles */
+.tw-select {
+  width: 100%;
+  font-family: inherit;
+  font-size: var(--font-size-base);
+  line-height: var(--line-height-normal);
+  color: var(--color-text-primary);
+  background-color: var(--color-background-primary);
+  border: 1px solid var(--color-border-base);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: all var(--duration-fast) var(--easing-in-out);
+  outline: none;
+  appearance: none;
+  padding-right: var(--spacing-10);
+}
+
+/* Size variants */
+.tw-select--sm {
+  padding: var(--spacing-1) var(--spacing-10) var(--spacing-1) var(--spacing-3);
+  font-size: var(--font-size-sm);
+}
+
+.tw-select--md {
+  padding: var(--spacing-2) var(--spacing-10) var(--spacing-2) var(--spacing-4);
+  font-size: var(--font-size-base);
+}
+
+.tw-select--lg {
+  padding: var(--spacing-3) var(--spacing-10) var(--spacing-3) var(--spacing-4);
+  font-size: var(--font-size-lg);
+}
+
+/* Focus state */
+.tw-select:focus {
+  border-color: var(--color-primary-500);
+  box-shadow: 0 0 0 3px rgba(33, 150, 243, 0.1);
+}
+
+/* Hover state */
+.tw-select:hover:not(:disabled) {
+  border-color: var(--color-border-dark);
+}
+
+/* Error state */
+.tw-select--error {
+  border-color: var(--color-error-500);
+}
+
+.tw-select--error:focus {
+  box-shadow: 0 0 0 3px rgba(244, 67, 54, 0.1);
+}
+
+/* Disabled state */
+.tw-select--disabled,
+.tw-select:disabled {
+  background-color: var(--color-background-secondary);
+  color: var(--color-text-disabled);
+  cursor: not-allowed;
+}
+
+/* Icon */
+.tw-select__icon {
+  position: absolute;
+  top: 50%;
+  right: var(--spacing-3);
+  transform: translateY(-50%);
+  pointer-events: none;
+  color: var(--color-text-secondary);
+}
+
+/* Helper text */
+.tw-select__helper {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+}
+
+/* Error message */
+.tw-select__error {
+  font-size: var(--font-size-sm);
+  color: var(--color-error-600);
+}
+
+/* Option group styling */
+.tw-select optgroup {
+  font-weight: var(--font-weight-semibold);
+}
+
+/* Placeholder option */
+.tw-select option[value=""][disabled] {
+  color: var(--color-text-tertiary);
+}

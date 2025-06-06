@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Alert Summary Report - TheWell Pipeline</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: #f5f5f5;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .header {
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        .header h1 {
+            color: #2c3e50;
+            margin-bottom: 10px;
+        }
+        .header .meta {
+            color: #7f8c8d;
+            font-size: 14px;
+        }
+        .summary {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        .summary-card {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .summary-card h3 {
+            color: #7f8c8d;
+            font-size: 14px;
+            font-weight: normal;
+            margin-bottom: 5px;
+        }
+        .summary-card .value {
+            font-size: 28px;
+            font-weight: bold;
+            color: #2c3e50;
+        }
+        .summary-card.critical .value { color: #e74c3c; }
+        .summary-card.warning .value { color: #f39c12; }
+        .summary-card.resolved .value { color: #27ae60; }
+        .section {
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        .section h2 {
+            color: #2c3e50;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #ecf0f1;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #ecf0f1;
+        }
+        th {
+            background: #f8f9fa;
+            font-weight: 600;
+            color: #2c3e50;
+        }
+        tr:hover {
+            background: #f8f9fa;
+        }
+        .severity {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 500;
+            text-transform: uppercase;
+        }
+        .severity.critical { background: #f8d7da; color: #721c24; }
+        .severity.warning { background: #fff3cd; color: #856404; }
+        .severity.info { background: #d1ecf1; color: #0c5460; }
+        .status {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+        .status.open { background: #f8d7da; color: #721c24; }
+        .status.acknowledged { background: #fff3cd; color: #856404; }
+        .status.resolved { background: #d4edda; color: #155724; }
+        .chart-container {
+            margin-top: 20px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 4px;
+        }
+        .footer {
+            text-align: center;
+            color: #7f8c8d;
+            font-size: 12px;
+            margin-top: 40px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Alert Summary Report</h1>
+            <div class="meta">
+                Generated on {{formatDate metadata.generatedAt "YYYY-MM-DD HH:mm"}}
+                {{#if metadata.requestedBy}}by {{metadata.requestedBy}}{{/if}}
+            </div>
+        </div>
+
+        {{#if summary}}
+        <div class="summary">
+            <div class="summary-card">
+                <h3>Total Alerts</h3>
+                <div class="value">{{formatNumber summary.totalAlerts 0}}</div>
+            </div>
+            <div class="summary-card critical">
+                <h3>Critical Alerts</h3>
+                <div class="value">{{formatNumber summary.criticalAlerts 0}}</div>
+            </div>
+            <div class="summary-card warning">
+                <h3>Warning Alerts</h3>
+                <div class="value">{{formatNumber summary.warningAlerts 0}}</div>
+            </div>
+            <div class="summary-card resolved">
+                <h3>Resolved Alerts</h3>
+                <div class="value">{{formatNumber summary.resolvedAlerts 0}}</div>
+            </div>
+            <div class="summary-card">
+                <h3>Avg Resolution Time</h3>
+                <div class="value">{{summary.averageResolutionTime}}</div>
+            </div>
+        </div>
+        {{/if}}
+
+        {{#if charts}}
+        <div class="section">
+            <h2>Alert Distribution</h2>
+            {{#each charts}}
+            <div class="chart-container">
+                <h3>{{this.title}}</h3>
+                <canvas id="chart-{{@index}}" width="400" height="300"></canvas>
+            </div>
+            {{/each}}
+        </div>
+        {{/if}}
+
+        {{#if details}}
+        <div class="section">
+            <h2>Alert Details</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Alert ID</th>
+                        <th>Type</th>
+                        <th>Severity</th>
+                        <th>Status</th>
+                        <th>Message</th>
+                        <th>Created</th>
+                        <th>Resolved</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {{#eachWithIndex details}}
+                    <tr>
+                        <td>{{id}}</td>
+                        <td>{{type}}</td>
+                        <td><span class="severity {{severity}}">{{severity}}</span></td>
+                        <td><span class="status {{status}}">{{status}}</span></td>
+                        <td>{{message}}</td>
+                        <td>{{formatDate createdAt "YYYY-MM-DD HH:mm"}}</td>
+                        <td>{{#if resolvedAt}}{{formatDate resolvedAt "YYYY-MM-DD HH:mm"}}{{else}}-{{/if}}</td>
+                    </tr>
+                    {{/eachWithIndex}}
+                </tbody>
+            </table>
+        </div>
+        {{/if}}
+
+        <div class="footer">
+            <p>TheWell Pipeline - Alert Summary Report</p>
+            <p>Page 1 of 1</p>
+        </div>
+    </div>
+
+    {{#if charts}}
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
+    <script>
+        // Render charts
+        {{#each charts}}
+        (function() {
+            const ctx = document.getElementById('chart-{{@index}}').getContext('2d');
+            const chartData = {{{json this.data}}};
+            new Chart(ctx, {
+                type: '{{this.type}}',
+                data: chartData,
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'right'
+                        }
+                    }
+                }
+            });
+        })();
+        {{/each}}
+    </script>
+    {{/if}}
+</body>
+</html>

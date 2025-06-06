@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Real-time Analytics Dashboard - TheWell Pipeline</title>
+    
+    <!-- Base styles -->
+    <link rel="stylesheet" href="/design-system/index.css">
+    <link rel="stylesheet" href="/styles.css">
+    <link rel="stylesheet" href="/css/dashboard-realtime.css">
+    
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@3.0.0/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
+    
+    <!-- Socket.io (loaded by realtime client) -->
+</head>
+<body>
+    <div class="app-container">
+        <!-- Navigation -->
+        <nav class="navbar">
+            <div class="navbar-brand">
+                <a href="/">TheWell Pipeline</a>
+            </div>
+            <div class="navbar-menu">
+                <a href="/" class="navbar-item">Home</a>
+                <a href="/documents" class="navbar-item">Documents</a>
+                <a href="/search" class="navbar-item">Search</a>
+                <a href="/dashboard" class="navbar-item">Dashboard</a>
+                <a href="/dashboard/realtime" class="navbar-item active">Real-time</a>
+                <a href="/admin" class="navbar-item">Admin</a>
+            </div>
+        </nav>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <div id="realtime-dashboard"></div>
+        </main>
+
+        <!-- Footer -->
+        <footer class="footer">
+            <div class="footer-content">
+                <p>&copy; 2024 TheWell Pipeline. All rights reserved.</p>
+            </div>
+        </footer>
+    </div>
+
+    <!-- Toast Container for Notifications -->
+    <div id="toast-container" class="toast-container"></div>
+
+    <!-- Scripts -->
+    <script src="/js/realtime-client.js"></script>
+    <script src="/js/dashboard-realtime.js"></script>
+    
+    <script>
+        // Initialize authentication token
+        const authToken = localStorage.getItem('auth_token');
+        if (!authToken) {
+            // Redirect to login if not authenticated
+            window.location.href = '/login?redirect=/dashboard/realtime';
+        }
+
+        // Toast notification helper
+        window.showToast = function(options) {
+            const toast = document.createElement('div');
+            toast.className = `toast toast-${options.type || 'info'}`;
+            
+            const message = document.createElement('div');
+            message.className = 'toast-message';
+            message.textContent = options.message;
+            toast.appendChild(message);
+            
+            if (options.action) {
+                const action = document.createElement('button');
+                action.className = 'toast-action';
+                action.textContent = options.action.text;
+                action.onclick = options.action.handler;
+                toast.appendChild(action);
+            }
+            
+            const container = document.getElementById('toast-container');
+            container.appendChild(toast);
+            
+            // Auto-remove after duration (unless duration is 0)
+            if (options.duration !== 0) {
+                setTimeout(() => {
+                    toast.classList.add('toast-fade-out');
+                    setTimeout(() => toast.remove(), 300);
+                }, options.duration || 5000);
+            }
+            
+            // Add close button for persistent toasts
+            if (options.duration === 0) {
+                const close = document.createElement('button');
+                close.className = 'toast-close';
+                close.innerHTML = '&times;';
+                close.onclick = () => toast.remove();
+                toast.appendChild(close);
+            }
+        };
+
+        // Handle connection events
+        window.realtimeClient.on('auth:failed', () => {
+            window.location.href = '/login?redirect=/dashboard/realtime';
+        });
+
+        window.realtimeClient.on('connection:established', () => {
+            window.showToast({
+                type: 'success',
+                message: 'Connected to real-time server',
+                duration: 3000
+            });
+        });
+
+        window.realtimeClient.on('connection:lost', (reason) => {
+            window.showToast({
+                type: 'error',
+                message: `Connection lost: ${reason}`,
+                duration: 5000
+            });
+        });
+
+        // Handle keyboard shortcuts
+        document.addEventListener('keydown', (e) => {
+            // Ctrl/Cmd + R to refresh dashboard
+            if ((e.ctrlKey || e.metaKey) && e.key === 'r') {
+                e.preventDefault();
+                if (window.realtimeDashboard) {
+                    window.realtimeDashboard.refresh();
+                }
+            }
+            
+            // Escape to close all toasts
+            if (e.key === 'Escape') {
+                document.querySelectorAll('.toast').forEach(toast => {
+                    toast.remove();
+                });
+            }
+        });
+    </script>
+
+    <style>
+        /* Additional page-specific styles */
+        .app-container {
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+
+        .navbar {
+            background: var(--color-primary);
+            color: white;
+            padding: 1rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .navbar-brand a {
+            color: white;
+            text-decoration: none;
+            font-size: 1.25rem;
+            font-weight: 600;
+        }
+
+        .navbar-menu {
+            display: flex;
+            gap: 1.5rem;
+        }
+
+        .navbar-item {
+            color: rgba(255, 255, 255, 0.8);
+            text-decoration: none;
+            transition: color 0.2s ease;
+        }
+
+        .navbar-item:hover,
+        .navbar-item.active {
+            color: white;
+        }
+
+        .main-content {
+            flex: 1;
+            background: var(--color-background, #f5f5f5);
+            padding: 2rem 0;
+        }
+
+        .footer {
+            background: var(--color-surface);
+            border-top: 1px solid var(--color-border);
+            padding: 1rem;
+            text-align: center;
+        }
+
+        .footer-content {
+            color: var(--color-text-secondary);
+            font-size: 0.875rem;
+        }
+
+        /* Toast Notifications */
+        .toast-container {
+            position: fixed;
+            top: 1rem;
+            right: 1rem;
+            z-index: 1000;
+        }
+
+        .toast {
+            background: white;
+            padding: 1rem;
+            margin-bottom: 0.5rem;
+            border-radius: 6px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            min-width: 300px;
+            animation: slideIn 0.3s ease;
+        }
+
+        .toast-success {
+            border-left: 4px solid var(--color-success);
+        }
+
+        .toast-error {
+            border-left: 4px solid var(--color-error);
+        }
+
+        .toast-warning {
+            border-left: 4px solid var(--color-warning);
+        }
+
+        .toast-info {
+            border-left: 4px solid var(--color-info);
+        }
+
+        .toast-message {
+            flex: 1;
+            color: var(--color-text-primary);
+        }
+
+        .toast-action {
+            padding: 0.375rem 0.75rem;
+            background: var(--color-primary);
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.875rem;
+        }
+
+        .toast-close {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            line-height: 1;
+            color: var(--color-text-secondary);
+            cursor: pointer;
+            padding: 0;
+            margin-left: 0.5rem;
+        }
+
+        .toast-fade-out {
+            animation: slideOut 0.3s ease;
+            opacity: 0;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        @keyframes slideOut {
+            from {
+                transform: translateX(0);
+                opacity: 1;
+            }
+            to {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .navbar-menu {
+                display: none;
+            }
+            
+            .main-content {
+                padding: 1rem 0;
+            }
+            
+            .toast-container {
+                left: 1rem;
+                right: 1rem;
+            }
+            
+            .toast {
+                min-width: auto;
+            }
+        }
+    </style>
+</body>
+</html>

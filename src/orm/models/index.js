@@ -21,6 +21,11 @@ const Source = require('./Source');
 const VisibilityAuditLog = require('./VisibilityAuditLog');
 const VisibilityApproval = require('./VisibilityApproval');
 const VisibilityRule = require('./VisibilityRule');
+const UserProfile = require('./UserProfile');
+const UserInteraction = require('./UserInteraction');
+const RecommendationFeedback = require('./RecommendationFeedback');
+const RecommendationMetric = require('./RecommendationMetric');
+const ABTestAssignment = require('./ABTestAssignment');
 
 module.exports = {
   AuditLog,
@@ -37,5 +42,10 @@ module.exports = {
   Source,
   VisibilityAuditLog,
   VisibilityApproval,
-  VisibilityRule
+  VisibilityRule,
+  UserProfile,
+  UserInteraction,
+  RecommendationFeedback,
+  RecommendationMetric,
+  ABTestAssignment
 };

@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document Analytics Report - TheWell Pipeline</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: #f5f5f5;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .header {
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        .header h1 {
+            color: #2c3e50;
+            margin-bottom: 10px;
+        }
+        .header .meta {
+            color: #7f8c8d;
+            font-size: 14px;
+        }
+        .summary {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        .summary-card {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .summary-card h3 {
+            color: #7f8c8d;
+            font-size: 14px;
+            font-weight: normal;
+            margin-bottom: 5px;
+        }
+        .summary-card .value {
+            font-size: 28px;
+            font-weight: bold;
+            color: #2c3e50;
+        }
+        .section {
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        .section h2 {
+            color: #2c3e50;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #ecf0f1;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #ecf0f1;
+        }
+        th {
+            background: #f8f9fa;
+            font-weight: 600;
+            color: #2c3e50;
+        }
+        tr:hover {
+            background: #f8f9fa;
+        }
+        .status {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+        .status.published { background: #d4edda; color: #155724; }
+        .status.draft { background: #fff3cd; color: #856404; }
+        .status.archived { background: #f8d7da; color: #721c24; }
+        .quality-score {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-weight: 500;
+        }
+        .quality-score.high { background: #d4edda; color: #155724; }
+        .quality-score.medium { background: #fff3cd; color: #856404; }
+        .quality-score.low { background: #f8d7da; color: #721c24; }
+        .chart-container {
+            margin-top: 20px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 4px;
+        }
+        .footer {
+            text-align: center;
+            color: #7f8c8d;
+            font-size: 12px;
+            margin-top: 40px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Document Analytics Report</h1>
+            <div class="meta">
+                Generated on {{formatDate metadata.generatedAt "YYYY-MM-DD HH:mm"}}
+                {{#if metadata.requestedBy}}by {{metadata.requestedBy}}{{/if}}
+            </div>
+        </div>
+
+        {{#if summary}}
+        <div class="summary">
+            <div class="summary-card">
+                <h3>Total Documents</h3>
+                <div class="value">{{formatNumber summary.totalDocuments 0}}</div>
+            </div>
+            <div class="summary-card">
+                <h3>Average Quality Score</h3>
+                <div class="value">{{formatNumber summary.averageQualityScore 1}}</div>
+            </div>
+            <div class="summary-card">
+                <h3>Total Feedback</h3>
+                <div class="value">{{formatNumber summary.totalFeedback 0}}</div>
+            </div>
+            {{#if summary.documentsByStatus}}
+            <div class="summary-card">
+                <h3>Documents by Status</h3>
+                <div class="value">
+                    {{#each summary.documentsByStatus}}
+                    <small>{{@key}}: {{this.length}}</small><br>
+                    {{/each}}
+                </div>
+            </div>
+            {{/if}}
+        </div>
+        {{/if}}
+
+        {{#if charts}}
+        <div class="section">
+            <h2>Analytics Overview</h2>
+            {{#each charts}}
+            <div class="chart-container">
+                <h3>{{this.title}}</h3>
+                <canvas id="chart-{{@index}}" width="400" height="200"></canvas>
+            </div>
+            {{/each}}
+        </div>
+        {{/if}}
+
+        {{#if details}}
+        <div class="section">
+            <h2>Document Details</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Document ID</th>
+                        <th>Title</th>
+                        <th>Status</th>
+                        <th>Quality Score</th>
+                        <th>Feedback Count</th>
+                        <th>Created</th>
+                        <th>Last Updated</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {{#eachWithIndex details}}
+                    <tr>
+                        <td>{{id}}</td>
+                        <td>{{title}}</td>
+                        <td><span class="status {{status}}">{{status}}</span></td>
+                        <td>
+                            <span class="quality-score {{#if (gt qualityScore 80)}}high{{else if (gt qualityScore 60)}}medium{{else}}low{{/if}}">
+                                {{formatNumber qualityScore 1}}
+                            </span>
+                        </td>
+                        <td>{{feedbackCount}}</td>
+                        <td>{{formatDate createdAt "YYYY-MM-DD"}}</td>
+                        <td>{{formatDate updatedAt "YYYY-MM-DD"}}</td>
+                    </tr>
+                    {{/eachWithIndex}}
+                </tbody>
+            </table>
+        </div>
+        {{/if}}
+
+        <div class="footer">
+            <p>TheWell Pipeline - Document Analytics Report</p>
+            <p>Page 1 of 1</p>
+        </div>
+    </div>
+
+    {{#if charts}}
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
+    <script>
+        // Render charts
+        {{#each charts}}
+        (function() {
+            const ctx = document.getElementById('chart-{{@index}}').getContext('2d');
+            const chartData = {{{json this.data}}};
+            new Chart(ctx, {
+                type: '{{this.type}}',
+                data: chartData,
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false
+                }
+            });
+        })();
+        {{/each}}
+    </script>
+    {{/if}}
+</body>
+</html>

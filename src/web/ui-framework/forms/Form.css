@@ -1,0 +1,155 @@
+/**
+ * Form Component Styles
+ */
+
+.tw-form {
+  width: 100%;
+}
+
+/* Form Field */
+.tw-form-field {
+  margin-bottom: var(--spacing-6);
+}
+
+.tw-form-field:last-child {
+  margin-bottom: 0;
+}
+
+/* Form Section */
+.tw-form-section {
+  margin-bottom: var(--spacing-8);
+  padding-bottom: var(--spacing-8);
+  border-bottom: 1px solid var(--color-border-light);
+}
+
+.tw-form-section:last-child {
+  margin-bottom: 0;
+  padding-bottom: 0;
+  border-bottom: none;
+}
+
+.tw-form-section__header {
+  margin-bottom: var(--spacing-6);
+}
+
+.tw-form-section__title {
+  margin: 0 0 var(--spacing-2) 0;
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-primary);
+}
+
+.tw-form-section__description {
+  margin: 0;
+  font-size: var(--font-size-base);
+  color: var(--color-text-secondary);
+  line-height: var(--line-height-relaxed);
+}
+
+.tw-form-section__content {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-6);
+}
+
+/* Form Actions */
+.tw-form-actions {
+  display: flex;
+  gap: var(--spacing-3);
+  margin-top: var(--spacing-8);
+  padding-top: var(--spacing-6);
+  border-top: 1px solid var(--color-border-light);
+}
+
+.tw-form-actions--left {
+  justify-content: flex-start;
+}
+
+.tw-form-actions--center {
+  justify-content: center;
+}
+
+.tw-form-actions--right {
+  justify-content: flex-end;
+}
+
+.tw-form-actions--between {
+  justify-content: space-between;
+}
+
+/* Form Grid Layout Helper */
+.tw-form-grid {
+  display: grid;
+  gap: var(--spacing-6);
+}
+
+.tw-form-grid--2 {
+  grid-template-columns: repeat(2, 1fr);
+}
+
+.tw-form-grid--3 {
+  grid-template-columns: repeat(3, 1fr);
+}
+
+.tw-form-grid--4 {
+  grid-template-columns: repeat(4, 1fr);
+}
+
+@media (max-width: 768px) {
+  .tw-form-grid--2,
+  .tw-form-grid--3,
+  .tw-form-grid--4 {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Form Row Helper */
+.tw-form-row {
+  display: flex;
+  gap: var(--spacing-4);
+  align-items: flex-start;
+}
+
+.tw-form-row > * {
+  flex: 1;
+}
+
+@media (max-width: 768px) {
+  .tw-form-row {
+    flex-direction: column;
+  }
+}
+
+/* Inline Form */
+.tw-form--inline {
+  display: flex;
+  align-items: flex-end;
+  gap: var(--spacing-4);
+}
+
+.tw-form--inline .tw-form-field {
+  margin-bottom: 0;
+  flex: 1;
+}
+
+.tw-form--inline .tw-form-actions {
+  margin-top: 0;
+  padding-top: 0;
+  border-top: none;
+  flex-shrink: 0;
+}
+
+/* Compact Form */
+.tw-form--compact .tw-form-field {
+  margin-bottom: var(--spacing-4);
+}
+
+.tw-form--compact .tw-form-section {
+  margin-bottom: var(--spacing-6);
+  padding-bottom: var(--spacing-6);
+}
+
+.tw-form--compact .tw-form-actions {
+  margin-top: var(--spacing-6);
+  padding-top: var(--spacing-4);
+}

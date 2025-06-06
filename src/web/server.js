@@ -4,6 +4,7 @@
  */
 
 const express = require('express');
+const http = require('http');
 const path = require('path');
 const cors = require('cors');
 const bodyParser = require('body-parser');
@@ -18,11 +19,18 @@ const feedbackRoutes = require('./routes/feedback');
 const ragRoutes = require('./routes/rag');
 const reliabilityRoutes = require('./routes/reliability');
 const dashboardRoutes = require('./routes/dashboard');
+const categorizationRoutes = require('./routes/categorization');
+const { router: reportRoutes, initializeRoute: initializeReportRoute } = require('./routes/reports');
+const recommendationRoutes = require('./routes/recommendations');
 
 // Import middleware
 const authMiddleware = require('./middleware/auth');
 const errorHandler = require('./middleware/errorHandler');
 const { TracingMiddleware } = require('../tracing');
+
+// Import real-time components
+const { WebSocketServer } = require('../realtime');
+const RealtimeAnalyticsService = require('../services/RealtimeAnalyticsService');
 
 class ManualReviewServer {
   constructor(options = {}) {
@@ -31,12 +39,16 @@ class ManualReviewServer {
     this.queueManager = options.queueManager;
     this.ingestionEngine = options.ingestionEngine;
     this.databaseManager = options.databaseManager;
+    this.ormManager = options.ormManager;
     this.ragManager = options.ragManager;
     this.cacheManager = options.cacheManager;
     this.sourceReliabilityService = options.sourceReliabilityService;
     this.costTracker = options.costTracker;
     this.qualityMetrics = options.qualityMetrics;
     this.dashboardManager = options.dashboardManager;
+    this.analyticsEngine = options.analyticsEngine;
+    this.realtimeAnalyticsService = options.realtimeAnalyticsService;
+    this.categorizationService = options.categorizationService;
     
     // Initialize tracing middleware
     this.tracingMiddleware = new TracingMiddleware({
@@ -48,7 +60,17 @@ class ManualReviewServer {
     
     this.app = express();
     this.server = null;
+    this.httpServer = null;
+    this.wsServer = null;
     this.isRunning = false;
+    
+    // Initialize real-time analytics service if not provided
+    if (!this.realtimeAnalyticsService && this.analyticsEngine) {
+      this.realtimeAnalyticsService = new RealtimeAnalyticsService({
+        analyticsEngine: this.analyticsEngine,
+        dbManager: this.databaseManager
+      });
+    }
     
     this.setupMiddleware();
     this.setupRoutes();
@@ -72,6 +94,7 @@ class ManualReviewServer {
     // Static files
     this.app.use(express.static(path.join(__dirname, 'public')));
     this.app.use('/design-system', express.static(path.join(__dirname, 'design-system')));
+    this.app.use('/components', express.static(path.join(__dirname, 'components')));
 
     // Request logging
     this.app.use((req, res, next) => {
@@ -96,9 +119,24 @@ class ManualReviewServer {
       this.app.set('feedbackDAO', new FeedbackDAO(this.databaseManager));
     }
     
+    // Set up ORM manager
+    if (this.ormManager) {
+      this.app.set('ormManager', this.ormManager);
+    }
+    
     // Set up dashboard manager
     if (this.dashboardManager) {
       this.app.set('dashboardManager', this.dashboardManager);
+    }
+    
+    // Set up real-time analytics service
+    if (this.realtimeAnalyticsService) {
+      this.app.set('realtimeAnalyticsService', this.realtimeAnalyticsService);
+    }
+    
+    // Set up categorization service
+    if (this.categorizationService) {
+      this.app.locals.categorizationService = this.categorizationService;
     }
   }
 
@@ -158,6 +196,20 @@ class ManualReviewServer {
     // Dashboard API routes
     this.app.use('/api/dashboard', dashboardRoutes);
 
+    // Categorization API routes
+    if (this.categorizationService) {
+      this.app.use('/api/categorization', categorizationRoutes);
+    }
+
+    // Report API routes
+    if (this.databaseManager) {
+      const reportRouter = initializeReportRoute(this.databaseManager, this.app.get('ormManager'));
+      this.app.use('/api/reports', reportRouter);
+    }
+
+    // Recommendation API routes
+    this.app.use('/api/recommendations', recommendationRoutes);
+
     this.app.use('/api', apiRoutes({
       queueManager: this.queueManager,
       ingestionEngine: this.ingestionEngine
@@ -197,14 +249,33 @@ class ManualReviewServer {
 
     try {
       return new Promise((resolve, reject) => {
-        this.server = this.app.listen(this.port, this.host, () => {
+        // Create HTTP server
+        this.httpServer = http.createServer(this.app);
+        
+        this.server = this.httpServer.listen(this.port, this.host, async () => {
           this.isRunning = true;
           // Update port to actual assigned port (important when using port 0)
           this.port = this.server.address().port;
+          
+          // Initialize WebSocket server
+          if (this.realtimeAnalyticsService) {
+            try {
+              this.wsServer = new WebSocketServer(this.httpServer, {
+                path: '/socket.io',
+                pingTimeout: 60000,
+                pingInterval: 25000
+              });
+              logger.info('WebSocket server initialized');
+            } catch (error) {
+              logger.error('Failed to initialize WebSocket server', error);
+            }
+          }
+          
           logger.info('Manual review server started', {
             host: this.host,
             port: this.port,
-            url: `http://${this.host}:${this.port}`
+            url: `http://${this.host}:${this.port}`,
+            websocket: !!this.wsServer
           });
           resolve();
         });
@@ -237,6 +308,18 @@ class ManualReviewServer {
     }
 
     try {
+      // Shutdown WebSocket server first
+      if (this.wsServer) {
+        await this.wsServer.shutdown();
+        logger.info('WebSocket server stopped');
+      }
+      
+      // Shutdown real-time analytics service
+      if (this.realtimeAnalyticsService) {
+        await this.realtimeAnalyticsService.shutdown();
+        logger.info('Real-time analytics service stopped');
+      }
+      
       await new Promise((resolve, reject) => {
         this.server.close((error) => {
           if (error) {

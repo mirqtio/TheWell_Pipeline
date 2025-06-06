@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>System Performance Report - TheWell Pipeline</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: #f5f5f5;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .header {
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        .header h1 {
+            color: #2c3e50;
+            margin-bottom: 10px;
+        }
+        .header .meta {
+            color: #7f8c8d;
+            font-size: 14px;
+        }
+        .summary {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        .summary-card {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .summary-card h3 {
+            color: #7f8c8d;
+            font-size: 14px;
+            font-weight: normal;
+            margin-bottom: 5px;
+        }
+        .summary-card .value {
+            font-size: 28px;
+            font-weight: bold;
+            color: #2c3e50;
+        }
+        .summary-card.cpu .value { color: #3498db; }
+        .summary-card.memory .value { color: #9b59b6; }
+        .summary-card.uptime .value { color: #27ae60; }
+        .summary-card.error .value { color: #e74c3c; }
+        .section {
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        .section h2 {
+            color: #2c3e50;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #ecf0f1;
+        }
+        .metric-row {
+            display: flex;
+            align-items: center;
+            padding: 10px 0;
+            border-bottom: 1px solid #ecf0f1;
+        }
+        .metric-label {
+            flex: 0 0 200px;
+            font-weight: 500;
+            color: #555;
+        }
+        .metric-value {
+            flex: 1;
+            font-weight: bold;
+            color: #2c3e50;
+        }
+        .metric-bar {
+            flex: 0 0 200px;
+            height: 20px;
+            background: #ecf0f1;
+            border-radius: 10px;
+            overflow: hidden;
+            margin-left: 20px;
+        }
+        .metric-fill {
+            height: 100%;
+            transition: width 0.3s ease;
+        }
+        .metric-fill.good { background: #27ae60; }
+        .metric-fill.warning { background: #f39c12; }
+        .metric-fill.critical { background: #e74c3c; }
+        .chart-container {
+            margin-top: 20px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 4px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #ecf0f1;
+        }
+        th {
+            background: #f8f9fa;
+            font-weight: 600;
+            color: #2c3e50;
+        }
+        .status-indicator {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 8px;
+        }
+        .status-indicator.up { background: #27ae60; }
+        .status-indicator.down { background: #e74c3c; }
+        .footer {
+            text-align: center;
+            color: #7f8c8d;
+            font-size: 12px;
+            margin-top: 40px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>System Performance Report</h1>
+            <div class="meta">
+                Generated on {{formatDate metadata.generatedAt "YYYY-MM-DD HH:mm"}}
+                {{#if metadata.requestedBy}}by {{metadata.requestedBy}}{{/if}}
+            </div>
+        </div>
+
+        {{#if summary}}
+        <div class="summary">
+            <div class="summary-card cpu">
+                <h3>Average CPU Usage</h3>
+                <div class="value">{{summary.averageCPU}}%</div>
+            </div>
+            <div class="summary-card memory">
+                <h3>Average Memory Usage</h3>
+                <div class="value">{{summary.averageMemory}}%</div>
+            </div>
+            <div class="summary-card">
+                <h3>Average Response Time</h3>
+                <div class="value">{{summary.averageResponseTime}}ms</div>
+            </div>
+            <div class="summary-card error">
+                <h3>Error Rate</h3>
+                <div class="value">{{summary.errorRate}}</div>
+            </div>
+            <div class="summary-card uptime">
+                <h3>System Uptime</h3>
+                <div class="value">{{summary.uptime}}</div>
+            </div>
+        </div>
+        {{/if}}
+
+        <div class="section">
+            <h2>Current System Metrics</h2>
+            {{#if details.[0]}}
+            <div class="metric-row">
+                <div class="metric-label">CPU Usage</div>
+                <div class="metric-value">{{details.[0].cpuUsage}}%</div>
+                <div class="metric-bar">
+                    <div class="metric-fill {{#if (gt details.[0].cpuUsage 80)}}critical{{else if (gt details.[0].cpuUsage 60)}}warning{{else}}good{{/if}}" 
+                         style="width: {{details.[0].cpuUsage}}%"></div>
+                </div>
+            </div>
+            <div class="metric-row">
+                <div class="metric-label">Memory Usage</div>
+                <div class="metric-value">{{details.[0].memoryUsage}}%</div>
+                <div class="metric-bar">
+                    <div class="metric-fill {{#if (gt details.[0].memoryUsage 80)}}critical{{else if (gt details.[0].memoryUsage 60)}}warning{{else}}good{{/if}}" 
+                         style="width: {{details.[0].memoryUsage}}%"></div>
+                </div>
+            </div>
+            <div class="metric-row">
+                <div class="metric-label">Response Time</div>
+                <div class="metric-value">{{details.[0].responseTime}}ms</div>
+                <div class="metric-bar">
+                    <div class="metric-fill {{#if (gt details.[0].responseTime 500)}}critical{{else if (gt details.[0].responseTime 200)}}warning{{else}}good{{/if}}" 
+                         style="width: {{#if (gt details.[0].responseTime 1000)}}100{{else}}{{details.[0].responseTime}}{{/if}}%"></div>
+                </div>
+            </div>
+            <div class="metric-row">
+                <div class="metric-label">System Status</div>
+                <div class="metric-value">
+                    <span class="status-indicator {{details.[0].status}}"></span>
+                    {{details.[0].status}}
+                </div>
+            </div>
+            {{/if}}
+        </div>
+
+        {{#if charts}}
+        <div class="section">
+            <h2>Performance Trends</h2>
+            {{#each charts}}
+            <div class="chart-container">
+                <h3>{{this.title}}</h3>
+                <canvas id="chart-{{@index}}" width="800" height="400"></canvas>
+            </div>
+            {{/each}}
+        </div>
+        {{/if}}
+
+        {{#if details}}
+        <div class="section">
+            <h2>Detailed Metrics History</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Timestamp</th>
+                        <th>CPU Usage</th>
+                        <th>Memory Usage</th>
+                        <th>Response Time</th>
+                        <th>Status</th>
+                        <th>Errors</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {{#eachWithIndex details}}
+                    <tr>
+                        <td>{{formatDate timestamp "YYYY-MM-DD HH:mm"}}</td>
+                        <td>{{cpuUsage}}%</td>
+                        <td>{{memoryUsage}}%</td>
+                        <td>{{responseTime}}ms</td>
+                        <td>
+                            <span class="status-indicator {{status}}"></span>
+                            {{status}}
+                        </td>
+                        <td>{{#if hasError}}<span style="color: #e74c3c;">Yes</span>{{else}}<span style="color: #27ae60;">No</span>{{/if}}</td>
+                    </tr>
+                    {{/eachWithIndex}}
+                </tbody>
+            </table>
+        </div>
+        {{/if}}
+
+        <div class="footer">
+            <p>TheWell Pipeline - System Performance Report</p>
+            <p>Page 1 of 1</p>
+        </div>
+    </div>
+
+    {{#if charts}}
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
+    <script>
+        // Render charts
+        {{#each charts}}
+        (function() {
+            const ctx = document.getElementById('chart-{{@index}}').getContext('2d');
+            const chartData = {{{json this.data}}};
+            new Chart(ctx, {
+                type: '{{this.type}}',
+                data: chartData,
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: true,
+                            position: 'top'
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            max: 100
+                        }
+                    }
+                }
+            });
+        })();
+        {{/each}}
+    </script>
+    {{/if}}
+</body>
+</html>

@@ -1,0 +1,127 @@
+/**
+ * Card Component Styles
+ */
+
+.tw-card {
+  background-color: var(--color-background-primary);
+  border: 1px solid var(--color-border-light);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  transition: all var(--duration-fast) var(--easing-in-out);
+}
+
+.tw-card--elevated {
+  border: none;
+  box-shadow: var(--shadow-md);
+}
+
+.tw-card--elevated:hover {
+  box-shadow: var(--shadow-lg);
+}
+
+.tw-card--interactive {
+  cursor: pointer;
+}
+
+.tw-card--interactive:hover {
+  border-color: var(--color-border-base);
+  transform: translateY(-2px);
+}
+
+.tw-card--interactive:active {
+  transform: translateY(0);
+}
+
+.tw-card--no-padding .tw-card__header,
+.tw-card--no-padding .tw-card__body,
+.tw-card--no-padding .tw-card__footer {
+  padding: 0;
+}
+
+/* Card Header */
+.tw-card__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--spacing-4) var(--spacing-6);
+  border-bottom: 1px solid var(--color-border-light);
+}
+
+.tw-card__header-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.tw-card__header-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-2);
+  margin-left: var(--spacing-4);
+  flex-shrink: 0;
+}
+
+/* Card Title */
+.tw-card__title {
+  margin: 0;
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-semibold);
+  line-height: var(--line-height-tight);
+  color: var(--color-text-primary);
+}
+
+/* Card Description */
+.tw-card__description {
+  margin: var(--spacing-1) 0 0;
+  font-size: var(--font-size-sm);
+  line-height: var(--line-height-normal);
+  color: var(--color-text-secondary);
+}
+
+/* Card Body */
+.tw-card__body {
+  padding: var(--spacing-6);
+}
+
+.tw-card__header + .tw-card__body {
+  padding-top: var(--spacing-4);
+}
+
+.tw-card__body:last-child {
+  padding-bottom: var(--spacing-6);
+}
+
+/* Card Footer */
+.tw-card__footer {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-3);
+  padding: var(--spacing-4) var(--spacing-6);
+  border-top: 1px solid var(--color-border-light);
+  background-color: var(--color-background-secondary);
+}
+
+.tw-card__footer--align-left {
+  justify-content: flex-start;
+}
+
+.tw-card__footer--align-center {
+  justify-content: center;
+}
+
+.tw-card__footer--align-right {
+  justify-content: flex-end;
+}
+
+.tw-card__footer--align-between {
+  justify-content: space-between;
+}
+
+/* Without header/body, adjust footer padding */
+.tw-card > .tw-card__footer:first-child {
+  border-top: none;
+}
+
+/* Nested cards */
+.tw-card .tw-card {
+  border: 1px solid var(--color-border-base);
+}

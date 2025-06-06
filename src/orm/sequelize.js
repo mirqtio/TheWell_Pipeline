@@ -99,6 +99,11 @@ class SequelizeORM {
     const CostAlert = require('./models/CostAlert')(this.sequelize, DataTypes);
     const DocumentFeedback = require('./models/DocumentFeedback')(this.sequelize, DataTypes);
     const FeedbackAggregate = require('./models/FeedbackAggregate')(this.sequelize, DataTypes);
+    const UserProfile = require('./models/UserProfile')(this.sequelize, DataTypes);
+    const UserInteraction = require('./models/UserInteraction')(this.sequelize, DataTypes);
+    const RecommendationFeedback = require('./models/RecommendationFeedback')(this.sequelize, DataTypes);
+    const RecommendationMetric = require('./models/RecommendationMetric')(this.sequelize, DataTypes);
+    const ABTestAssignment = require('./models/ABTestAssignment')(this.sequelize, DataTypes);
 
     // Store models in the models object
     this.models = {
@@ -115,7 +120,12 @@ class SequelizeORM {
       CostBudget,
       CostAlert,
       DocumentFeedback,
-      FeedbackAggregate
+      FeedbackAggregate,
+      UserProfile,
+      UserInteraction,
+      RecommendationFeedback,
+      RecommendationMetric,
+      ABTestAssignment
     };
 
     // Make models available on sequelize instance
@@ -143,7 +153,12 @@ class SequelizeORM {
       CostBudget,
       CostAlert,
       DocumentFeedback,
-      FeedbackAggregate
+      FeedbackAggregate,
+      UserProfile,
+      UserInteraction,
+      RecommendationFeedback,
+      RecommendationMetric,
+      ABTestAssignment
     } = this.models;
 
     // Source -> Documents (one-to-many)
@@ -195,6 +210,14 @@ class SequelizeORM {
     // Cost Budget -> Cost Alerts (one-to-many)
     CostBudget.hasMany(CostAlert, { foreignKey: 'budget_id', as: 'alerts' });
     CostAlert.belongsTo(CostBudget, { foreignKey: 'budget_id', as: 'budget' });
+
+    // Document -> User Interactions (one-to-many)
+    Document.hasMany(UserInteraction, { foreignKey: 'document_id', as: 'userInteractions' });
+    UserInteraction.belongsTo(Document, { foreignKey: 'document_id', as: 'document' });
+
+    // Document -> Recommendation Feedback (one-to-many)
+    Document.hasMany(RecommendationFeedback, { foreignKey: 'document_id', as: 'recommendationFeedback' });
+    RecommendationFeedback.belongsTo(Document, { foreignKey: 'document_id', as: 'document' });
 
     logger.info('ORM model associations configured successfully');
   }

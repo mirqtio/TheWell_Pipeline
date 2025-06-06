@@ -1,0 +1,199 @@
+/**
+ * Input Component Styles
+ */
+
+.tw-input-container {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-2);
+  width: 100%;
+}
+
+/* Label */
+.tw-input__label {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-1);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-text-primary);
+}
+
+.tw-input__required {
+  color: var(--color-error-500);
+}
+
+/* Input wrapper for prefix/suffix */
+.tw-input__wrapper {
+  display: flex;
+  align-items: stretch;
+  position: relative;
+}
+
+/* Input base styles */
+.tw-input {
+  width: 100%;
+  font-family: inherit;
+  font-size: var(--font-size-base);
+  line-height: var(--line-height-normal);
+  color: var(--color-text-primary);
+  background-color: var(--color-background-primary);
+  border: 1px solid var(--color-border-base);
+  border-radius: var(--radius-md);
+  transition: all var(--duration-fast) var(--easing-in-out);
+  outline: none;
+}
+
+/* Size variants */
+.tw-input--sm {
+  padding: var(--spacing-1) var(--spacing-3);
+  font-size: var(--font-size-sm);
+}
+
+.tw-input--md {
+  padding: var(--spacing-2) var(--spacing-4);
+  font-size: var(--font-size-base);
+}
+
+.tw-input--lg {
+  padding: var(--spacing-3) var(--spacing-4);
+  font-size: var(--font-size-lg);
+}
+
+/* Focus state */
+.tw-input:focus {
+  border-color: var(--color-primary-500);
+  box-shadow: 0 0 0 3px rgba(33, 150, 243, 0.1);
+}
+
+/* Hover state */
+.tw-input:hover:not(:disabled):not(:read-only) {
+  border-color: var(--color-border-dark);
+}
+
+/* Error state */
+.tw-input--error {
+  border-color: var(--color-error-500);
+}
+
+.tw-input--error:focus {
+  box-shadow: 0 0 0 3px rgba(244, 67, 54, 0.1);
+}
+
+/* Success state */
+.tw-input--success {
+  border-color: var(--color-success-500);
+}
+
+.tw-input--success:focus {
+  box-shadow: 0 0 0 3px rgba(76, 175, 80, 0.1);
+}
+
+/* Disabled state */
+.tw-input--disabled,
+.tw-input:disabled {
+  background-color: var(--color-background-secondary);
+  color: var(--color-text-disabled);
+  cursor: not-allowed;
+}
+
+/* Read-only state */
+.tw-input--readonly,
+.tw-input:read-only {
+  background-color: var(--color-background-secondary);
+  cursor: default;
+}
+
+/* Prefix/Suffix */
+.tw-input__prefix,
+.tw-input__suffix {
+  display: flex;
+  align-items: center;
+  padding: 0 var(--spacing-3);
+  background-color: var(--color-background-secondary);
+  border: 1px solid var(--color-border-base);
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-sm);
+  white-space: nowrap;
+}
+
+.tw-input__prefix {
+  border-right: none;
+  border-top-left-radius: var(--radius-md);
+  border-bottom-left-radius: var(--radius-md);
+}
+
+.tw-input__suffix {
+  border-left: none;
+  border-top-right-radius: var(--radius-md);
+  border-bottom-right-radius: var(--radius-md);
+}
+
+.tw-input--with-prefix {
+  border-top-left-radius: 0;
+  border-bottom-left-radius: 0;
+}
+
+.tw-input--with-suffix {
+  border-top-right-radius: 0;
+  border-bottom-right-radius: 0;
+}
+
+/* Helper text */
+.tw-input__helper {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+}
+
+/* Error message */
+.tw-input__error {
+  font-size: var(--font-size-sm);
+  color: var(--color-error-600);
+}
+
+/* Textarea specific */
+.tw-textarea {
+  min-height: calc(var(--line-height-normal) * 1em * 3);
+  resize: vertical;
+}
+
+.tw-textarea--resize-none {
+  resize: none;
+}
+
+.tw-textarea--resize-horizontal {
+  resize: horizontal;
+}
+
+.tw-textarea--resize-vertical {
+  resize: vertical;
+}
+
+.tw-textarea--resize-both {
+  resize: both;
+}
+
+/* Placeholder styling */
+.tw-input::placeholder {
+  color: var(--color-text-tertiary);
+  opacity: 1;
+}
+
+/* Number input - hide spinners */
+.tw-input[type="number"]::-webkit-inner-spin-button,
+.tw-input[type="number"]::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.tw-input[type="number"] {
+  -moz-appearance: textfield;
+}
+
+/* Search input - style the clear button */
+.tw-input[type="search"]::-webkit-search-decoration,
+.tw-input[type="search"]::-webkit-search-cancel-button,
+.tw-input[type="search"]::-webkit-search-results-button,
+.tw-input[type="search"]::-webkit-search-results-decoration {
+  -webkit-appearance: none;
+}

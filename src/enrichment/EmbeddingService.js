@@ -6,6 +6,7 @@
  */
 
 const logger = require('../utils/logger');
+const MLIntegration = require('../ml/MLIntegration');
 
 class EmbeddingService {
   constructor(config = {}) {
@@ -14,6 +15,7 @@ class EmbeddingService {
       model: 'text-embedding-3-small',
       maxRetries: 3,
       timeout: 30000,
+      useMLEnhancement: true,
       ...config
     };
     
@@ -23,6 +25,7 @@ class EmbeddingService {
     
     this.apiKey = config.apiKey;
     this.baseUrl = config.baseUrl || 'https://api.openai.com/v1';
+    this.mlIntegration = MLIntegration;
     
     // Embedding model specifications
     this.modelSpecs = {
@@ -55,6 +58,28 @@ class EmbeddingService {
       throw new Error('Text must be a non-empty string');
     }
 
+    // Optionally enhance text with ML before embedding
+    let processedText = text;
+    if (this.config.useMLEnhancement && options.enhance !== false) {
+      try {
+        // Extract key entities and concepts
+        const entities = await this.mlIntegration.enhanceEntityExtraction(text);
+        const entityText = entities.map(e => e.text).join(' ');
+        
+        // Get document quality to potentially filter
+        const quality = await this.mlIntegration.assessDocumentQuality(text);
+        
+        if (quality.overallScore < 0.3) {
+          logger.warn('Low quality text detected for embedding', { score: quality.overallScore });
+        }
+        
+        // Enhance text with entities for better semantic representation
+        processedText = `${text} ${entityText}`.trim();
+      } catch (error) {
+        logger.warn('ML enhancement failed, using original text', { error: error.message });
+      }
+    }
+
     const model = options.model || this.config.model;
     const modelSpec = this.modelSpecs[model];
     
@@ -64,7 +89,7 @@ class EmbeddingService {
 
     // Truncate text if it's too long (rough estimate: 1 token ≈ 4 characters)
     const maxChars = modelSpec.maxTokens * 4;
-    const truncatedText = text.length > maxChars ? text.substring(0, maxChars) : text;
+    const truncatedText = processedText.length > maxChars ? processedText.substring(0, maxChars) : processedText;
 
     try {
       const response = await this.makeEmbeddingRequest({

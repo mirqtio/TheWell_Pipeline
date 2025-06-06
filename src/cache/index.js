@@ -14,6 +14,7 @@ const QueryCache = require('./QueryCache');
 const EmbeddingCache = require('./EmbeddingCache');
 const ResponseCache = require('./ResponseCache');
 const CacheIntegration = require('./CacheIntegration');
+const RecommendationCache = require('./RecommendationCache');
 
 module.exports = {
   CacheManager,
@@ -21,6 +22,7 @@ module.exports = {
   EmbeddingCache,
   ResponseCache,
   CacheIntegration,
+  RecommendationCache,
   
   /**
    * Create a unified cache integration instance
@@ -42,6 +44,10 @@ module.exports = {
   
   createResponseCache: (config = {}) => {
     return new ResponseCache(config);
+  },
+  
+  createRecommendationCache: (config = {}) => {
+    return new RecommendationCache(config);
   },
   
   /**

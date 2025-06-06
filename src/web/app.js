@@ -30,11 +30,21 @@ const usersRoutes = require('./routes/users');
 const rolesRoutes = require('./routes/roles');
 const versioningRoutes = require('./routes/versioning');
 const entitiesRoutes = require('./routes/entities');
+const alertsRoutes = require('./routes/alerts');
+const searchRoutes = require('./routes/search');
+const reportsRoutes = require('./routes/reports');
+const categorizationRoutes = require('./routes/categorization');
+const recommendationsRoutes = require('./routes/recommendations');
+const visualizationRoutes = require('./routes/visualizations');
+const mlRoutes = require('./routes/ml');
+const apiKeysRoutes = require('./routes/apiKeys');
+const rateLimitAdminRoutes = require('./routes/rateLimitAdmin');
 
 // Import middleware
 const authMiddleware = require('./middleware/auth');
 const errorHandler = require('./middleware/errorHandler');
 const { checkOptionalAuth, rateLimit } = require('./middleware/rbac');
+const { createRateLimitMiddleware, requireApiKey } = require('./middleware/rateLimitMiddleware');
 
 // Create Express app
 const app = express();
@@ -66,6 +76,10 @@ app.use(bodyParser.urlencoded({ extended: true, limit: '10mb' }));
 
 // Static files
 app.use('/static', express.static(path.join(__dirname, 'public')));
+
+// Apply rate limiting middleware BEFORE other routes
+// This ensures rate limiting is checked first
+app.use(createRateLimitMiddleware());
 
 /**
  * @swagger
@@ -135,6 +149,14 @@ if (requestThrottler) {
   app.use('/api', requestThrottler.middleware());
 }
 
+// Apply rate limiting middleware
+try {
+  const rateLimitMiddleware = require('./middleware/rateLimitMiddleware');
+  app.use('/api', rateLimitMiddleware());
+} catch (error) {
+  logger.warn('Rate limiting middleware not available:', error.message);
+}
+
 // Setup routes
 app.use('/api/v1/review', reviewRoutes);
 app.use('/api/v1/jobs', jobRoutes);
@@ -147,6 +169,27 @@ app.use('/api/v1/users', usersRoutes);
 app.use('/api/v1/roles', rolesRoutes);
 app.use('/api/v1', versioningRoutes);
 app.use('/api/v1/entities', entitiesRoutes);
+app.use('/api/v1/alerts', alertsRoutes());
+app.use('/api/v1/search', searchRoutes());
+app.use('/api/v1/reports', reportsRoutes());
+app.use('/api/v1/categorization', categorizationRoutes());
+app.use('/api/v1/recommendations', recommendationsRoutes());
+
+// Phase 3 routes
+if (typeof visualizationRoutes !== 'undefined') {
+  app.use('/api/visualizations', visualizationRoutes);
+}
+
+// Phase 4 routes  
+if (typeof mlRoutes !== 'undefined') {
+  app.use('/api/v1/ml', mlRoutes);
+}
+if (typeof apiKeysRoutes !== 'undefined') {
+  app.use('/api/v1/keys', apiKeysRoutes);
+}
+if (typeof rateLimitAdminRoutes !== 'undefined') {
+  app.use('/api/v1/admin/rate-limits', rateLimitAdminRoutes);
+}
 
 // Initialize SourceReliabilityService for production use
 let sourceReliabilityService = global.testSourceReliabilityService;

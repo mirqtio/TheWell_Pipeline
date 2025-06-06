@@ -1,0 +1,149 @@
+import { Meta } from '@storybook/addon-docs';
+
+<Meta title="Introduction" />
+
+# TheWell UI Framework
+
+Welcome to TheWell UI Framework - a comprehensive, modern, and accessible component library designed for building enterprise-grade applications.
+
+## Overview
+
+TheWell UI Framework provides a complete set of tools and components to build consistent, accessible, and performant user interfaces. Built with React and modern web standards, it offers:
+
+- **🎨 Design System**: Comprehensive design tokens and theming support
+- **🧩 Component Library**: 30+ production-ready components
+- **📱 Responsive**: Mobile-first responsive design
+- **♿ Accessible**: WCAG 2.1 AA compliant components
+- **🚀 Performance**: Optimized for speed and efficiency
+- **🛠 Developer Experience**: TypeScript support and comprehensive documentation
+
+## Getting Started
+
+### Installation
+
+```bash
+npm install @thewell/ui-framework
+```
+
+### Basic Usage
+
+```jsx
+import { ThemeProvider, Button, Card } from '@thewell/ui-framework';
+
+function App() {
+  return (
+    <ThemeProvider>
+      <Card>
+        <Card.Header>
+          <Card.Title>Welcome to TheWell</Card.Title>
+        </Card.Header>
+        <Card.Body>
+          <p>Start building amazing applications!</p>
+          <Button variant="primary">Get Started</Button>
+        </Card.Body>
+      </Card>
+    </ThemeProvider>
+  );
+}
+```
+
+## Architecture
+
+The framework is organized into several key modules:
+
+### Design System
+- **Tokens**: Colors, typography, spacing, and more
+- **Theme**: Light/dark mode support with theme customization
+- **Styles**: Global styles and CSS utilities
+
+### Components
+- **Core**: Button, Badge, Card, Spinner
+- **Layout**: Grid, Container, Stack, PageLayout
+- **Forms**: Input, Select, Checkbox, Form validation
+- **Notifications**: Toast, Alert, Modal
+
+### Integration
+- **API Client**: Unified API wrapper with interceptors
+- **Error Handling**: Error boundaries and global error handling
+- **Loading States**: Loading manager with global and local states
+
+### Hooks
+- **useApi**: Data fetching with caching
+- **useDebounce**: Debounce and throttle utilities
+- **useLocalStorage**: Persistent state management
+- **useMediaQuery**: Responsive design helpers
+
+## Key Features
+
+### Accessibility First
+Every component is built with accessibility in mind:
+- Semantic HTML
+- ARIA attributes
+- Keyboard navigation
+- Screen reader support
+- Focus management
+
+### Theme Customization
+Easily customize the look and feel:
+```jsx
+<ThemeProvider
+  theme={{
+    colors: {
+      primary: {
+        500: '#custom-color',
+      },
+    },
+  }}
+>
+  {/* Your app */}
+</ThemeProvider>
+```
+
+### Responsive Design
+Built-in responsive utilities:
+```jsx
+<Grid columns={{ xs: 1, md: 2, lg: 3 }}>
+  <Grid.Item>Content</Grid.Item>
+  <Grid.Item>Content</Grid.Item>
+  <Grid.Item>Content</Grid.Item>
+</Grid>
+```
+
+### Form Validation
+Powerful form handling with validation:
+```jsx
+<Form onSubmit={handleSubmit}>
+  <Form.Field
+    name="email"
+    rules={validationRules.email}
+    render={({ register, error }) => (
+      <Input
+        {...register}
+        type="email"
+        label="Email"
+        error={error}
+      />
+    )}
+  />
+  <Form.SubmitButton>Submit</Form.SubmitButton>
+</Form>
+```
+
+## Best Practices
+
+1. **Always wrap your app with ThemeProvider**
+2. **Use semantic component variants** (primary, secondary, etc.)
+3. **Leverage the design tokens** for consistent styling
+4. **Follow accessibility guidelines** when extending components
+5. **Use the built-in hooks** for common patterns
+6. **Test with keyboard navigation** and screen readers
+
+## Support
+
+- **Documentation**: Browse the component stories for examples
+- **GitHub**: Report issues and contribute
+- **Migration Guide**: See the migration guide for upgrading existing apps
+
+## License
+
+MIT License - see LICENSE file for details

@@ -1,0 +1,260 @@
+.visualization-dashboard {
+  min-height: 100vh;
+  background-color: #f5f5f5;
+  position: relative;
+}
+
+.dashboard-header {
+  background-color: #ffffff;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+.widget-grid {
+  padding-bottom: 80px; /* Space for FAB */
+}
+
+.widget-container {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  transition: all 0.3s ease;
+  overflow: hidden;
+}
+
+.widget-container:hover {
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+.widget-header {
+  background-color: #fafafa;
+  border-bottom: 1px solid #e0e0e0;
+  cursor: move;
+}
+
+.widget-header .MuiIconButton-root {
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+.widget-container:hover .widget-header .MuiIconButton-root {
+  opacity: 1;
+}
+
+.widget-content {
+  flex: 1;
+  overflow: hidden;
+  position: relative;
+  padding: 16px;
+}
+
+/* Ensure visualizations fill their container */
+.widget-content svg,
+.widget-content canvas {
+  width: 100% !important;
+  height: 100% !important;
+}
+
+.add-widget-fab {
+  position: fixed !important;
+  bottom: 24px;
+  right: 24px;
+  z-index: 101;
+}
+
+/* Drag and drop styling */
+.widget-container.dragging {
+  opacity: 0.5;
+}
+
+.widget-grid .MuiGrid-item {
+  transition: transform 0.2s;
+}
+
+/* Responsive adjustments */
+@media (max-width: 600px) {
+  .dashboard-header {
+    padding: 8px;
+  }
+  
+  .widget-grid {
+    padding: 8px;
+    padding-bottom: 80px;
+  }
+  
+  .widget-content {
+    padding: 8px;
+  }
+}
+
+/* Loading state */
+.widget-loading {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+
+/* Error state */
+.widget-error {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  color: #f44336;
+  text-align: center;
+  padding: 16px;
+}
+
+/* Tooltip styling */
+.visualization-tooltip {
+  position: absolute;
+  background: rgba(0, 0, 0, 0.8);
+  color: white;
+  padding: 8px 12px;
+  border-radius: 4px;
+  font-size: 12px;
+  pointer-events: none;
+  z-index: 1000;
+  max-width: 200px;
+  word-wrap: break-word;
+}
+
+.visualization-tooltip::after {
+  content: '';
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  margin-left: -5px;
+  border-width: 5px;
+  border-style: solid;
+  border-color: rgba(0, 0, 0, 0.8) transparent transparent transparent;
+}
+
+/* Chart specific styling */
+.widget-content .chart-container {
+  position: relative;
+  height: 100%;
+  width: 100%;
+}
+
+/* Network graph styling */
+.widget-content .network-container {
+  height: 100%;
+  width: 100%;
+  cursor: grab;
+}
+
+.widget-content .network-container.dragging {
+  cursor: grabbing;
+}
+
+/* Heatmap styling */
+.widget-content .heatmap-container {
+  height: 100%;
+  width: 100%;
+  overflow: auto;
+}
+
+/* Timeline styling */
+.widget-content .timeline-container {
+  height: 100%;
+  width: 100%;
+  overflow-x: auto;
+  overflow-y: hidden;
+}
+
+/* Word cloud styling */
+.widget-content .wordcloud-container {
+  height: 100%;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Geographic map styling */
+.widget-content .geomap-container {
+  height: 100%;
+  width: 100%;
+  position: relative;
+}
+
+.geomap-controls {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  z-index: 10;
+  background: white;
+  border-radius: 4px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+/* Cross-filter indicator */
+.cross-filter-active {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  background: #4caf50;
+  color: white;
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-size: 11px;
+  z-index: 10;
+}
+
+/* Export progress */
+.export-progress {
+  position: fixed;
+  bottom: 24px;
+  left: 24px;
+  background: white;
+  padding: 16px;
+  border-radius: 4px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  z-index: 1000;
+}
+
+/* Animation for widgets */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.widget-container {
+  animation: fadeIn 0.3s ease-out;
+}
+
+/* Theme support */
+.visualization-dashboard.dark-theme {
+  background-color: #121212;
+}
+
+.dark-theme .dashboard-header {
+  background-color: #1e1e1e;
+  color: #ffffff;
+}
+
+.dark-theme .widget-container {
+  background-color: #1e1e1e;
+}
+
+.dark-theme .widget-header {
+  background-color: #2a2a2a;
+  border-bottom-color: #333333;
+}
+
+.dark-theme .widget-content {
+  color: #ffffff;
+}

@@ -10,6 +10,7 @@ const InputProcessor = require('./components/InputProcessor');
 const OutputFormatter = require('./components/OutputFormatter');
 const { RAGTracing } = require('../tracing');
 const { ParallelSearchManager, PerformanceBenchmark, DatabaseOptimizer } = require('./performance');
+const MLIntegration = require('../ml/MLIntegration');
 
 class RAGManager {
   constructor(options = {}) {
@@ -22,6 +23,10 @@ class RAGManager {
     this.enableParallelSearch = options.enableParallelSearch !== false;
     this.enableDatabaseOptimization = options.enableDatabaseOptimization !== false;
     this.enablePerformanceBenchmarking = options.enablePerformanceBenchmarking !== false;
+    
+    // ML enhancement settings
+    this.enableMLEnhancement = options.enableMLEnhancement !== false;
+    this.mlIntegration = MLIntegration;
     
     // Initialize tracing
     this.ragTracing = new RAGTracing(options.tracingManager);
@@ -155,7 +160,7 @@ class RAGManager {
           );
           
           // Step 2: Retrieve relevant documents
-          const retrievedDocs = await this.ragTracing.traceRetrieval(
+          let retrievedDocs = await this.ragTracing.traceRetrieval(
             'hybrid', // Default strategy, could be configurable
             {
               limit: processedInput.filters?.limit || 10,
@@ -178,6 +183,42 @@ class RAGManager {
               }
             }
           );
+          
+          // Step 2b: ML-enhanced ranking and filtering
+          if (this.enableMLEnhancement && retrievedDocs.length > 0) {
+            try {
+              // Re-rank documents using ML similarity
+              retrievedDocs = await this.mlIntegration.enhanceSearchRanking(
+                processedInput.query,
+                retrievedDocs
+              );
+              
+              // Assess quality and filter low-quality results
+              const qualityThreshold = 0.3;
+              const enhancedDocs = await Promise.all(
+                retrievedDocs.map(async (doc) => {
+                  const quality = await this.mlIntegration.assessDocumentQuality(
+                    doc.content || doc.text || ''
+                  );
+                  return {
+                    ...doc,
+                    qualityScore: quality.overallScore,
+                    qualityLevel: quality.qualityLevel
+                  };
+                })
+              );
+              
+              // Filter by quality
+              retrievedDocs = enhancedDocs.filter(doc => doc.qualityScore >= qualityThreshold);
+              
+              logger.debug('ML-enhanced document filtering', {
+                originalCount: enhancedDocs.length,
+                filteredCount: retrievedDocs.length
+              });
+            } catch (error) {
+              logger.warn('ML enhancement failed during retrieval', { error: error.message });
+            }
+          }
           
           // Step 3: Generate response using LLM
           const generatedResponse = await this.ragTracing.traceGeneration(

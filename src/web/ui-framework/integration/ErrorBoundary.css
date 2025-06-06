@@ -1,0 +1,107 @@
+/**
+ * Error Boundary Styles
+ */
+
+.tw-error-boundary {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  padding: var(--spacing-6);
+  background-color: var(--color-background-secondary);
+}
+
+.tw-error-boundary__content {
+  max-width: 600px;
+  text-align: center;
+}
+
+.tw-error-boundary__icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 128px;
+  height: 128px;
+  margin: 0 auto var(--spacing-8);
+  background-color: var(--color-error-50);
+  border-radius: var(--radius-full);
+  color: var(--color-error-500);
+}
+
+.tw-error-boundary__title {
+  margin: 0 0 var(--spacing-4) 0;
+  font-size: var(--font-size-3xl);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-text-primary);
+}
+
+.tw-error-boundary__message {
+  margin: 0 0 var(--spacing-8) 0;
+  font-size: var(--font-size-lg);
+  color: var(--color-text-secondary);
+  line-height: var(--line-height-relaxed);
+}
+
+.tw-error-boundary__details {
+  margin-bottom: var(--spacing-8);
+  text-align: left;
+}
+
+.tw-error-boundary__details summary {
+  cursor: pointer;
+  font-weight: var(--font-weight-medium);
+  margin-bottom: var(--spacing-2);
+}
+
+.tw-error-boundary__details pre {
+  margin: var(--spacing-2) 0;
+  padding: var(--spacing-3);
+  background-color: var(--color-background-tertiary);
+  border-radius: var(--radius-md);
+  font-size: var(--font-size-sm);
+  font-family: var(--font-family-mono);
+  overflow-x: auto;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.tw-error-boundary__actions {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-3);
+}
+
+/* Dark theme adjustments */
+.dark-theme .tw-error-boundary__icon {
+  background-color: rgba(244, 67, 54, 0.1);
+}
+
+/* Responsive adjustments */
+@media (max-width: 640px) {
+  .tw-error-boundary {
+    padding: var(--spacing-4);
+  }
+  
+  .tw-error-boundary__icon {
+    width: 96px;
+    height: 96px;
+  }
+  
+  .tw-error-boundary__title {
+    font-size: var(--font-size-2xl);
+  }
+  
+  .tw-error-boundary__message {
+    font-size: var(--font-size-base);
+  }
+  
+  .tw-error-boundary__actions {
+    flex-direction: column;
+    width: 100%;
+  }
+  
+  .tw-error-boundary__actions > * {
+    width: 100%;
+  }
+}
