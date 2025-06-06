@@ -185,7 +185,7 @@ class AnalyticsEngine extends EventEmitter {
   // Aggregation workers
   startAggregationWorkers() {
     // Set up periodic aggregation for each metric
-    setInterval(() => {
+    this.aggregationInterval = setInterval(() => {
       this.metricBuffers.forEach(async (buffer, metricKey) => {
         if (buffer.length > 0) {
           await this.aggregateMetric(metricKey);
@@ -194,7 +194,7 @@ class AnalyticsEngine extends EventEmitter {
     }, this.config.aggregationInterval);
 
     // Set up data retention cleanup
-    setInterval(() => {
+    this.cleanupInterval = setInterval(() => {
       this.cleanupOldData();
     }, 3600000); // Run every hour
   }
@@ -385,6 +385,9 @@ class AnalyticsEngine extends EventEmitter {
     
     await subscriber.subscribe('analytics:query');
     
+    // Store subscriber reference for cleanup
+    this.subscriber = subscriber;
+    
     subscriber.on('message', async (channel, message) => {
       try {
         const data = JSON.parse(message);
@@ -550,6 +553,14 @@ class AnalyticsEngine extends EventEmitter {
   async shutdown() {
     logger.info('Shutting down Analytics Engine...');
     
+    // Clear intervals
+    if (this.aggregationInterval) {
+      clearInterval(this.aggregationInterval);
+    }
+    if (this.cleanupInterval) {
+      clearInterval(this.cleanupInterval);
+    }
+    
     // Aggregate remaining buffered metrics
     for (const [metricKey, buffer] of this.metricBuffers.entries()) {
       if (buffer.length > 0) {
@@ -558,6 +569,9 @@ class AnalyticsEngine extends EventEmitter {
     }
     
     // Close connections
+    if (this.subscriber) {
+      await this.subscriber.quit();
+    }
     await this.redis.quit();
     await this.pool.end();
     

@@ -24,22 +24,22 @@ describe('EntityExtractionService', () => {
       addCustomPattern: jest.fn()
     };
     
-    DatabaseManager.getInstance = jest.fn().mockReturnValue({
-      getDatabase: jest.fn().mockReturnValue(mockDb)
-    });
+    // Mock DatabaseManager constructor
+    DatabaseManager.mockImplementation(() => mockDb);
     
     EntityExtractor.mockImplementation(() => mockExtractor);
     
-    // Mock custom patterns query first
-    mockDb.query.mockResolvedValueOnce({ rows: [] });
+    // Default mock for all queries
+    mockDb.query.mockResolvedValue({ rows: [], rowCount: 0 });
     
     service = new EntityExtractionService();
     
     // Wait for async initialization
-    await new Promise(resolve => setTimeout(resolve, 10));
+    await new Promise(resolve => setTimeout(resolve, 150));
     
-    // Reset for tests
+    // Reset for tests but keep default response
     mockDb.query.mockReset();
+    mockDb.query.mockResolvedValue({ rows: [], rowCount: 0 });
   });
   
   describe('processDocument', () => {
@@ -123,7 +123,6 @@ describe('EntityExtractionService', () => {
   
   describe('getDocumentEntities', () => {
     it('should retrieve entities for a document', async () => {
-      mockDb.query.mockReset();
       const mockEntities = [
         { 
           id: 1,
@@ -160,7 +159,6 @@ describe('EntityExtractionService', () => {
     });
     
     it('should filter by entity types', async () => {
-      mockDb.query.mockReset();
       mockDb.query.mockResolvedValue({ rows: [] });
       
       await service.getDocumentEntities(1, { 
@@ -176,7 +174,6 @@ describe('EntityExtractionService', () => {
   
   describe('searchEntities', () => {
     it('should search for entities by text', async () => {
-      mockDb.query.mockReset();
       const mockResults = [
         {
           entity_text: 'John Smith',
@@ -207,7 +204,6 @@ describe('EntityExtractionService', () => {
   
   describe('addCustomPattern', () => {
     it('should add custom extraction pattern', async () => {
-      mockDb.query.mockReset();
       mockDb.query.mockResolvedValue({ 
         rows: [{ id: 1, name: 'PROJECT_ID', pattern: 'PROJ-\\d+' }] 
       });
@@ -229,7 +225,6 @@ describe('EntityExtractionService', () => {
   
   describe('getEntityStatistics', () => {
     it('should return entity statistics', async () => {
-      mockDb.query.mockReset();
       const mockStats = [
         {
           entity_type: 'PERSON',
@@ -261,7 +256,6 @@ describe('EntityExtractionService', () => {
   
   describe('createEntityRelationship', () => {
     it('should create relationship between entities', async () => {
-      mockDb.query.mockReset();
       mockDb.query.mockResolvedValue({ 
         rows: [{ id: 1, relationship_type: 'WORKS_FOR' }] 
       });
@@ -283,8 +277,6 @@ describe('EntityExtractionService', () => {
         { id: 2, title: 'Doc 2', content: 'Content 2' }
       ];
       
-      mockDb.query.mockReset();
-      
       // Mock successful extraction for both
       mockExtractor.extractFromDocument
         .mockResolvedValueOnce({
@@ -297,9 +289,7 @@ describe('EntityExtractionService', () => {
         });
       
       // Mock all database queries for processing both documents
-      mockDb.query.mockImplementation(() => 
-        Promise.resolve({ rows: [{ id: Date.now() }], rowCount: 1 })
-      );
+      mockDb.query.mockResolvedValue({ rows: [{ id: Date.now() }], rowCount: 1 });
       
       const results = await service.processBatch(documents);
       

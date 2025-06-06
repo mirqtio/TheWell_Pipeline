@@ -6,7 +6,7 @@ const { EventEmitter } = require('events');
 jest.mock('ioredis', () => require('ioredis-mock'));
 jest.mock('pg', () => {
   const mockClient = {
-    query: jest.fn(),
+    query: jest.fn().mockResolvedValue({ rows: [] }),
     release: jest.fn()
   };
   
@@ -14,7 +14,7 @@ jest.mock('pg', () => {
     Pool: jest.fn().mockImplementation(() => ({
       connect: jest.fn().mockResolvedValue(mockClient),
       end: jest.fn().mockResolvedValue(undefined),
-      query: jest.fn()
+      query: jest.fn().mockResolvedValue({ rows: [] })
     }))
   };
 });
@@ -31,7 +31,7 @@ describe('AnalyticsEngine', () => {
     const { Pool } = require('pg');
     mockPool = new Pool();
     mockClient = {
-      query: jest.fn(),
+      query: jest.fn().mockResolvedValue({ rows: [] }),
       release: jest.fn()
     };
     mockPool.connect.mockResolvedValue(mockClient);
@@ -45,8 +45,6 @@ describe('AnalyticsEngine', () => {
 
   afterEach(async () => {
     if (analyticsEngine) {
-      // Clear timers
-      clearInterval(analyticsEngine.aggregationTimer);
       await analyticsEngine.shutdown();
     }
   });
@@ -212,10 +210,9 @@ describe('AnalyticsEngine', () => {
       };
       const tags = { service: 'test' };
 
-      mockClient.query.mockResolvedValue({ rows: [] });
-
       await analyticsEngine.storeAggregations(metric, aggregations, tags);
 
+      expect(mockPool.connect).toHaveBeenCalled();
       expect(mockClient.query).toHaveBeenCalledWith('BEGIN');
       expect(mockClient.query).toHaveBeenCalledWith(
         expect.stringContaining('INSERT INTO analytics_metrics'),
@@ -254,7 +251,7 @@ describe('AnalyticsEngine', () => {
     });
 
     test('should load baseline stats from database', async () => {
-      mockClient.query.mockResolvedValue({
+      mockPool.query.mockResolvedValueOnce({
         rows: [
           {
             metric_name: 'test.metric',
@@ -290,7 +287,7 @@ describe('AnalyticsEngine', () => {
         aggregation: 'avg'
       };
 
-      mockClient.query.mockResolvedValue({
+      mockClient.query.mockResolvedValueOnce({
         rows: [
           { time_bucket: new Date(), value: 10 },
           { time_bucket: new Date(), value: 20 }
@@ -309,6 +306,7 @@ describe('AnalyticsEngine', () => {
         ])
       });
 
+      expect(mockPool.connect).toHaveBeenCalled();
       expect(mockClient.query).toHaveBeenCalledWith(
         expect.stringContaining('SELECT'),
         expect.arrayContaining([query.metric])
@@ -346,7 +344,7 @@ describe('AnalyticsEngine', () => {
 
   describe('Public API', () => {
     test('should get metric history', async () => {
-      mockClient.query.mockResolvedValue({
+      mockClient.query.mockResolvedValueOnce({
         rows: [
           { time_bucket: new Date(), avg: 10, min: 5, max: 15 }
         ]
@@ -360,6 +358,7 @@ describe('AnalyticsEngine', () => {
       );
 
       expect(history).toHaveLength(1);
+      expect(mockPool.connect).toHaveBeenCalled();
       expect(mockClient.query).toHaveBeenCalledWith(
         expect.stringContaining('SELECT'),
         expect.arrayContaining(['test.metric', JSON.stringify({ service: 'test' })])
