@@ -276,13 +276,13 @@ class AlertManager extends EventEmitter {
     const { alert } = notification;
     const timestamp = new Date().toISOString();
     
-    console.log(`\n🚨 ALERT [${alert.severity.toUpperCase()}] - ${timestamp}`);
-    console.log(`📋 ${alert.title}`);
-    console.log(`📄 ${alert.description}`);
+    logger.info(`\n🚨 ALERT [${alert.severity.toUpperCase()}] - ${timestamp}`);
+    logger.info(`📋 ${alert.title}`);
+    logger.info(`📄 ${alert.description}`);
     if (Object.keys(alert.metadata).length > 0) {
-      console.log(`🔍 Metadata: ${JSON.stringify(alert.metadata, null, 2)}`);
+      logger.info(`🔍 Metadata: ${JSON.stringify(alert.metadata, null, 2)}`);
     }
-    console.log('─'.repeat(50));
+    logger.info('─'.repeat(50));
   }
 
   // Escalation handling

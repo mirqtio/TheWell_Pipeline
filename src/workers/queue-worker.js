@@ -1,2 +1,4 @@
 // Placeholder for queue-worker.js
-console.log('Queue worker started');
+const logger = require('../utils/logger');
+
+logger.info('Queue worker started');

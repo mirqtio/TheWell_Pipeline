@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
+import logger from '../../../utils/logger';
 import {
   Box,
   Paper,
@@ -91,9 +92,9 @@ const VisualizationDashboard = () => {
         visualizationEngineRef.current = new VisualizationEngine();
         await visualizationEngineRef.current.initialize();
         
-        console.log('Visualization engine initialized');
+        logger.info('Visualization engine initialized');
       } catch (error) {
-        console.error('Failed to initialize visualization engine:', error);
+        logger.error('Failed to initialize visualization engine:', error);
         setError('Failed to initialize visualization engine');
       }
     };
@@ -123,7 +124,7 @@ const VisualizationDashboard = () => {
         selectDashboard(response.data.dashboards[0]);
       }
     } catch (error) {
-      console.error('Failed to load dashboards:', error);
+      logger.error('Failed to load dashboards:', error);
       setError('Failed to load dashboards');
     } finally {
       setLoading(false);
@@ -181,7 +182,7 @@ const VisualizationDashboard = () => {
         }
       }
     } catch (error) {
-      console.error(`Failed to render widget ${widget.id}:`, error);
+      logger.error(`Failed to render widget ${widget.id}:`, error);
     }
   };
 
@@ -257,7 +258,7 @@ const VisualizationDashboard = () => {
       setError(null);
       alert('Dashboard saved successfully!');
     } catch (error) {
-      console.error('Failed to save dashboard:', error);
+      logger.error('Failed to save dashboard:', error);
       setError('Failed to save dashboard');
     }
   };
@@ -275,7 +276,7 @@ const VisualizationDashboard = () => {
       link.download = `${widget.title || widget.type}-${Date.now()}.${format}`;
       link.click();
     } catch (error) {
-      console.error('Failed to export widget:', error);
+      logger.error('Failed to export widget:', error);
       setError('Failed to export visualization');
     }
   };
@@ -679,7 +680,7 @@ const ShareDashboardDialog = ({ open, dashboard, onClose }) => {
       alert('Dashboard shared successfully!');
       onClose();
     } catch (error) {
-      console.error('Failed to share dashboard:', error);
+      logger.error('Failed to share dashboard:', error);
       alert('Failed to share dashboard');
     }
   };

@@ -3,6 +3,14 @@ import { io, Socket } from 'socket.io-client';
 import { AppDispatch } from './index';
 import { updateMetrics } from './dashboardSlice';
 
+// Simple logger wrapper for browser environment
+const logger = {
+  info: (...args: any[]) => console.info('[INFO]', ...args),
+  warn: (...args: any[]) => console.warn('[WARN]', ...args),
+  error: (...args: any[]) => console.error('[ERROR]', ...args),
+  debug: (...args: any[]) => console.debug('[DEBUG]', ...args)
+};
+
 interface WebSocketState {
   connected: boolean;
   reconnecting: boolean;
@@ -50,13 +58,13 @@ export const initializeWebSocket = () => (dispatch: AppDispatch) => {
   });
 
   socket.on('connect', () => {
-    console.log('WebSocket connected');
+    logger.info('WebSocket connected');
     dispatch(setConnected(true));
     dispatch(setReconnecting(false));
   });
 
   socket.on('disconnect', () => {
-    console.log('WebSocket disconnected');
+    logger.info('WebSocket disconnected');
     dispatch(setConnected(false));
   });
 
@@ -65,7 +73,7 @@ export const initializeWebSocket = () => (dispatch: AppDispatch) => {
   });
 
   socket.on('connect_error', (error) => {
-    console.error('WebSocket connection error:', error);
+    logger.error('WebSocket connection error:', error);
     dispatch(setError(error.message));
   });
 
@@ -77,13 +85,13 @@ export const initializeWebSocket = () => (dispatch: AppDispatch) => {
   // Listen for alerts
   socket.on('alert:new', (alert) => {
     // Handle new alert
-    console.log('New alert:', alert);
+    logger.info('New alert:', alert);
   });
 
   // Listen for document updates
   socket.on('document:update', (document) => {
     // Handle document update
-    console.log('Document updated:', document);
+    logger.info('Document updated:', document);
   });
 
   dispatch(setSocket(socket));

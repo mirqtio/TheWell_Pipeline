@@ -5,6 +5,14 @@
 
 /* global bootstrap */
 
+// Simple logger wrapper for browser environment
+const logger = {
+  info: (...args) => console.info('[INFO]', ...args),
+  warn: (...args) => console.warn('[WARN]', ...args),
+  error: (...args) => console.error('[ERROR]', ...args),
+  debug: (...args) => console.debug('[DEBUG]', ...args)
+};
+
 class ManualReviewApp {
   constructor() {
     this.apiKey = localStorage.getItem('reviewApiKey') || 'dev-review-key';
@@ -1019,7 +1027,7 @@ class ManualReviewApp {
    * Load data for the Monitoring view
    */
   async loadMonitoringViewData() {
-    console.log('[App.js] loadMonitoringViewData: Called');
+    logger.info('[App.js] loadMonitoringViewData: Called');
     this.setLoadingState('monitoring-page', true);
     const monitoringContentElement = document.getElementById('monitoring-view-content');
     
@@ -1083,17 +1091,17 @@ class ManualReviewApp {
    * Load user information
    */
   async loadUserInfo() {
-    console.log('[App.js] loadUserInfo: Called');
+    logger.info('[App.js] loadUserInfo: Called');
     // Placeholder for user info loading
     // In a real implementation, this would fetch user details
-    console.log('Loading user info...');
+    logger.info('Loading user info...');
   }
 
   /**
    * Check system status
    */
   async checkSystemStatus() {
-    console.log('[App.js] checkSystemStatus: Called');
+    logger.info('[App.js] checkSystemStatus: Called');
     const statusElement = document.getElementById('system-status');
     if (statusElement) statusElement.textContent = 'Connecting...';
 
@@ -1105,7 +1113,7 @@ class ManualReviewApp {
           statusElement.classList.remove('text-warning', 'text-danger');
           statusElement.classList.add('text-success');
         }
-        console.log('[App.js] System Status:', response.status);
+        logger.info('[App.js] System Status:', response.status);
         return response;
       } else {
         if (statusElement) {
@@ -1131,7 +1139,7 @@ class ManualReviewApp {
    * Update system status periodically
    */
   async updateSystemStatus() {
-    console.log('[App.js] updateSystemStatus: Called');
+    logger.info('[App.js] updateSystemStatus: Called');
     await this.checkSystemStatus();
   }
   
@@ -1141,7 +1149,7 @@ class ManualReviewApp {
    * @param {Object} data - The monitoring data to display
    */
   renderMonitoringDashboard(container, data) {
-    console.log('[App.js] renderMonitoringDashboard: Called with data:', data);
+    logger.info('[App.js] renderMonitoringDashboard: Called with data:', data);
     
     if (!container) return;
     
@@ -1452,7 +1460,7 @@ class ManualReviewApp {
    */
   async loadReviewData() {
     // Placeholder - this would be implemented in the full review system
-    console.log('Loading review data...');
+    logger.info('Loading review data...');
     const container = document.getElementById('documents-container');
     if (container) {
       container.innerHTML = `
@@ -1469,7 +1477,7 @@ class ManualReviewApp {
    */
   async loadJobsData() {
     // Placeholder - this would be implemented in the full jobs system
-    console.log('Loading jobs data...');
+    logger.info('Loading jobs data...');
     const container = document.getElementById('jobs-container');
     if (container) {
       container.innerHTML = `
@@ -1486,7 +1494,7 @@ class ManualReviewApp {
    */
   async loadStatsData() {
     // Placeholder - this would be implemented in the full stats system
-    console.log('Loading stats data...');
+    logger.info('Loading stats data...');
     const container = document.getElementById('stats-container');
     if (container) {
       container.innerHTML = `
@@ -1516,7 +1524,7 @@ class ManualReviewApp {
    * Search documents
    */
   async searchDocuments() {
-    console.log(`Searching documents for: ${this.searchQuery}`);
+    logger.info(`Searching documents for: ${this.searchQuery}`);
     // Placeholder for search functionality
   }
 
@@ -1524,7 +1532,7 @@ class ManualReviewApp {
    * Approve document
    */
   async approveDocument() {
-    console.log('Approving document...');
+    logger.info('Approving document...');
     // Placeholder for document approval
   }
 
@@ -1532,7 +1540,7 @@ class ManualReviewApp {
    * Reject document
    */
   async rejectDocument() {
-    console.log('Rejecting document...');
+    logger.info('Rejecting document...');
     // Placeholder for document rejection
   }
 
@@ -1540,7 +1548,7 @@ class ManualReviewApp {
    * Flag document
    */
   async flagDocument() {
-    console.log('Flagging document...');
+    logger.info('Flagging document...');
     // Placeholder for document flagging
   }
 
@@ -1566,7 +1574,7 @@ class ManualReviewApp {
    * Make API call
    */
   async apiCall(url, options = {}) {
-    console.log('[App.js] apiCall: Called with URL:', url, 'Options:', JSON.stringify(options));
+    logger.debug('[App.js] apiCall: Called with URL:', url, 'Options:', JSON.stringify(options));
     const baseHeaders = {
       'Content-Type': 'application/json',
     };
@@ -2544,7 +2552,7 @@ class ManualReviewApp {
    */
   showBulkCurationActions() {
     // Implementation for bulk curation actions modal
-    console.log('Show bulk curation actions');
+    logger.info('Show bulk curation actions');
   }
 
   /**
@@ -2552,7 +2560,7 @@ class ManualReviewApp {
    */
   showCurationFilters() {
     // Implementation for curation filters modal
-    console.log('Show curation filters');
+    logger.info('Show curation filters');
   }
 
   /**
@@ -2560,7 +2568,7 @@ class ManualReviewApp {
    */
   showCurationStats() {
     // Implementation for curation stats modal
-    console.log('Show curation stats');
+    logger.info('Show curation stats');
   }
 
   /**
@@ -2568,7 +2576,7 @@ class ManualReviewApp {
    */
   searchCurationContent() {
     const query = document.getElementById('curation-search')?.value;
-    console.log('Search curation content:', query);
+    logger.info('Search curation content:', query);
     // Implementation for search functionality
   }
 

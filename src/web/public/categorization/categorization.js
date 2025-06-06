@@ -1,5 +1,13 @@
 // Categorization UI JavaScript
 
+// Simple logger wrapper for browser environment
+const logger = {
+  info: (...args) => console.info('[INFO]', ...args),
+  warn: (...args) => console.warn('[WARN]', ...args),
+  error: (...args) => console.error('[ERROR]', ...args),
+  debug: (...args) => console.debug('[DEBUG]', ...args)
+};
+
 let selectedCategoryId = null;
 let selectedDocumentIds = new Set();
 let categories = [];
@@ -41,7 +49,7 @@ async function loadCategories() {
     renderCategoryTree();
     updateCategoryFilter();
   } catch (error) {
-    console.error('Failed to load categories:', error);
+    logger.error('Failed to load categories:', error);
     showNotification('Failed to load categories', 'error');
   }
 }
@@ -132,7 +140,7 @@ async function loadCategoryDetails(categoryId) {
         
     showCategoryDetails(data);
   } catch (error) {
-    console.error('Failed to load category details:', error);
+    logger.error('Failed to load category details:', error);
   }
 }
 
@@ -205,7 +213,7 @@ async function loadDocuments() {
     documents = data.documents || [];
     renderDocuments();
   } catch (error) {
-    console.error('Failed to load documents:', error);
+    logger.error('Failed to load documents:', error);
   }
 }
 
@@ -287,7 +295,7 @@ async function loadDocumentDetails(documentId) {
         
     showDocumentDetails(documentId, history, suggestions);
   } catch (error) {
-    console.error('Failed to load document details:', error);
+    logger.error('Failed to load document details:', error);
   }
 }
 
@@ -484,7 +492,7 @@ async function handleAddCategory(event) {
       showNotification(error.message || 'Failed to create category', 'error');
     }
   } catch (error) {
-    console.error('Failed to create category:', error);
+    logger.error('Failed to create category:', error);
     showNotification('Failed to create category', 'error');
   }
 }
@@ -559,7 +567,7 @@ async function bulkCategorize() {
       loadDocuments();
     }
   } catch (error) {
-    console.error('Failed to start batch categorization:', error);
+    logger.error('Failed to start batch categorization:', error);
     showNotification('Failed to start batch categorization', 'error');
   }
 }
@@ -589,7 +597,7 @@ async function acceptSuggestion(documentId, categoryId) {
       loadDocuments();
     }
   } catch (error) {
-    console.error('Failed to accept suggestion:', error);
+    logger.error('Failed to accept suggestion:', error);
     showNotification('Failed to accept suggestion', 'error');
   }
 }
@@ -612,5 +620,5 @@ function getAuthToken() {
 
 function showNotification(message, type = 'info') {
   // Implement notification display
-  console.log(`[${type}] ${message}`);
+  logger.info(`[${type}] ${message}`);
 }

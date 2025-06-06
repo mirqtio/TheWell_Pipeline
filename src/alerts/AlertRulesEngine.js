@@ -474,7 +474,7 @@ class AlertRulesEngine {
     
     // Console action (for testing)
     this.registerAction('console', async ({ rule, data: _data, result }) => {
-      console.log(`ALERT: ${rule.name} - ${result.reason}`);
+      logger.warn(`ALERT: ${rule.name} - ${result.reason}`);
     });
   }
 }

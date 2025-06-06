@@ -3,6 +3,14 @@
  * Handles WebSocket connections and real-time data updates
  */
 
+// Simple logger wrapper for browser environment
+const logger = {
+  info: (...args) => console.info('[INFO]', ...args),
+  warn: (...args) => console.warn('[WARN]', ...args),
+  error: (...args) => console.error('[ERROR]', ...args),
+  debug: (...args) => console.debug('[DEBUG]', ...args)
+};
+
 class RealtimeClient {
   constructor(options = {}) {
     this.socketUrl = options.socketUrl || window.location.origin;
@@ -58,20 +66,20 @@ class RealtimeClient {
 
   setupMainSocketHandlers() {
     this.socket.on('connect', () => {
-      console.log('Connected to real-time server');
+      logger.info('Connected to real-time server');
       this.connectionState = 'connected';
       this.reconnectAttempts = 0;
       this.emit('connection:established');
     });
 
     this.socket.on('disconnect', (reason) => {
-      console.log('Disconnected from real-time server:', reason);
+      logger.info('Disconnected from real-time server:', reason);
       this.connectionState = 'disconnected';
       this.emit('connection:lost', reason);
     });
 
     this.socket.on('connect_error', (error) => {
-      console.error('Connection error:', error.message);
+      logger.error('Connection error:', error.message);
       this.connectionState = 'error';
       this.reconnectAttempts++;
       
@@ -81,7 +89,7 @@ class RealtimeClient {
     });
 
     this.socket.on('reconnect', (attemptNumber) => {
-      console.log('Reconnected after', attemptNumber, 'attempts');
+      logger.info('Reconnected after', attemptNumber, 'attempts');
       this.emit('connection:reconnected', attemptNumber);
     });
   }
@@ -109,7 +117,7 @@ class RealtimeClient {
     });
 
     namespace.on('connect', () => {
-      console.log(`Connected to ${name} namespace`);
+      logger.info(`Connected to ${name} namespace`);
     });
 
     this.namespaces[name] = namespace;
@@ -198,7 +206,7 @@ class RealtimeClient {
       
       // Log to console in development
       if (window.location.hostname === 'localhost') {
-        console.error('Real-time error:', data);
+        logger.error('Real-time error:', data);
       }
     });
   }
@@ -282,7 +290,7 @@ class RealtimeClient {
         try {
           handler(data);
         } catch (error) {
-          console.error('Error in event handler:', error);
+          logger.error('Error in event handler:', error);
         }
       });
     }

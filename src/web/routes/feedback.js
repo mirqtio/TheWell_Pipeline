@@ -1,6 +1,7 @@
 const express = require('express');
 const FeedbackDAO = require('../../database/FeedbackDAO'); // eslint-disable-line no-unused-vars
 const FeedbackProcessor = require('../../services/FeedbackProcessor');
+const logger = require('../../utils/logger');
 
 const router = express.Router();
 
@@ -60,8 +61,8 @@ router.post('/', async (req, res) => {
       data: { feedback }
     });
   } catch (error) {
-    console.error('Error creating feedback:', error);
-    console.error('Error stack:', error.stack);
+    logger.error('Error creating feedback:', error);
+    logger.error('Error stack:', error.stack);
     
     // Handle document not found error specifically
     if (error.message && error.message.includes('not found')) {
@@ -120,8 +121,8 @@ router.get('/document/:documentId', async (req, res) => {
       }
     });
   } catch (error) {
-    console.error('Error getting document feedback:', error);
-    console.error('Error stack:', error.stack);
+    logger.error('Error getting document feedback:', error);
+    logger.error('Error stack:', error.stack);
     
     // Handle document not found error specifically
     if (error.message && error.message.includes('not found')) {
@@ -166,8 +167,8 @@ router.get('/user/:userId', async (req, res) => {
       }
     });
   } catch (error) {
-    console.error('Error getting user feedback:', error);
-    console.error('Error stack:', error.stack);
+    logger.error('Error getting user feedback:', error);
+    logger.error('Error stack:', error.stack);
     res.status(500).json({
       success: false,
       error: 'Internal server error',
@@ -193,8 +194,8 @@ router.get('/statistics', async (req, res) => {
       data: { statistics }
     });
   } catch (error) {
-    console.error('Error getting feedback statistics:', error);
-    console.error('Error stack:', error.stack);
+    logger.error('Error getting feedback statistics:', error);
+    logger.error('Error stack:', error.stack);
     
     // Handle document not found error specifically
     if (error.message && error.message.includes('not found')) {
@@ -235,8 +236,8 @@ router.get('/trends', async (req, res) => {
       data: { trends }
     });
   } catch (error) {
-    console.error('Error getting feedback trends:', error);
-    console.error('Error stack:', error.stack);
+    logger.error('Error getting feedback trends:', error);
+    logger.error('Error stack:', error.stack);
     
     // Handle document not found error specifically
     if (error.message && error.message.includes('not found')) {
@@ -277,8 +278,8 @@ router.get('/document/:documentId/aggregates', async (req, res) => {
       data: { aggregates }
     });
   } catch (error) {
-    console.error('Error getting feedback aggregates:', error);
-    console.error('Error stack:', error.stack);
+    logger.error('Error getting feedback aggregates:', error);
+    logger.error('Error stack:', error.stack);
     
     // Handle document not found error specifically
     if (error.message && error.message.includes('not found')) {
@@ -305,7 +306,7 @@ router.get('/document/:documentId/aggregates', async (req, res) => {
 router.post('/bulk', async (req, res) => {
   try {
     const { feedback } = req.body;
-    console.log('Bulk feedback request:', { feedback });
+    logger.debug('Bulk feedback request:', { feedback });
 
     if (!Array.isArray(feedback) || feedback.length === 0) {
       return res.status(400).json({
@@ -314,9 +315,9 @@ router.post('/bulk', async (req, res) => {
       });
     }
 
-    console.log('Calling bulkCreateFeedback with:', feedback);
+    logger.debug('Calling bulkCreateFeedback with:', feedback);
     const results = await req.feedbackDAO.bulkCreateFeedback(feedback);
-    console.log('Bulk feedback results:', results);
+    logger.debug('Bulk feedback results:', results);
 
     res.status(201).json({
       success: true,
@@ -326,8 +327,8 @@ router.post('/bulk', async (req, res) => {
       }
     });
   } catch (error) {
-    console.error('Error creating bulk feedback:', error);
-    console.error('Error stack:', error.stack);
+    logger.error('Error creating bulk feedback:', error);
+    logger.error('Error stack:', error.stack);
     
     // Handle document not found error specifically
     if (error.message && error.message.includes('not found')) {
@@ -354,11 +355,11 @@ router.post('/bulk', async (req, res) => {
 router.get('/:id', async (req, res) => {
   try {
     const { id } = req.params;
-    console.log('GET feedback by ID:', id);
-    console.log('feedbackDAO available:', !!req.feedbackDAO);
+    logger.debug('GET feedback by ID:', id);
+    logger.debug('feedbackDAO available:', !!req.feedbackDAO);
     
     const feedback = await req.feedbackDAO.getFeedbackById(id);
-    console.log('Feedback result:', feedback);
+    logger.debug('Feedback result:', feedback);
 
     if (!feedback) {
       return res.status(404).json({
@@ -372,8 +373,8 @@ router.get('/:id', async (req, res) => {
       data: { feedback }
     });
   } catch (error) {
-    console.error('Error getting feedback:', error);
-    console.error('Error stack:', error.stack);
+    logger.error('Error getting feedback:', error);
+    logger.error('Error stack:', error.stack);
     res.status(500).json({
       success: false,
       error: 'Internal server error',
@@ -404,8 +405,8 @@ router.put('/:id', async (req, res) => {
       data: { feedback }
     });
   } catch (error) {
-    console.error('Error updating feedback:', error);
-    console.error('Error stack:', error.stack);
+    logger.error('Error updating feedback:', error);
+    logger.error('Error stack:', error.stack);
     if (error.message === 'Feedback not found') {
       return res.status(404).json({
         success: false,
@@ -441,8 +442,8 @@ router.delete('/:id', async (req, res) => {
       message: 'Feedback deleted successfully'
     });
   } catch (error) {
-    console.error('Error deleting feedback:', error);
-    console.error('Error stack:', error.stack);
+    logger.error('Error deleting feedback:', error);
+    logger.error('Error stack:', error.stack);
     if (error.message === 'Feedback not found') {
       return res.status(404).json({
         success: false,
@@ -472,7 +473,7 @@ router.use((req, res, next) => {
     });
     
     feedbackProcessor.initialize().catch(error => {
-      console.error('Failed to initialize feedback processor:', error);
+      logger.error('Failed to initialize feedback processor:', error);
     });
   }
   req.feedbackProcessor = feedbackProcessor;
@@ -529,7 +530,7 @@ router.post('/enhanced', async (req, res) => {
       }
     });
   } catch (error) {
-    console.error('Error processing enhanced feedback:', error);
+    logger.error('Error processing enhanced feedback:', error);
     res.status(500).json({
       success: false,
       error: 'Failed to process feedback',
@@ -574,7 +575,7 @@ router.get('/patterns', async (req, res) => {
       }
     });
   } catch (error) {
-    console.error('Error getting feedback patterns:', error);
+    logger.error('Error getting feedback patterns:', error);
     res.status(500).json({
       success: false,
       error: 'Failed to get feedback patterns',
@@ -626,7 +627,7 @@ router.get('/insights', async (req, res) => {
       data: insights
     });
   } catch (error) {
-    console.error('Error getting feedback insights:', error);
+    logger.error('Error getting feedback insights:', error);
     res.status(500).json({
       success: false,
       error: 'Failed to get feedback insights',
@@ -670,7 +671,7 @@ router.post('/trend/:trendId/acknowledge', async (req, res) => {
       }
     });
   } catch (error) {
-    console.error('Error acknowledging trend:', error);
+    logger.error('Error acknowledging trend:', error);
     res.status(500).json({
       success: false,
       error: 'Failed to acknowledge trend',
@@ -703,7 +704,7 @@ router.get('/analytics/dashboard', async (req, res) => {
           averageRating: calculateAverageRating(recentFeedback)
         };
       } catch (error) {
-        console.warn('Could not fetch database analytics:', error.message);
+        logger.warn('Could not fetch database analytics:', error.message);
       }
     }
     
@@ -741,7 +742,7 @@ router.get('/analytics/dashboard', async (req, res) => {
       timeframe
     });
   } catch (error) {
-    console.error('Error getting feedback analytics dashboard:', error);
+    logger.error('Error getting feedback analytics dashboard:', error);
     res.status(500).json({
       success: false,
       error: 'Failed to get analytics dashboard',
