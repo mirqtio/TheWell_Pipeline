@@ -615,9 +615,10 @@ class DataAggregator extends EventEmitter {
       return date.toISOString().slice(0, 13) + ':00:00.000Z';
     case 'day':
       return date.toISOString().slice(0, 10);
-    case 'week':
+    case 'week': {
       const week = this.getWeekNumber(date);
       return `${date.getFullYear()}-W${week}`;
+    }
     case 'month':
       return date.toISOString().slice(0, 7);
     default:
@@ -717,10 +718,11 @@ class DataAggregator extends EventEmitter {
       return Math.min(...values);
     case 'max':
       return Math.max(...values);
-    case 'std':
+    case 'std': {
       const mean = values.reduce((a, b) => a + b, 0) / values.length;
       const variance = values.reduce((sum, val) => sum + Math.pow(val - mean, 2), 0) / values.length;
       return Math.sqrt(variance);
+    }
     case 'count':
       return values.length;
     default:

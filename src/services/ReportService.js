@@ -736,32 +736,36 @@ class ReportService {
     case 'once':
       return scheduleConfig.runAt || now;
       
-    case 'daily':
+    case 'daily': {
       const daily = new Date(now);
       daily.setDate(daily.getDate() + 1);
       daily.setHours(scheduleConfig.hour || 0, scheduleConfig.minute || 0, 0, 0);
       return daily;
+    }
       
-    case 'weekly':
+    case 'weekly': {
       const weekly = new Date(now);
       const daysUntilTarget = (scheduleConfig.dayOfWeek - weekly.getDay() + 7) % 7 || 7;
       weekly.setDate(weekly.getDate() + daysUntilTarget);
       weekly.setHours(scheduleConfig.hour || 0, scheduleConfig.minute || 0, 0, 0);
       return weekly;
+    }
       
-    case 'monthly':
+    case 'monthly': {
       const monthly = new Date(now);
       monthly.setMonth(monthly.getMonth() + 1);
       monthly.setDate(scheduleConfig.dayOfMonth || 1);
       monthly.setHours(scheduleConfig.hour || 0, scheduleConfig.minute || 0, 0, 0);
       return monthly;
+    }
       
-    case 'custom':
+    case 'custom': {
       // Use cron expression
       const job = schedule.scheduleJob(scheduleConfig.cron, () => {});
       const nextRun = job.nextInvocation();
       job.cancel();
       return nextRun;
+    }
       
     default:
       throw new Error(`Unknown schedule type: ${scheduleType}`);
@@ -818,13 +822,14 @@ class ReportService {
     switch (scheduledReport.schedule_type) {
     case 'daily':
     case 'weekly':
-    case 'monthly':
+    case 'monthly': {
       const cronExpression = this.buildCronExpression(
         scheduledReport.schedule_type,
         scheduledReport.schedule_config
       );
       job = schedule.scheduleJob(cronExpression, jobFunction);
       break;
+    }
       
     case 'custom':
       job = schedule.scheduleJob(scheduledReport.schedule_config.cron, jobFunction);
