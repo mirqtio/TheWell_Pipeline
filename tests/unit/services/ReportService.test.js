@@ -425,8 +425,7 @@ describe('ReportService', () => {
       const filters = {
         status: 'completed',
         reportType: 'document-analytics',
-        limit: 10,
-        offset: 0
+        limit: 10
       };
 
       const mockReports = [
@@ -441,7 +440,7 @@ describe('ReportService', () => {
       expect(result).toEqual(mockReports);
       expect(mockDb.query).toHaveBeenCalledWith(
         expect.stringContaining('FROM report_history'),
-        ['completed', 'document-analytics', 10, 0]
+        ['completed', 'document-analytics', 10]
       );
     });
   });

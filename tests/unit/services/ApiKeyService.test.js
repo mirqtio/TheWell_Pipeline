@@ -25,11 +25,13 @@ describe('ApiKeyService', () => {
   
   beforeEach(() => {
     mockDb = {
-      query: jest.fn(),
+      query: jest.fn().mockResolvedValue({ rows: [], rowCount: 0 }),
       transaction: jest.fn()
     };
     
     service = new ApiKeyService(mockDb);
+    // Mock _getDb to return mockDb
+    service._getDb = jest.fn(() => mockDb);
   });
   
   describe('generateApiKey', () => {
@@ -190,7 +192,7 @@ describe('ApiKeyService', () => {
       await service.validateApiKey(apiKey);
       
       expect(mockDb.query).toHaveBeenCalledWith(
-        expect.stringContaining('UPDATE api_keys SET last_used_at'),
+        expect.stringMatching(/UPDATE\s+api_keys\s+SET\s+last_used_at/),
         [1]
       );
     });
@@ -208,9 +210,7 @@ describe('ApiKeyService', () => {
         rollback: jest.fn()
       };
       
-      mockDb.transaction.mockImplementation(async (callback) => {
-        return callback(mockTrx);
-      });
+      mockDb.transaction.mockResolvedValue(mockTrx);
       
       // Mock queries
       mockTrx.query
@@ -239,7 +239,7 @@ describe('ApiKeyService', () => {
       
       // Check that old key was set to expire
       expect(mockTrx.query).toHaveBeenCalledWith(
-        expect.stringContaining('UPDATE api_keys SET expires_at'),
+        expect.stringMatching(/UPDATE\s+api_keys\s+SET\s+expires_at/),
         expect.arrayContaining([oldKeyId])
       );
       
@@ -252,9 +252,7 @@ describe('ApiKeyService', () => {
         rollback: jest.fn()
       };
       
-      mockDb.transaction.mockImplementation(async (callback) => {
-        return callback(mockTrx);
-      });
+      mockDb.transaction.mockResolvedValue(mockTrx);
       
       await expect(service.rotateApiKey(1))
         .rejects.toThrow('DB error');
@@ -263,12 +261,11 @@ describe('ApiKeyService', () => {
     });
     
     it('should handle invalid old key', async () => {
-      mockDb.transaction.mockImplementation(async (callback) => {
-        const mockTrx = {
-          query: jest.fn().mockResolvedValue({ rows: [] })
-        };
-        return callback(mockTrx);
-      });
+      const mockTrx = {
+        query: jest.fn().mockResolvedValue({ rows: [] }),
+        rollback: jest.fn()
+      };
+      mockDb.transaction.mockResolvedValue(mockTrx);
       
       await expect(service.rotateApiKey(999))
         .rejects.toThrow('Invalid or inactive API key');
@@ -320,7 +317,7 @@ describe('ApiKeyService', () => {
       
       expect(result).toBe(true);
       expect(mockDb.query).toHaveBeenCalledWith(
-        expect.stringContaining('UPDATE api_keys SET is_active = FALSE'),
+        expect.stringMatching(/UPDATE\s+api_keys\s+SET\s+is_active\s*=\s*FALSE/),
         [1, 2]
       );
     });

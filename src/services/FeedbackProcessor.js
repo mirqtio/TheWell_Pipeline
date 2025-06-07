@@ -129,6 +129,7 @@ class FeedbackProcessor extends EventEmitter {
     };
 
     // Initialize trend detection
+    const self = this;
     this.trendDetector = {
       detectTrends: (feedbackItems) => {
         const trends = new Map();
@@ -136,7 +137,7 @@ class FeedbackProcessor extends EventEmitter {
         // Group feedback by similarity
         for (let i = 0; i < feedbackItems.length; i++) {
           for (let j = i + 1; j < feedbackItems.length; j++) {
-            const similarity = this.semanticAnalyzer.calculateSimilarity(
+            const similarity = self.semanticAnalyzer.calculateSimilarity(
               feedbackItems[i].content,
               feedbackItems[j].content
             );
@@ -147,7 +148,7 @@ class FeedbackProcessor extends EventEmitter {
                 trends.set(trendKey, {
                   items: [feedbackItems[i], feedbackItems[j]],
                   similarity,
-                  pattern: this.extractPattern([feedbackItems[i], feedbackItems[j]])
+                  pattern: self.trendDetector.extractPattern([feedbackItems[i], feedbackItems[j]])
                 });
               }
             }
@@ -161,8 +162,8 @@ class FeedbackProcessor extends EventEmitter {
         // Extract common patterns from similar feedback items
         if (items.length < 2) return null;
         
-        const commonWords = this.findCommonWords(items.map(item => item.content));
-        const commonTopics = this.findCommonTopics(items);
+        const commonWords = self.findCommonWords(items.map(item => item.content));
+        const commonTopics = self.findCommonTopics(items);
         
         return {
           commonWords,

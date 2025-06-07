@@ -1,16 +1,36 @@
+// Create mocks
+const mockApiKeyService = {
+  validateApiKey: jest.fn(),
+  getUserFromApiKey: jest.fn(),
+  recordApiKeyUsage: jest.fn()
+};
+
+const mockPermissionService = {
+  checkPermission: jest.fn(),
+  getUserPermissions: jest.fn(),
+  getRolePermissions: jest.fn()
+};
+
 // Mock services before importing middleware
-jest.mock('../../../../src/services/ApiKeyService');
-jest.mock('../../../../src/services/PermissionService');
+jest.mock('../../../../src/services/ApiKeyService', () => ({
+  getInstance: jest.fn(() => mockApiKeyService)
+}));
+jest.mock('../../../../src/services/PermissionService', () => ({
+  getInstance: jest.fn(() => mockPermissionService)
+}));
+jest.mock('../../../../src/utils/logger', () => ({
+  info: jest.fn(),
+  warn: jest.fn(),
+  error: jest.fn(),
+  security: jest.fn()
+}));
 
 const ApiKeyService = require('../../../../src/services/ApiKeyService');
 const PermissionService = require('../../../../src/services/PermissionService');
-const RBACMiddleware = require('../../../../src/web/middleware/rbac');
+const rbac = require('../../../../src/web/middleware/rbac');
 
 describe('RBAC Middleware', () => {
   let req, res, next;
-  let mockApiKeyService;
-  let mockPermissionService;
-  let rbacMiddleware;
   
   beforeEach(() => {
     req = {
@@ -47,25 +67,11 @@ describe('RBAC Middleware', () => {
     
     next = jest.fn();
     
-    // Mock services
-    mockApiKeyService = {
-      validateApiKey: jest.fn(),
-      getUserFromApiKey: jest.fn(),
-      recordApiKeyUsage: jest.fn()
-    };
-    
-    mockPermissionService = {
-      checkPermission: jest.fn(),
-      getUserPermissions: jest.fn(),
-      getRolePermissions: jest.fn()
-    };
-    
-    // Replace service instances
-    ApiKeyService.getInstance = jest.fn().mockReturnValue(mockApiKeyService);
-    PermissionService.getInstance = jest.fn().mockReturnValue(mockPermissionService);
-    
-    // Create middleware instance after mocks are set up
-    rbacMiddleware = new RBACMiddleware();
+    // Clear mock calls
+    mockApiKeyService.validateApiKey.mockClear();
+    mockApiKeyService.getUserFromApiKey.mockClear();
+    mockApiKeyService.recordApiKeyUsage.mockClear();
+    mockPermissionService.checkPermission.mockClear();
   });
   
   describe('requireAuth', () => {
@@ -77,8 +83,9 @@ describe('RBAC Middleware', () => {
         email: 'test@example.com',
         role: 'analyst'
       });
+      mockApiKeyService.recordApiKeyUsage.mockResolvedValue();
       
-      const middleware = rbacMiddleware.requireAuth();
+      const middleware = rbac.requireAuth();
       await middleware(req, res, next);
       
       expect(mockApiKeyService.validateApiKey).toHaveBeenCalledWith('valid-key');
@@ -91,7 +98,7 @@ describe('RBAC Middleware', () => {
       req.headers['x-api-key'] = 'invalid-key';
       mockApiKeyService.validateApiKey.mockResolvedValue(false);
       
-      const middleware = rbacMiddleware.requireAuth();
+      const middleware = rbac.requireAuth();
       await middleware(req, res, next);
       
       expect(res.status).toHaveBeenCalledWith(401);
@@ -103,7 +110,7 @@ describe('RBAC Middleware', () => {
     });
     
     it('should reject missing API key', async () => {
-      const middleware = rbacMiddleware.requireAuth();
+      const middleware = rbac.requireAuth();
       await middleware(req, res, next);
       
       expect(res.status).toHaveBeenCalledWith(401);
@@ -127,7 +134,7 @@ describe('RBAC Middleware', () => {
     it('should allow permitted actions', async () => {
       mockPermissionService.checkPermission.mockResolvedValue(true);
       
-      const middleware = rbacMiddleware.requirePermission('documents', 'read');
+      const middleware = rbac.requirePermission('documents', 'read');
       await middleware(req, res, next);
       
       expect(mockPermissionService.checkPermission).toHaveBeenCalledWith(1, 'documents', 'read');
@@ -137,7 +144,7 @@ describe('RBAC Middleware', () => {
     it('should deny forbidden actions', async () => {
       mockPermissionService.checkPermission.mockResolvedValue(false);
       
-      const middleware = rbacMiddleware.requirePermission('documents', 'delete');
+      const middleware = rbac.requirePermission('documents', 'delete');
       await middleware(req, res, next);
       
       expect(res.status).toHaveBeenCalledWith(403);
@@ -151,7 +158,7 @@ describe('RBAC Middleware', () => {
     it('should handle missing user', async () => {
       req.user = null;
       
-      const middleware = rbacMiddleware.requirePermission('documents', 'read');
+      const middleware = rbac.requirePermission('documents', 'read');
       await middleware(req, res, next);
       
       expect(res.status).toHaveBeenCalledWith(401);
@@ -167,7 +174,7 @@ describe('RBAC Middleware', () => {
         .mockResolvedValueOnce(false) // First permission denied
         .mockResolvedValueOnce(true);  // Second permission allowed
       
-      const middleware = rbacMiddleware.requireAnyPermission([
+      const middleware = rbac.requireAnyPermission([
         { resource: 'documents', action: 'delete' },
         { resource: 'documents', action: 'update' }
       ]);
@@ -180,7 +187,7 @@ describe('RBAC Middleware', () => {
     it('should support multiple permissions (AND logic)', async () => {
       mockPermissionService.checkPermission.mockResolvedValue(true);
       
-      const middleware = rbacMiddleware.requireAllPermissions([
+      const middleware = rbac.requireAllPermissions([
         { resource: 'documents', action: 'read' },
         { resource: 'documents', action: 'update' }
       ]);
@@ -198,7 +205,7 @@ describe('RBAC Middleware', () => {
         role: 'admin'
       };
       
-      const middleware = rbacMiddleware.requireRole('admin');
+      const middleware = rbac.requireRole('admin');
       await middleware(req, res, next);
       
       expect(next).toHaveBeenCalled();
@@ -210,7 +217,7 @@ describe('RBAC Middleware', () => {
         role: 'analyst'
       };
       
-      const middleware = rbacMiddleware.requireRole(['admin', 'analyst']);
+      const middleware = rbac.requireRole(['admin', 'analyst']);
       await middleware(req, res, next);
       
       expect(next).toHaveBeenCalled();
@@ -222,7 +229,7 @@ describe('RBAC Middleware', () => {
         role: 'viewer'
       };
       
-      const middleware = rbacMiddleware.requireRole('admin');
+      const middleware = rbac.requireRole('admin');
       await middleware(req, res, next);
       
       expect(res.status).toHaveBeenCalledWith(403);
@@ -243,7 +250,7 @@ describe('RBAC Middleware', () => {
         email: 'test@example.com'
       });
       
-      const middleware = rbacMiddleware.checkOptionalAuth();
+      const middleware = rbac.checkOptionalAuth();
       await middleware(req, res, next);
       
       expect(req.user).toBeDefined();
@@ -251,7 +258,7 @@ describe('RBAC Middleware', () => {
     });
     
     it('should continue without user if no API key', async () => {
-      const middleware = rbacMiddleware.checkOptionalAuth();
+      const middleware = rbac.checkOptionalAuth();
       await middleware(req, res, next);
       
       expect(req.user).toBeNull();
@@ -262,7 +269,7 @@ describe('RBAC Middleware', () => {
       req.headers['x-api-key'] = 'invalid-key';
       mockApiKeyService.validateApiKey.mockResolvedValue(false);
       
-      const middleware = rbacMiddleware.checkOptionalAuth();
+      const middleware = rbac.checkOptionalAuth();
       await middleware(req, res, next);
       
       expect(req.user).toBeNull();
@@ -283,7 +290,7 @@ describe('RBAC Middleware', () => {
     
     it('should log successful requests', async () => {
       const auditLogger = jest.fn();
-      const middleware = rbacMiddleware.auditLog(auditLogger);
+      const middleware = rbac.auditLog(auditLogger);
       
       await middleware(req, res, next);
       
@@ -299,13 +306,14 @@ describe('RBAC Middleware', () => {
         ip_address: '127.0.0.1',
         user_agent: 'Mozilla/5.0',
         request_body: { data: 'test' },
+        response_time: expect.any(Number),
         timestamp: expect.any(Date)
       });
     });
     
     it('should log failed requests', async () => {
       const auditLogger = jest.fn();
-      const middleware = rbacMiddleware.auditLog(auditLogger);
+      const middleware = rbac.auditLog(auditLogger);
       
       await middleware(req, res, next);
       
