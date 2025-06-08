@@ -85,19 +85,18 @@ serviceContainer.register('visibilityManager', () => {
   });
 });
 
-serviceContainer.register('searchService', () => {
-  const SearchService = require('./SearchService');
-  return new SearchService();
+serviceContainer.register('feedbackProcessor', () => {
+  const FeedbackProcessor = require('./FeedbackProcessor');
+  return new FeedbackProcessor({
+    databaseManager: serviceContainer.get('databaseManager')
+  });
 });
 
-serviceContainer.register('rateLimitService', () => {
-  const RateLimitService = require('./RateLimitService');
-  return new RateLimitService();
-});
-
-serviceContainer.register('analyticsEngine', () => {
-  const AnalyticsEngine = require('../analytics/AnalyticsEngine');
-  return new AnalyticsEngine();
+serviceContainer.register('auditService', () => {
+  const AuditService = require('./AuditService');
+  return new AuditService({
+    databaseManager: serviceContainer.get('databaseManager')
+  });
 });
 
 serviceContainer.register('sourceReliabilityService', () => {
@@ -143,9 +142,8 @@ module.exports = {
   getQueueManager: () => serviceContainer.get('queueManager'),
   getIngestionEngine: () => serviceContainer.get('ingestionEngine'),
   getVisibilityManager: () => serviceContainer.get('visibilityManager'),
-  getSearchService: () => serviceContainer.get('searchService'),
-  getRateLimitService: () => serviceContainer.get('rateLimitService'),
-  getAnalyticsEngine: () => serviceContainer.get('analyticsEngine'),
+  getFeedbackProcessor: () => serviceContainer.get('feedbackProcessor'),
+  getAuditService: () => serviceContainer.get('auditService'),
   getSourceReliabilityService: () => serviceContainer.get('sourceReliabilityService'),
   getCostTracker: () => serviceContainer.get('costTracker'),
   getQualityMetrics: () => serviceContainer.get('qualityMetrics'),
