@@ -28,23 +28,31 @@ class ManualReviewServer {
   constructor(options = {}) {
     this.port = options.port !== undefined ? options.port : (process.env.WEB_PORT || 3000);
     this.host = options.host || process.env.WEB_HOST || 'localhost';
-    this.queueManager = options.queueManager;
-    this.ingestionEngine = options.ingestionEngine;
-    this.databaseManager = options.databaseManager;
-    this.ragManager = options.ragManager;
-    this.cacheManager = options.cacheManager;
-    this.sourceReliabilityService = options.sourceReliabilityService;
-    this.costTracker = options.costTracker;
-    this.qualityMetrics = options.qualityMetrics;
-    this.dashboardManager = options.dashboardManager;
     
-    // Initialize tracing middleware
-    this.tracingMiddleware = new TracingMiddleware({
-      tracingManager: options.tracingManager,
-      excludePaths: ['/health', '/metrics', '/favicon.ico', '/static'],
-      includeRequestBody: false, // Don't log request bodies for privacy
-      includeResponseBody: false, // Don't log response bodies for privacy
-    });
+    // Support both direct injection and lazy loading
+    this.queueManager = options.queueManager || null;
+    this.ingestionEngine = options.ingestionEngine || null;
+    this.databaseManager = options.databaseManager || null;
+    this.ragManager = options.ragManager || null;
+    this.cacheManager = options.cacheManager || null;
+    this.sourceReliabilityService = options.sourceReliabilityService || null;
+    this.costTracker = options.costTracker || null;
+    this.qualityMetrics = options.qualityMetrics || null;
+    this.dashboardManager = options.dashboardManager || null;
+    this.tracingManager = options.tracingManager || null;
+    
+    // Store service getters for lazy loading
+    this.serviceGetters = options.serviceGetters || {};
+    
+    // Initialize tracing middleware only if we have a tracing manager
+    if (this.tracingManager || this.serviceGetters.getTracingManager) {
+      this.tracingMiddleware = new TracingMiddleware({
+        tracingManager: this.tracingManager || (this.serviceGetters.getTracingManager && this.serviceGetters.getTracingManager()),
+        excludePaths: ['/health', '/metrics', '/favicon.ico', '/static'],
+        includeRequestBody: false, // Don't log request bodies for privacy
+        includeResponseBody: false, // Don't log response bodies for privacy
+      });
+    }
     
     this.app = express();
     this.server = null;
@@ -53,6 +61,24 @@ class ManualReviewServer {
     this.setupMiddleware();
     this.setupRoutes();
     this.setupErrorHandling();
+  }
+
+  /**
+   * Get a service (with lazy loading support)
+   */
+  getService(name) {
+    // First check if directly injected
+    if (this[name]) {
+      return this[name];
+    }
+    
+    // Then try to get from service getters
+    const getterName = `get${name.charAt(0).toUpperCase()}${name.slice(1)}`;
+    if (this.serviceGetters[getterName]) {
+      return this.serviceGetters[getterName]();
+    }
+    
+    return null;
   }
 
   /**
@@ -83,8 +109,10 @@ class ManualReviewServer {
       next();
     });
 
-    // Tracing middleware
-    this.app.use(this.tracingMiddleware.middleware());
+    // Tracing middleware (only if available)
+    if (this.tracingMiddleware) {
+      this.app.use(this.tracingMiddleware.middleware());
+    }
 
     // Authentication middleware for protected routes
     this.app.use('/api', authMiddleware);

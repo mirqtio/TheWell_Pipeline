@@ -6,6 +6,9 @@
 // Load environment variables
 require('dotenv').config();
 
+// Setup services for tests
+require('./tests/setup/setupServices');
+
 // Mock PostgreSQL connections for unit tests
 jest.mock('pg', () => {
   const mockClient = {

@@ -7,11 +7,7 @@
 const path = require('path'); // eslint-disable-line no-unused-vars
 const ManualReviewServer = require('./server');
 const logger = require('../utils/logger');
-const SourceReliabilityService = require('../services/SourceReliabilityService');
-const QueueManager = require('../ingestion/queue/QueueManager');
-const IngestionEngine = require('../ingestion/IngestionEngine');
-const DatabaseManager = require('../database/DatabaseManager');
-const ConfigManager = require('../config/ConfigManager');
+const services = require('../services');
 
 // Mock dependencies for development
 class MockQueueManager {
@@ -350,46 +346,36 @@ async function startWebServer() {
   try {
     const isProduction = process.env.NODE_ENV === 'production';
     let queueManager, ingestionEngine, sourceReliabilityService;
-    let databaseManager; // Declare at function scope for cleanup
+    let serviceGetters;
 
     if (isProduction) {
       logger.info('Initializing production services...');
       
-      // Initialize real dependencies for production
-      databaseManager = new DatabaseManager({
-        host: process.env.DB_HOST || 'postgres',
-        port: parseInt(process.env.DB_PORT || '5432'),
-        database: process.env.DB_NAME || 'thewell_prod',
-        username: process.env.DB_USER || 'thewell',
-        password: process.env.DB_PASSWORD || process.env.POSTGRES_PASSWORD
-      });
-      await databaseManager.initialize();
+      // Use service getters for lazy initialization
+      serviceGetters = services;
       
-      const configManager = new ConfigManager({
-        configDir: process.env.CONFIG_DIR || '/app/config',
-        watchForChanges: true
-      });
-      await configManager.loadConfigs();
+      // Initialize critical services
+      const databaseManager = services.getDatabaseManager();
+      if (databaseManager && typeof databaseManager.initialize === 'function') {
+        await databaseManager.initialize();
+      }
       
-      queueManager = new QueueManager({
-        redis: {
-          host: process.env.REDIS_HOST || 'redis',
-          port: parseInt(process.env.REDIS_PORT || '6379'),
-          password: process.env.REDIS_PASSWORD
-        }
-      });
-      await queueManager.initialize();
+      const configManager = services.getConfigManager();
+      if (configManager && typeof configManager.loadConfigs === 'function') {
+        await configManager.loadConfigs();
+      }
       
-      ingestionEngine = new IngestionEngine({
-        queueManager,
-        databaseManager,
-        configManager
-      });
-      await ingestionEngine.initialize();
+      queueManager = services.getQueueManager();
+      if (queueManager && typeof queueManager.initialize === 'function') {
+        await queueManager.initialize();
+      }
       
-      sourceReliabilityService = new SourceReliabilityService({
-        databaseManager
-      });
+      ingestionEngine = services.getIngestionEngine();
+      if (ingestionEngine && typeof ingestionEngine.initialize === 'function') {
+        await ingestionEngine.initialize();
+      }
+      
+      sourceReliabilityService = services.getSourceReliabilityService();
     } else {
       logger.info('Using mock services for development...');
       
@@ -411,6 +397,7 @@ async function startWebServer() {
       queueManager,
       ingestionEngine,
       sourceReliabilityService,
+      serviceGetters, // Pass service getters for lazy loading
       logger
     });
 
@@ -433,19 +420,9 @@ async function startWebServer() {
         logger.info('Web server closed');
         
         if (isProduction) {
-          // Cleanup production services
-          if (queueManager && typeof queueManager.close === 'function') {
-            await queueManager.close();
-            logger.info('Queue manager closed');
-          }
-          if (ingestionEngine && typeof ingestionEngine.stop === 'function') {
-            await ingestionEngine.stop();
-            logger.info('Ingestion engine stopped');
-          }
-          if (databaseManager && typeof databaseManager.close === 'function') {
-            await databaseManager.close();
-            logger.info('Database manager closed');
-          }
+          // Cleanup production services using the service container
+          await services.serviceContainer.shutdownAll();
+          logger.info('All services shut down');
         }
         
         process.exit(0);
