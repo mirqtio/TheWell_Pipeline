@@ -183,7 +183,7 @@ class VisibilityManager extends EventEmitter {
 
     const approvalId = uuidv4();
     
-    const approval = await this.models.VisibilityApproval.create({
+    await this.models.VisibilityApproval.create({
       approvalId,
       documentId,
       requestedVisibility,
