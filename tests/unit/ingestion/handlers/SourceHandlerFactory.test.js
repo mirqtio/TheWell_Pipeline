@@ -8,18 +8,14 @@ jest.mock('fs', () => ({
   }
 }));
 
-// Mock Puppeteer to prevent import issues
-jest.mock('puppeteer', () => ({
-  launch: jest.fn().mockResolvedValue({
-    newPage: jest.fn().mockResolvedValue({
-      goto: jest.fn().mockResolvedValue(undefined),
-      evaluate: jest.fn().mockResolvedValue({}),
-      waitForSelector: jest.fn().mockResolvedValue({}),
-      click: jest.fn().mockResolvedValue(undefined),
-      url: jest.fn().mockReturnValue('https://example.com'),
-      close: jest.fn().mockResolvedValue(undefined)
+// Mock axios for HTTP requests
+jest.mock('axios', () => ({
+  create: jest.fn().mockReturnValue({
+    get: jest.fn().mockResolvedValue({
+      data: '<html><body>Test content</body></html>',
+      status: 200
     }),
-    close: jest.fn().mockResolvedValue(undefined)
+    defaults: { headers: { common: {} } }
   })
 }));
 

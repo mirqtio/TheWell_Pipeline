@@ -1,6 +1,5 @@
 const axios = require('axios');
 const crypto = require('crypto');
-const puppeteer = require('puppeteer');
 const { BaseSourceHandler, SOURCE_TYPES, VISIBILITY_LEVELS } = require('../types');
 
 /**
@@ -14,7 +13,6 @@ class DynamicUnstructuredSourceHandler extends BaseSourceHandler {
     this.httpClient = null;
     this.discoveredUrls = new Set();
     this.lastDiscoveryTime = null;
-    this.browser = null;
   }
 
   /**
@@ -51,19 +49,6 @@ class DynamicUnstructuredSourceHandler extends BaseSourceHandler {
       targets: this.config.config.targets.length,
       lastDiscoveryTime: this.lastDiscoveryTime
     });
-
-    // Initialize browser if not already done
-    if (!this.browser) {
-      try {
-        this.browser = await puppeteer.launch({
-          headless: true,
-          args: ['--no-sandbox', '--disable-setuid-sandbox']
-        });
-      } catch (error) {
-        this.logger?.error('Failed to initialize Puppeteer browser', { error: error.message });
-        throw error;
-      }
-    }
   }
 
   /**
@@ -192,17 +177,18 @@ class DynamicUnstructuredSourceHandler extends BaseSourceHandler {
       url: document.url 
     });
 
-    // Initialize browser if not already done
-    if (!this.browser) {
-      await this.initialize();
-    }
-
-    const page = await this.browser.newPage();
-    
     try {
-      await page.goto(document.url, { waitUntil: 'networkidle0', timeout: 30000 });
+      // Use HTTP client to fetch the page content
+      const response = await this.httpClient.get(document.url, {
+        timeout: 30000,
+        headers: {
+          'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8'
+        }
+      });
       
-      // Extract content using selectors if configured
+      const html = response.data;
+      
+      // Extract content using basic HTML parsing
       const target = this._findTargetForDocument(document);
       const selectors = target?.selectors || {};
       
@@ -210,10 +196,9 @@ class DynamicUnstructuredSourceHandler extends BaseSourceHandler {
       let title = document.title;
       
       if (Object.keys(selectors).length > 0) {
-        // Extract all content using selectors in one evaluate call
-        const extractedData = await this._evaluateSelectors(page, selectors);
+        // Use simple regex-based extraction for basic selector support
+        const extractedData = this._extractWithSelectors(html, selectors);
         
-        // Handle test mock that returns object directly
         if (typeof extractedData === 'object' && extractedData !== null) {
           extractedContent = extractedData.content || '';
           title = extractedData.title || title;
@@ -229,11 +214,9 @@ class DynamicUnstructuredSourceHandler extends BaseSourceHandler {
           extractedContent = String(extractedData || '');
         }
       } else {
-        // Fallback to body content
-        extractedContent = await page.evaluate(() => {
-          const body = document.querySelector('body');
-          return body ? body.textContent.trim() : '';
-        });
+        // Fallback to basic HTML text extraction
+        extractedContent = this._extractTextFromHtml(html);
+        title = this._extractTitleFromHtml(html) || title;
       }
 
       // Apply content filters
@@ -248,7 +231,7 @@ class DynamicUnstructuredSourceHandler extends BaseSourceHandler {
           extractedAt: new Date(),
           metadata: {
             ...document.metadata,
-            extractionMethod: 'puppeteer-scrape',
+            extractionMethod: 'http-scrape',
             title: title,
             filtered: true,
             filterReason: this._getFilterReason(extractedContent, filters)
@@ -265,7 +248,7 @@ class DynamicUnstructuredSourceHandler extends BaseSourceHandler {
         extractedAt: new Date(),
         metadata: {
           ...document.metadata,
-          extractionMethod: 'puppeteer-scrape',
+          extractionMethod: 'http-scrape',
           contentLength: extractedContent.length,
           title: title
         }
@@ -277,8 +260,6 @@ class DynamicUnstructuredSourceHandler extends BaseSourceHandler {
         error: error.message 
       });
       throw error;
-    } finally {
-      await page.close();
     }
   }
 
@@ -323,92 +304,81 @@ class DynamicUnstructuredSourceHandler extends BaseSourceHandler {
     const documents = [];
     const visitedUrls = new Set();
     const urlQueue = startUrls.map(url => ({ url, depth: 0 }));
-
-    // Initialize browser if not already done
-    if (!this.browser) {
-      await this.initialize();
-    }
-
-    const page = await this.browser.newPage();
     
-    try {
-      while (urlQueue.length > 0 && documents.length < maxPages) {
-        const { url, depth } = urlQueue.shift();
-        
-        if (visitedUrls.has(url) || depth > maxDepth) {
-          continue;
-        }
-
-        try {
-          visitedUrls.add(url);
-          
-          // Check robots.txt if enabled
-          if (this.config.config.crawling?.respectRobots) {
-            const allowed = await this._checkRobotsTxt(url);
-            if (!allowed) {
-              this.logger?.info('URL blocked by robots.txt', { url });
-              continue;
-            }
-          }
-          
-          await page.goto(url, { waitUntil: 'networkidle0', timeout: 30000 });
-          
-          // Extract links from the page using page.evaluate
-          const links = await page.evaluate(() => {
-            const anchors = Array.from(document.querySelectorAll('a[href]'));
-            return anchors.map(a => ({
-              href: a.href,
-              text: a.textContent.trim()
-            }));
-          });
-          
-          // Create documents from discovered links
-          for (const link of links) {
-            if (documents.length >= maxPages) break;
-            
-            const document = {
-              id: this._generateDocumentId(link.href),
-              url: link.href,
-              title: link.text,
-              lastModified: new Date(),
-              metadata: {
-                sourceId: this.config.id,
-                sourceType: SOURCE_TYPES.DYNAMIC_UNSTRUCTURED,
-                targetName: target.name,
-                originalUrl: link.href,
-                visibility: this.config.visibility || VISIBILITY_LEVELS.EXTERNAL,
-                discoveredAt: new Date()
-              }
-            };
-            
-            documents.push(document);
-          }
-
-          // Extract links for further crawling if we haven't reached max depth
-          if (depth < maxDepth) {
-            const filteredLinks = links
-              .map(link => link.href)
-              .filter(link => 
-                this._isAllowedDomain(link, allowedDomains) && !visitedUrls.has(link)
-              );
-            
-            filteredLinks.forEach(link => {
-              urlQueue.push({ url: link, depth: depth + 1 });
-            });
-          }
-
-          // Rate limiting
-          await this._sleep(target.config.crawlDelayMs || 1000);
-        } catch (error) {
-          this.logger?.warn('Target discovery failed', { 
-            targetName: target.name,
-            url,
-            error: error.message 
-          });
-        }
+    while (urlQueue.length > 0 && documents.length < maxPages) {
+      const { url, depth } = urlQueue.shift();
+      
+      if (visitedUrls.has(url) || depth > maxDepth) {
+        continue;
       }
-    } finally {
-      await page.close();
+
+      try {
+        visitedUrls.add(url);
+        
+        // Check robots.txt if enabled
+        if (this.config.config.crawling?.respectRobots) {
+          const allowed = await this._checkRobotsTxt(url);
+          if (!allowed) {
+            this.logger?.info('URL blocked by robots.txt', { url });
+            continue;
+          }
+        }
+        
+        // Fetch page content using HTTP client
+        const response = await this.httpClient.get(url, {
+          timeout: 30000,
+          headers: {
+            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8'
+          }
+        });
+        
+        const html = response.data;
+        
+        // Extract links from HTML using regex parsing
+        const links = this._extractLinksFromHtml(html, url);
+        
+        // Create documents from discovered links
+        for (const linkUrl of links) {
+          if (documents.length >= maxPages) break;
+          
+          const document = {
+            id: this._generateDocumentId(linkUrl),
+            url: linkUrl,
+            title: this._getTitleFromUrl(linkUrl),
+            lastModified: new Date(),
+            metadata: {
+              sourceId: this.config.id,
+              sourceType: SOURCE_TYPES.DYNAMIC_UNSTRUCTURED,
+              targetName: target.name,
+              originalUrl: linkUrl,
+              visibility: this.config.visibility || VISIBILITY_LEVELS.EXTERNAL,
+              discoveredAt: new Date()
+            }
+          };
+          
+          documents.push(document);
+        }
+
+        // Extract links for further crawling if we haven't reached max depth
+        if (depth < maxDepth) {
+          const filteredLinks = links.filter(link => 
+            this._isAllowedDomain(link, allowedDomains) && !visitedUrls.has(link)
+          );
+          
+          filteredLinks.forEach(link => {
+            urlQueue.push({ url: link, depth: depth + 1 });
+          });
+        }
+
+        // Rate limiting
+        await this._sleep(target.config.crawlDelayMs || 1000);
+      } catch (error) {
+        this.logger?.warn('Target discovery failed', { 
+          targetName: target.name,
+          url,
+          error: error.message 
+        });
+      }
     }
 
     return documents;
@@ -546,24 +516,51 @@ class DynamicUnstructuredSourceHandler extends BaseSourceHandler {
   }
 
   /**
-   * Create document from page
+   * Extract content using basic CSS selector support
    */
-  async _createDocumentFromPage(page, url, _target) {
-    const title = await page.title();
+  _extractWithSelectors(html, selectors) {
+    const result = {};
     
-    return {
-      id: this._generateDocumentId(url),
-      url,
-      title,
-      lastModified: new Date(),
-      metadata: {
-        sourceId: this.config.id,
-        sourceType: SOURCE_TYPES.DYNAMIC_UNSTRUCTURED,
-        originalUrl: url,
-        visibility: this.config.visibility || VISIBILITY_LEVELS.EXTERNAL,
-        discoveredAt: new Date()
+    for (const [key, selector] of Object.entries(selectors)) {
+      try {
+        // Convert basic CSS selectors to regex patterns
+        // This is a simplified approach - real CSS parsing would be more complex
+        let pattern;
+        
+        if (selector.includes('class=')) {
+          const className = selector.match(/class="([^"]+)"/)?.[1] || selector.match(/\.([a-zA-Z0-9_-]+)/)?.[1];
+          if (className) {
+            pattern = new RegExp(`<[^>]*class="[^"]*${className}[^"]*"[^>]*>([\\s\\S]*?)</[^>]*>`, 'i');
+          }
+        } else if (selector.includes('id=')) {
+          const id = selector.match(/id="([^"]+)"/)?.[1] || selector.match(/#([a-zA-Z0-9_-]+)/)?.[1];
+          if (id) {
+            pattern = new RegExp(`<[^>]*id="${id}"[^>]*>([\\s\\S]*?)</[^>]*>`, 'i');
+          }
+        } else {
+          // Basic tag selector
+          const tag = selector.replace(/[.#].*/, '');
+          pattern = new RegExp(`<${tag}[^>]*>([\\s\\S]*?)</${tag}>`, 'i');
+        }
+        
+        if (pattern) {
+          const match = html.match(pattern);
+          if (match) {
+            const content = match[1];
+            // Remove HTML tags and clean up the content
+            result[key] = content.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
+          } else {
+            result[key] = null;
+          }
+        } else {
+          result[key] = null;
+        }
+      } catch (error) {
+        result[key] = null;
       }
-    };
+    }
+    
+    return result;
   }
 
   /**
@@ -656,85 +653,6 @@ class DynamicUnstructuredSourceHandler extends BaseSourceHandler {
     return feedLinks;
   }
 
-  /**
-   * Evaluate selectors on a page
-   */
-  async _evaluateSelectors(page, selectors) {
-    return await page.evaluate((selectors) => {
-      const result = {};
-      for (const [key, selector] of Object.entries(selectors)) {
-        const elements = document.querySelectorAll(selector);
-        if (elements.length === 1) {
-          result[key] = elements[0].textContent?.trim() || '';
-        } else if (elements.length > 1) {
-          result[key] = Array.from(elements).map(el => el.textContent?.trim() || '');
-        } else {
-          result[key] = null;
-        }
-      }
-      return result;
-    }, selectors);
-  }
-
-  /**
-   * Handle pagination for a target
-   */
-  async _handlePagination(page, target, collectUrls) {
-    const targetConfig = target?.config || {};
-    const paginationConfig = target?.pagination || {};
-    const { maxPages = 10 } = paginationConfig;
-    const paginationSelector = paginationConfig.nextSelector || targetConfig.paginationSelector || 'a[rel="next"], .next, .pagination .next';
-    let currentPage = 1;
-    
-    // Collect initial page URL
-    let pageUrl = page.url();
-    collectUrls(pageUrl);
-    
-    while (currentPage < maxPages) {
-      try {
-        // Look for next page link
-        const hasNextPage = await page.waitForSelector(paginationSelector, { timeout: 1000 }).then(() => true).catch(() => false);
-        
-        if (!hasNextPage) {
-          this.logger?.info('No more pages found', { 
-            targetName: target?.name,
-            currentPage 
-          });
-          break;
-        }
-        
-        // Click next page link and wait for navigation
-        await Promise.all([
-          page.waitForNavigation({ waitUntil: 'networkidle0', timeout: 30000 }),
-          page.click(paginationSelector)
-        ]);
-        
-        currentPage++;
-        
-        // Collect URLs from this page - generate different URL for each page
-        const baseUrl = page.url();
-        pageUrl = baseUrl.includes('page') ? baseUrl : `${baseUrl}?page=${currentPage}`;
-        collectUrls(pageUrl);
-        
-        this.logger?.info('Navigated to next page', { 
-          targetName: target?.name,
-          currentPage,
-          url: pageUrl
-        });
-        
-        // Rate limiting between pages
-        await this._sleep(targetConfig.crawlDelayMs || 1000);
-        
-      } catch (error) {
-        this.logger?.warn('Pagination failed', { 
-          targetName: target?.name,
-          currentPage,
-          error: error.message 
-        });
-        break;
-      }
-    }
-  }
 
   /**
    * Helper methods
@@ -939,9 +857,6 @@ class DynamicUnstructuredSourceHandler extends BaseSourceHandler {
   async cleanup() {
     this.logger?.info('DynamicUnstructuredSourceHandler cleanup completed', { sourceId: this.config.id });
     this.discoveredUrls.clear();
-    if (this.browser) {
-      await this.browser.close();
-    }
   }
 
   /**
