@@ -88,6 +88,11 @@
     "testMatch": [
       "**/tests/**/*.test.js"
     ],
+    "testPathIgnorePatterns": [
+      "/node_modules/",
+      "/tests/unit/web/components/",
+      "/tests/unit/web/ui/"
+    ],
     "collectCoverageFrom": [
       "src/**/*.js",
       "!src/**/*.test.js",

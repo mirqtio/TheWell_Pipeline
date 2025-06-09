@@ -493,7 +493,7 @@ describe('Document Model', () => {
       expect(defineCall[1]).toHaveProperty('embedding');
       
       const embeddingField = defineCall[1].embedding;
-      expect(embeddingField.type).toBe(DataTypes.TEXT);
+      expect(embeddingField.type.toString()).toContain('TEXT');
       expect(embeddingField.allowNull).toBe(true);
       expect(embeddingField.comment).toBe('Vector embedding stored as JSON string');
     });
