@@ -51,7 +51,7 @@ jobs:
     
     - name: Install dependencies
       run: npm ci --prefer-offline --no-audit
-      timeout-minutes: 3
+      timeout-minutes: 5
     
     - name: Set up environment variables
       run: |
