@@ -491,11 +491,11 @@ describe('Document Model', () => {
       const defineCall = mockSequelize.define.mock.calls[0];
       expect(defineCall[0]).toBe('Document');
       expect(defineCall[1]).toHaveProperty('embedding');
-      expect(defineCall[1].embedding).toEqual(expect.objectContaining({
-        type: DataTypes.TEXT,
-        allowNull: true,
-        comment: 'Vector embedding stored as JSON string'
-      }));
+      
+      const embeddingField = defineCall[1].embedding;
+      expect(embeddingField.type).toBe(DataTypes.TEXT);
+      expect(embeddingField.allowNull).toBe(true);
+      expect(embeddingField.comment).toBe('Vector embedding stored as JSON string');
     });
   });
 });
