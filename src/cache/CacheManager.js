@@ -13,7 +13,7 @@ class CacheManager extends EventEmitter {
     this.config = {
       redis: {
         host: config.redis?.host || process.env.REDIS_HOST || 'localhost',
-        port: config.redis?.port || process.env.REDIS_PORT || 6379,
+        port: config.redis?.port || parseInt(process.env.REDIS_PORT) || 6379,
         password: config.redis?.password || process.env.REDIS_PASSWORD,
         db: config.redis?.db || 1 // Use different DB than QueueManager
       },

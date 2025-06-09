@@ -12,6 +12,45 @@ class ServiceContainer {
     this.services = new Map();
     this.factories = new Map();
     this.initialized = new Map();
+    this.validateEnvironment();
+  }
+
+  /**
+   * Validate required environment variables
+   */
+  validateEnvironment() {
+    // Required vars for all environments
+    const requiredBase = ['NODE_ENV'];
+    
+    // Additional required vars for production
+    const requiredProduction = [
+      'DB_HOST', 'DB_PORT', 'DB_NAME', 'DB_USER',
+      'REDIS_HOST', 'REDIS_PORT'
+    ];
+    
+    // Check base requirements
+    const missing = requiredBase.filter(v => !process.env[v]);
+    
+    // In production, check additional requirements
+    if (process.env.NODE_ENV === 'production') {
+      missing.push(...requiredProduction.filter(v => !process.env[v]));
+    }
+    
+    if (missing.length > 0) {
+      logger.error('Missing required environment variables:', missing);
+      throw new Error(`Missing required environment variables: ${missing.join(', ')}`);
+    }
+    
+    // Validate NODE_ENV value
+    const validEnvironments = ['development', 'test', 'production'];
+    if (!validEnvironments.includes(process.env.NODE_ENV)) {
+      throw new Error(`Invalid NODE_ENV: ${process.env.NODE_ENV}. Must be one of: ${validEnvironments.join(', ')}`);
+    }
+    
+    logger.info('Environment validated successfully', {
+      NODE_ENV: process.env.NODE_ENV,
+      CI: process.env.CI || false
+    });
   }
 
   /**

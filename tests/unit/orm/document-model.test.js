@@ -488,17 +488,14 @@ describe('Document Model', () => {
   describe('Vector Operations', () => {
     it('should handle vector embedding storage', () => {
       // Test that embedding field is properly configured for vector storage
-      expect(mockSequelize.define).toHaveBeenCalledWith(
-        'Document',
-        expect.objectContaining({
-          embedding: expect.objectContaining({
-            type: DataTypes.TEXT,
-            allowNull: true,
-            comment: 'Vector embedding stored as JSON string'
-          })
-        }),
-        expect.any(Object)
-      );
+      const defineCall = mockSequelize.define.mock.calls[0];
+      expect(defineCall[0]).toBe('Document');
+      expect(defineCall[1]).toHaveProperty('embedding');
+      expect(defineCall[1].embedding).toEqual(expect.objectContaining({
+        type: DataTypes.TEXT,
+        allowNull: true,
+        comment: 'Vector embedding stored as JSON string'
+      }));
     });
   });
 });

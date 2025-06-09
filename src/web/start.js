@@ -388,7 +388,7 @@ async function startWebServer() {
     logger.info('Starting TheWell Pipeline Manual Review Web Interface...');
 
     // Create and start server
-    const port = process.env.WEB_PORT || 3001;
+    const port = process.env.PORT || process.env.WEB_PORT || 3001;
     const host = process.env.WEB_HOST || 'localhost';
     
     const webServer = new ManualReviewServer({

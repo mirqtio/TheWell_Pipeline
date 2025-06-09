@@ -3,8 +3,11 @@
  * Configures test environment and mocks for database and external services
  */
 
-// Load environment variables
+// Load environment variables first
 require('dotenv').config();
+
+// Setup CI environment (overrides .env for test consistency)
+require('./tests/setup/setupCI');
 
 // Setup services for tests
 require('./tests/setup/setupServices');

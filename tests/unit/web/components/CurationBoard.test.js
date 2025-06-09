@@ -5,7 +5,7 @@
 const React = require('react');
 const { render, screen, fireEvent, waitFor, within } = require('@testing-library/react');
 const userEvent = require('@testing-library/user-event');
-const '@testing-library/jest-dom';
+require('@testing-library/jest-dom');
 const CurationBoard = require('../../../../src/web/components/curation/CurationBoard');
 
 // Mock fetch
