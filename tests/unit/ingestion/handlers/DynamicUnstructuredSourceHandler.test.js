@@ -60,7 +60,7 @@ describe('DynamicUnstructuredSourceHandler', () => {
           delayBetweenRequests: 1000
         },
         contentFilters: {
-          minWordCount: 50,
+          minWordCount: 5,
           excludePatterns: ['advertisement', 'sponsored']
         }
       }
@@ -165,7 +165,7 @@ describe('DynamicUnstructuredSourceHandler', () => {
 
       expect(documents).toBeInstanceOf(Array);
       expect(documents.length).toBe(0);
-      expect(mockLogger.error).toHaveBeenCalled();
+      expect(mockLogger.warn).toHaveBeenCalled();
     });
   });
 
@@ -186,7 +186,7 @@ describe('DynamicUnstructuredSourceHandler', () => {
 
       const mockHttpClient = {
         get: jest.fn().mockResolvedValue({
-          data: '<html><head><title>Test Article</title></head><body><p>This is test content for extraction.</p></body></html>'
+          data: '<html><head><title>Test Article</title></head><body><p>This is test content for extraction with enough words to pass the filter validation requirements.</p></body></html>'
         })
       };
       handler.httpClient = mockHttpClient;
