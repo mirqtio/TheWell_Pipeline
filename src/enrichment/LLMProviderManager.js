@@ -7,7 +7,7 @@
 
 const { OpenAIProvider, AnthropicProvider } = require('./providers');
 const FailoverManager = require('./FailoverManager');
-const PromptVersionManager = require('./PromptVersionManager');
+const PromptTemplateManager = require('./PromptTemplateManager');
 const logger = require('../utils/logger');
 
 class LLMProviderManager {
@@ -23,8 +23,8 @@ class LLMProviderManager {
     this.healthCheckInterval = null;
     this.isShuttingDown = false;
     
-    // Initialize prompt version manager
-    this.promptVersionManager = new PromptVersionManager(config.prompts || {});
+    // Initialize prompt template manager
+    this.promptTemplateManager = new PromptTemplateManager(config.prompts || {});
     
     // Initialize enhanced failover manager
     this.failoverManager = new FailoverManager(config.failover || {});
@@ -435,41 +435,47 @@ class LLMProviderManager {
   }
 
   /**
-   * Initialize prompt version manager
+   * Initialize prompt template manager
    */
-  async initializePromptVersioning() {
+  async initializePromptTemplates() {
     try {
-      await this.promptVersionManager.initialize();
-      logger.info('Prompt versioning system initialized');
+      await this.promptTemplateManager.initialize();
+      logger.info('Prompt template system initialized');
     } catch (error) {
-      logger.error('Failed to initialize prompt versioning', { error: error.message });
+      logger.error('Failed to initialize prompt template system', { error: error.message });
       throw error;
     }
   }
 
   /**
-   * Execute enrichment with versioned prompt
-   * @param {string} promptId - ID of the prompt to use
+   * Execute enrichment with versioned prompt template
+   * @param {string} promptName - Name of the prompt template to use
    * @param {Object} variables - Variables to substitute in the prompt
    * @param {Object} options - Execution options
    * @returns {Promise<Object>} Enrichment result with prompt metadata
    */
-  async executeWithPrompt(promptId, variables = {}, options = {}) {
+  async executeWithPrompt(promptName, variables = {}, options = {}) {
     try {
       const {
-        promptVersion = 'latest',
+        promptVersion = null,
         taskType = 'enrichment',
         ...executeOptions
       } = options;
 
-      // Get the versioned prompt
-      const prompt = await this.promptVersionManager.getPrompt(promptId, promptVersion);
-      if (!prompt) {
-        throw new Error(`Prompt not found: ${promptId} (version: ${promptVersion})`);
+      // Get the versioned prompt template
+      const template = await this.promptTemplateManager.getTemplate(promptName, promptVersion);
+      if (!template) {
+        throw new Error(`Prompt template not found: ${promptName}${promptVersion ? ` (version: ${promptVersion})` : ''}`);
+      }
+
+      // Validate variables against template requirements
+      const missingVars = template.variables.filter(v => !(v in variables));
+      if (missingVars.length > 0) {
+        throw new Error(`Missing required variables: ${missingVars.join(', ')}`);
       }
 
       // Substitute variables in prompt content
-      const processedContent = this.substitutePromptVariables(prompt.content, variables);
+      const processedContent = this.substitutePromptVariables(template.template, variables);
 
       // Execute with failover
       const result = await this.executeWithFailover({
@@ -478,20 +484,34 @@ class LLMProviderManager {
         ...executeOptions
       });
 
+      // Link template to output
+      await this.promptTemplateManager.linkToOutput(template.id, template.version, {
+        documentId: executeOptions.documentId,
+        enrichmentType: taskType,
+        provider: result.provider,
+        model: result.model,
+        timestamp: new Date().toISOString(),
+        inputTokens: result.metadata?.inputTokens,
+        outputTokens: result.metadata?.outputTokens,
+        cost: result.cost?.total,
+        result: result.content || result.text
+      });
+
       // Add prompt metadata to result
       return {
         ...result,
         promptMetadata: {
-          promptId,
-          promptVersion: prompt.version,
+          templateId: template.id,
+          templateName: promptName,
+          templateVersion: template.version,
           variables,
-          promptHash: this.generatePromptHash(prompt),
+          promptHash: this.generatePromptHash(template),
           executionTimestamp: new Date().toISOString()
         }
       };
     } catch (error) {
-      logger.error('Failed to execute with prompt', {
-        promptId,
+      logger.error('Failed to execute with prompt template', {
+        promptName,
         promptVersion: options.promptVersion,
         error: error.message
       });
@@ -526,89 +546,108 @@ class LLMProviderManager {
   }
 
   /**
-   * Generate hash for prompt reproducibility
-   * @param {Object} prompt - Prompt object
+   * Generate hash for prompt template reproducibility
+   * @param {Object} template - Prompt template object
    * @returns {string} Hash string
    */
-  generatePromptHash(prompt) {
+  generatePromptHash(template) {
     const crypto = require('crypto');
     const hashData = {
-      id: prompt.id,
-      version: prompt.version,
-      content: prompt.content
+      id: template.id,
+      name: template.name,
+      version: template.version,
+      template: template.template,
+      variables: template.variables
     };
     return crypto.createHash('sha256').update(JSON.stringify(hashData)).digest('hex');
   }
 
   /**
-   * Save or update a prompt
-   * @param {string} promptId - Prompt identifier
-   * @param {Object} promptData - Prompt content and metadata
+   * Save or update a prompt template
+   * @param {Object} templateData - Template content and metadata
    * @param {Object} options - Save options
-   * @returns {Promise<Object>} Saved prompt
+   * @returns {Promise<Object>} Saved template
    */
-  async savePrompt(promptId, promptData, options = {}) {
+  async savePromptTemplate(templateData, _options = {}) {
     try {
-      return await this.promptVersionManager.savePrompt(promptId, promptData, options);
+      return await this.promptTemplateManager.storeTemplate(templateData);
     } catch (error) {
-      logger.error('Failed to save prompt', { promptId, error: error.message });
+      logger.error('Failed to save prompt template', { templateName: templateData.name, error: error.message });
       throw error;
     }
   }
 
   /**
-   * Get a prompt by ID and version
-   * @param {string} promptId - Prompt identifier
-   * @param {string} version - Prompt version (default: 'latest')
-   * @returns {Promise<Object|null>} Prompt object or null
+   * Get a prompt template by name and version
+   * @param {string} templateName - Template name
+   * @param {string} version - Template version (default: latest)
+   * @returns {Promise<Object|null>} Template object or null
    */
-  async getPrompt(promptId, version = 'latest') {
+  async getPromptTemplate(templateName, version = null) {
     try {
-      return await this.promptVersionManager.getPrompt(promptId, version);
+      return await this.promptTemplateManager.getTemplate(templateName, version);
     } catch (error) {
-      logger.error('Failed to get prompt', { promptId, version, error: error.message });
+      logger.error('Failed to get prompt template', { templateName, version, error: error.message });
       throw error;
     }
   }
 
   /**
-   * List all available prompts
-   * @returns {Array<string>} Array of prompt IDs
+   * Search prompt templates by criteria
+   * @param {Object} criteria - Search criteria
+   * @returns {Array<Object>} Array of matching templates
    */
-  listPrompts() {
-    return this.promptVersionManager.listPrompts();
+  async searchPromptTemplates(criteria = {}) {
+    try {
+      return await this.promptTemplateManager.searchTemplates(criteria);
+    } catch (error) {
+      logger.error('Failed to search prompt templates', { criteria, error: error.message });
+      throw error;
+    }
   }
 
   /**
-   * Get version history for a prompt
-   * @param {string} promptId - Prompt identifier
+   * Get version history for a prompt template
+   * @param {string} templateName - Template name
    * @returns {Array<Object>} Version history
    */
-  getPromptVersionHistory(promptId) {
-    return this.promptVersionManager.getVersionHistory(promptId);
+  async getPromptTemplateVersions(templateName) {
+    try {
+      return await this.promptTemplateManager.getTemplateVersions(templateName);
+    } catch (error) {
+      logger.error('Failed to get template versions', { templateName, error: error.message });
+      throw error;
+    }
   }
 
   /**
-   * Rollback prompt to a previous version
-   * @param {string} promptId - Prompt identifier
+   * Rollback prompt template to a previous version
+   * @param {string} templateName - Template name
    * @param {string} targetVersion - Target version to rollback to
    * @returns {Promise<Object>} Rollback result
    */
-  async rollbackPrompt(promptId, targetVersion) {
+  async rollbackPromptTemplate(templateName, targetVersion) {
     try {
-      return await this.promptVersionManager.rollbackPrompt(promptId, targetVersion);
+      return await this.promptTemplateManager.rollbackToVersion(templateName, targetVersion);
     } catch (error) {
-      logger.error('Failed to rollback prompt', { promptId, targetVersion, error: error.message });
+      logger.error('Failed to rollback prompt template', { templateName, targetVersion, error: error.message });
       throw error;
     }
   }
 
   /**
-   * Get prompt versioning statistics
-   * @returns {Object} Statistics
+   * Get outputs linked to a prompt template
+   * @param {string} templateId - Template ID
+   * @param {string} version - Template version
+   * @returns {Array<Object>} Linked outputs
    */
-  getPromptStatistics() {
-    return this.promptVersionManager.getStatistics();
+  async getPromptTemplateOutputs(templateId, version) {
+    try {
+      return await this.promptTemplateManager.getLinkedOutputs(templateId, version);
+    } catch (error) {
+      logger.error('Failed to get prompt template outputs', { templateId, version, error: error.message });
+      throw error;
+    }
   }
 
   /**
@@ -628,8 +667,8 @@ class LLMProviderManager {
     // Shutdown failover manager
     await this.failoverManager.shutdown();
     
-    // Shutdown prompt version manager
-    await this.promptVersionManager.shutdown();
+    // Shutdown prompt template manager
+    await this.promptTemplateManager.cleanup();
     
     // Shutdown all providers
     const shutdownPromises = Array.from(this.providers.values()).map(async (provider) => {
