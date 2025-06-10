@@ -9,6 +9,7 @@ const auth = require('../middleware/auth');
 const { requireRole } = require('../middleware/auth');
 const PrometheusExporter = require('../../monitoring/PrometheusExporter');
 const AlertManager = require('../../monitoring/AlertManager');
+const { getLLMProviderManager } = require('../../services');
 const logger = require('../../utils/logger');
 
 // Middleware for admin routes - require admin role
@@ -614,6 +615,348 @@ router.post('/config', async (req, res) => {
     res.status(500).json({
       success: false,
       error: 'Failed to update configuration',
+      message: error.message
+    });
+  }
+});
+
+// ============ PROMPT TEMPLATE MANAGEMENT ROUTES ============
+
+/**
+ * GET /api/v1/admin/prompt-templates
+ * List all prompt templates with search and filtering
+ */
+router.get('/prompt-templates', async (req, res) => {
+  try {
+    const { category, tags, search, page = 1, limit = 20 } = req.query;
+    
+    const llmProvider = getLLMProviderManager();
+    if (!llmProvider) {
+      return res.status(503).json({
+        success: false,
+        error: 'LLM Provider Manager not available'
+      });
+    }
+
+    // Build search criteria
+    const criteria = {};
+    if (category) criteria.category = category;
+    if (tags) criteria.tags = tags.split(',');
+    if (search) criteria.text = search;
+
+    const templates = await llmProvider.searchPromptTemplates(criteria);
+    
+    // Paginate results
+    const startIndex = (parseInt(page) - 1) * parseInt(limit);
+    const paginatedTemplates = templates.slice(startIndex, startIndex + parseInt(limit));
+
+    res.json({
+      success: true,
+      data: {
+        templates: paginatedTemplates,
+        pagination: {
+          page: parseInt(page),
+          limit: parseInt(limit),
+          total: templates.length,
+          totalPages: Math.ceil(templates.length / parseInt(limit))
+        }
+      }
+    });
+  } catch (error) {
+    logger.error('Error listing prompt templates:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to list prompt templates',
+      message: error.message
+    });
+  }
+});
+
+/**
+ * POST /api/v1/admin/prompt-templates
+ * Create a new prompt template
+ */
+router.post('/prompt-templates', async (req, res) => {
+  try {
+    const { name, template, variables, metadata } = req.body;
+    
+    if (!name || !template) {
+      return res.status(400).json({
+        success: false,
+        error: 'Missing required fields: name, template'
+      });
+    }
+
+    const llmProvider = getLLMProviderManager();
+    if (!llmProvider) {
+      return res.status(503).json({
+        success: false,
+        error: 'LLM Provider Manager not available'
+      });
+    }
+
+    const templateData = {
+      name,
+      template,
+      variables: variables || [],
+      metadata: {
+        ...metadata,
+        author: req.user?.id || 'admin',
+        createdBy: req.user?.name || 'Admin User'
+      }
+    };
+
+    const result = await llmProvider.savePromptTemplate(templateData);
+
+    logger.info('Prompt template created by admin:', {
+      templateName: name,
+      templateId: result.templateId,
+      adminUser: req.user?.id,
+      version: result.version
+    });
+
+    res.status(201).json({
+      success: true,
+      data: result
+    });
+  } catch (error) {
+    logger.error('Error creating prompt template:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to create prompt template',
+      message: error.message
+    });
+  }
+});
+
+/**
+ * GET /api/v1/admin/prompt-templates/:name
+ * Get specific prompt template with version history
+ */
+router.get('/prompt-templates/:name', async (req, res) => {
+  try {
+    const { name } = req.params;
+    const { version } = req.query;
+
+    const llmProvider = getLLMProviderManager();
+    if (!llmProvider) {
+      return res.status(503).json({
+        success: false,
+        error: 'LLM Provider Manager not available'
+      });
+    }
+
+    const template = await llmProvider.getPromptTemplate(name, version);
+    if (!template) {
+      return res.status(404).json({
+        success: false,
+        error: 'Prompt template not found'
+      });
+    }
+
+    // Get version history
+    const versions = await llmProvider.getPromptTemplateVersions(name);
+
+    // Get linked outputs for current version
+    const linkedOutputs = await llmProvider.getPromptTemplateOutputs(template.id, template.version);
+
+    res.json({
+      success: true,
+      data: {
+        template,
+        versions,
+        linkedOutputs: linkedOutputs.slice(0, 10), // Limit to recent 10
+        usage: {
+          totalExecutions: linkedOutputs.length,
+          lastUsed: linkedOutputs.length > 0 ? linkedOutputs[0].timestamp : null
+        }
+      }
+    });
+  } catch (error) {
+    logger.error('Error getting prompt template:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to get prompt template',
+      message: error.message
+    });
+  }
+});
+
+/**
+ * PUT /api/v1/admin/prompt-templates/:name
+ * Update existing prompt template (creates new version)
+ */
+router.put('/prompt-templates/:name', async (req, res) => {
+  try {
+    const { name } = req.params;
+    const { template, variables, metadata } = req.body;
+
+    if (!template) {
+      return res.status(400).json({
+        success: false,
+        error: 'Missing required field: template'
+      });
+    }
+
+    const llmProvider = getLLMProviderManager();
+    if (!llmProvider) {
+      return res.status(503).json({
+        success: false,
+        error: 'LLM Provider Manager not available'
+      });
+    }
+
+    const templateData = {
+      name,
+      template,
+      variables: variables || [],
+      metadata: {
+        ...metadata,
+        updatedBy: req.user?.name || 'Admin User',
+        updatedAt: new Date().toISOString()
+      }
+    };
+
+    const result = await llmProvider.savePromptTemplate(templateData);
+
+    logger.info('Prompt template updated by admin:', {
+      templateName: name,
+      templateId: result.templateId,
+      adminUser: req.user?.id,
+      newVersion: result.version
+    });
+
+    res.json({
+      success: true,
+      data: result
+    });
+  } catch (error) {
+    logger.error('Error updating prompt template:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to update prompt template',
+      message: error.message
+    });
+  }
+});
+
+/**
+ * POST /api/v1/admin/prompt-templates/:name/rollback
+ * Rollback prompt template to previous version
+ */
+router.post('/prompt-templates/:name/rollback', async (req, res) => {
+  try {
+    const { name } = req.params;
+    const { targetVersion } = req.body;
+
+    if (!targetVersion) {
+      return res.status(400).json({
+        success: false,
+        error: 'Missing required field: targetVersion'
+      });
+    }
+
+    const llmProvider = getLLMProviderManager();
+    if (!llmProvider) {
+      return res.status(503).json({
+        success: false,
+        error: 'LLM Provider Manager not available'
+      });
+    }
+
+    const result = await llmProvider.rollbackPromptTemplate(name, targetVersion);
+
+    logger.info('Prompt template rolled back by admin:', {
+      templateName: name,
+      rolledBackTo: targetVersion,
+      adminUser: req.user?.id,
+      newVersion: result.newVersion
+    });
+
+    res.json({
+      success: true,
+      data: result
+    });
+  } catch (error) {
+    logger.error('Error rolling back prompt template:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to rollback prompt template',
+      message: error.message
+    });
+  }
+});
+
+/**
+ * GET /api/v1/admin/prompt-templates/:name/analytics
+ * Get usage analytics for a prompt template
+ */
+router.get('/prompt-templates/:name/analytics', async (req, res) => {
+  try {
+    const { name } = req.params;
+    const { days = 30 } = req.query;
+
+    const llmProvider = getLLMProviderManager();
+    if (!llmProvider) {
+      return res.status(503).json({
+        success: false,
+        error: 'LLM Provider Manager not available'
+      });
+    }
+
+    // Get template to get ID
+    const template = await llmProvider.getPromptTemplate(name);
+    if (!template) {
+      return res.status(404).json({
+        success: false,
+        error: 'Prompt template not found'
+      });
+    }
+
+    // Get linked outputs for analytics
+    const linkedOutputs = await llmProvider.getPromptTemplateOutputs(template.id, template.version);
+    
+    // Calculate analytics
+    const cutoffDate = new Date(Date.now() - parseInt(days) * 24 * 60 * 60 * 1000);
+    const recentOutputs = linkedOutputs.filter(output => 
+      new Date(output.timestamp) >= cutoffDate
+    );
+
+    const analytics = {
+      totalExecutions: recentOutputs.length,
+      totalCost: recentOutputs.reduce((sum, output) => sum + (output.cost_total || 0), 0),
+      totalTokens: {
+        input: recentOutputs.reduce((sum, output) => sum + (output.input_tokens || 0), 0),
+        output: recentOutputs.reduce((sum, output) => sum + (output.output_tokens || 0), 0)
+      },
+      providerBreakdown: recentOutputs.reduce((acc, output) => {
+        const provider = output.provider || 'unknown';
+        acc[provider] = (acc[provider] || 0) + 1;
+        return acc;
+      }, {}),
+      dailyUsage: recentOutputs.reduce((acc, output) => {
+        const day = new Date(output.timestamp).toISOString().split('T')[0];
+        acc[day] = (acc[day] || 0) + 1;
+        return acc;
+      }, {}),
+      avgCostPerExecution: recentOutputs.length > 0 ? 
+        recentOutputs.reduce((sum, output) => sum + (output.cost_total || 0), 0) / recentOutputs.length : 0
+    };
+
+    res.json({
+      success: true,
+      data: {
+        templateName: name,
+        templateVersion: template.version,
+        timeframe: `${days} days`,
+        analytics
+      }
+    });
+  } catch (error) {
+    logger.error('Error getting prompt template analytics:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to get prompt template analytics',
       message: error.message
     });
   }
