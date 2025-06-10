@@ -5,13 +5,9 @@ yarn-debug.log*
 yarn-error.log*
 
 # Testing
-tests/
 coverage/
 test-results/
-*.test.js
-*.spec.js
 jest.config.js
-jest.setup.js
 
 # Development
 .git/
