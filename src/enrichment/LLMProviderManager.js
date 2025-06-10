@@ -568,7 +568,7 @@ class LLMProviderManager {
    * @param {Object} options - Save options
    * @returns {Promise<Object>} Saved template
    */
-  async savePromptTemplate(templateData, options = {}) {
+  async savePromptTemplate(templateData, _options = {}) {
     try {
       return await this.promptTemplateManager.storeTemplate(templateData);
     } catch (error) {

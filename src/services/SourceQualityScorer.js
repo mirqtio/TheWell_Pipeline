@@ -430,18 +430,18 @@ class SourceQualityScorer {
     // Publication type influences credibility
     if (metadata.contentType) {
       switch (metadata.contentType.toLowerCase()) {
-        case 'academic':
-        case 'research':
-          score = Math.min(1.0, score + 0.1);
-          break;
-        case 'news':
-        case 'journalism':
-          score = Math.min(1.0, score + 0.05);
-          break;
-        case 'blog':
-        case 'opinion':
-          score = Math.max(0.1, score - 0.1);
-          break;
+      case 'academic':
+      case 'research':
+        score = Math.min(1.0, score + 0.1);
+        break;
+      case 'news':
+      case 'journalism':
+        score = Math.min(1.0, score + 0.05);
+        break;
+      case 'blog':
+      case 'opinion':
+        score = Math.max(0.1, score - 0.1);
+        break;
       }
     }
     

@@ -4,8 +4,6 @@
  */
 
 const { exec } = require('child_process');
-const path = require('path');
-const fs = require('fs').promises;
 const logger = require('../utils/logger');
 
 class GitPromptVersioning {
@@ -51,7 +49,7 @@ class GitPromptVersioning {
         await this._execGit('add .');
       }
 
-      const commitHash = await this._execGit(`commit -m "${message}"`);
+      await this._execGit(`commit -m "${message}"`);
       const hash = await this._execGit('rev-parse HEAD');
 
       logger.info('Changes committed to git', {
