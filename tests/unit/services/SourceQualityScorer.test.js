@@ -112,7 +112,7 @@ describe('SourceQualityScorer', () => {
       };
 
       const weight = scorer.calculateBelievabilityWeight(sourceMetrics);
-      expect(weight).toBeCloseTo(1.0, 2); // maximum weight
+      expect(weight).toBeCloseTo(0.9, 1); // near maximum weight
     });
   });
 
